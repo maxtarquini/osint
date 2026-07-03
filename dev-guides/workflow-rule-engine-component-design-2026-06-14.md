@@ -43,6 +43,161 @@ Fonti di riferimento:
 - Runtime osservabile: ogni nodo attraversato deve poter generare trace persistente e log correlati.
 - Nodi MVP dichiarativi: evitare scripting libero nella prima iterazione per ridurre rischi di sicurezza e debugging.
 - Controller sottili: autorizzazione, validazione dominio e audit stanno nei service/component.
+- Raven note: lo stato condiviso di esecuzione deve restare separato dal workflow engine. In Raven questo ruolo e coperto da `it.osint.raven.workflow.WorkflowContext`, che non deve dipendere da LangGraph4j.
+- Raven note: il contratto del singolo nodo e `it.osint.raven.workflow.WorkflowNode`. Anche questo contratto resta nel dominio puro: conosce `WorkflowContext`, ma non conosce LangGraph4j, Spring, MongoDB, Neo4j o Qdrant.
+
+### 3.1 Raven WorkflowContext
+
+Per Raven, il modello di stato condiviso tra nodi e agenti e `WorkflowContext`.
+
+Il contesto contiene:
+
+- identificativi e timestamp della execution;
+- `SourceDto`;
+- `RawDocumentDto`;
+- `StructuredDocument`;
+- stato `WorkflowStatus`;
+- output condivisi come `Map<Class<?>, WorkflowArtifact>`;
+- variabili temporanee;
+- eventi di audit;
+- warning;
+- errori strutturati;
+- metriche.
+
+La scelta centrale e non aggiungere campi al contesto per ogni nuovo agente. Gli output devono essere registrati come artifact tipizzati e, per i nodi workflow, preferibilmente tramite capability nominate:
+
+```java
+context.put("metadata-agent", metadata);
+context.put("entity-agent", ENTITY_EXTRACTION, entityExtractionResult);
+
+MetadataDto metadata = context.require(MetadataDto.class);
+EntityExtractionResult entities = context.require(ENTITY_EXTRACTION);
+```
+
+Ogni `WorkflowArtifact` conserva:
+
+```text
+id
+type
+value
+producedBy
+producedAt
+```
+
+Questa provenienza interna e importante quando molti agenti LLM collaborano nello stesso workflow: permette di capire quale nodo ha prodotto un dato, quando lo ha prodotto e quale risultato downstream lo ha usato.
+
+Regole:
+
+- `WorkflowContext` non deve estendere classi LangGraph4j.
+- `WorkflowContext` non deve contenere Spring bean, repository, driver o client di modelli.
+- `WorkflowContext` deve poter essere serializzato da adapter esterni senza annotazioni framework obbligatorie nel modello.
+- Eventi, warning, errori, variabili e metriche non devono contenere credenziali, prompt, payload LLM completi, documenti completi o stack trace.
+- Il workflow engine futuro puo passare, checkpointare o adattare il contesto, ma non deve trasformarlo in un oggetto dipendente dal motore.
+
+### 3.2 Raven WorkflowNode
+
+Per Raven, ogni step eseguibile del workflow implementa `WorkflowNode`.
+
+Il contratto e:
+
+```java
+public interface WorkflowNode {
+    String id();
+    String name();
+    String description();
+    WorkflowNodeCategory category();
+    Set<WorkflowCapability> requires();
+    Set<WorkflowCapability> produces();
+    WorkflowContext execute(WorkflowContext context) throws Exception;
+}
+```
+
+Un nodo legge dal `WorkflowContext`, produce nuovi artifact, aggiorna eventi/metriche/warning/errori e restituisce lo stesso context arricchito.
+
+La parte piu importante e dichiarativa:
+
+```java
+Set<WorkflowCapability> requires();
+Set<WorkflowCapability> produces();
+```
+
+`WorkflowCapability` contiene:
+
+```java
+record WorkflowCapability(
+    String id,
+    String namespace,
+    String description,
+    Class<?> type,
+    Version version,
+    boolean required,
+    Set<String> aliases
+)
+```
+
+Queste due liste sono la base per costruire il DAG senza hard-code. Il motore puo registrare automaticamente i nodi disponibili, confrontare capability prodotte e richieste, e derivare un ordine di esecuzione compatibile. L'identita della capability e data da namespace, id e version; il tipo Java serve solo per validare e castare il valore, non per definire la dipendenza.
+
+Esempio:
+
+```text
+HTML Parser
+  produces structured-document -> StructuredDocument
+
+Metadata Extraction
+  requires structured-document -> StructuredDocument
+  produces metadata-extraction -> MetadataDto
+
+Entity Extraction
+  requires structured-document -> StructuredDocument
+  produces entity-extraction -> EntityExtractionResult
+
+Relationship Extraction
+  requires entity-extraction -> EntityExtractionResult
+  produces relationship-extraction -> RelationshipExtractionResult
+```
+
+`WorkflowNode` include anche default utili al futuro engine:
+
+```text
+configuration()   Collections.emptyMap()
+timeout()         5 minuti
+maxRetries()      0
+parallelizable()  true
+idempotent()      true
+priority()        100
+```
+
+`canExecute(context)` verifica automaticamente tutte le capability dichiarate in `requires()` usando `context.contains(capability)`. Non deve usare reflection complessa o metadata framework-specific.
+
+Nota importante: `contains(...)` verifica gli artifact nominati per capability, non campi arbitrari del context. Se un workflow inizializza `context.document(article)` e un nodo dichiara la capability `structured-document`, il parser o il motore deve anche pubblicare il documento come artifact:
+
+```java
+context
+        .document(article)
+        .put("parser", STRUCTURED_DOCUMENT, article);
+```
+
+Categorie disponibili:
+
+```text
+CONNECTOR
+PARSER
+ENRICHMENT
+AI
+PERSISTENCE
+VALIDATION
+UTILITY
+EXPORT
+```
+
+Regole:
+
+- `WorkflowNode` non deve dipendere da LangGraph4j.
+- `WorkflowNode` non deve dipendere da Spring o injection framework.
+- `WorkflowNode` non deve dipendere da MongoDB, Neo4j, Qdrant o client esterni.
+- Eventuali adapter LangGraph4j devono stare fuori dal dominio e devono adattare `WorkflowNode`, non il contrario.
+- I nodi con side effect non idempotenti devono dichiarare `idempotent() == false`, salvo deduplicazione/upsert espliciti.
+- I nodi devono registrare eventi nel context tramite `context.event(...)`; non usare direttamente logger nel contratto di dominio.
 
 ## 4) Scope e visibilita
 
@@ -456,26 +611,32 @@ flowchart TD
 
 ### 8.3 Node execution contract
 
-Interfaccia proposta:
+Per il modello Raven il contratto implementato e `WorkflowNode`:
 
 ```java
-public interface WorkflowNodeExecutor {
-    WorkflowNodeType supports();
-    WorkflowNodeResult execute(WorkflowNodeExecutionContext context);
+public interface WorkflowNode {
+    String id();
+    String name();
+    String description();
+    WorkflowNodeCategory category();
+    Set<WorkflowCapability> requires();
+    Set<WorkflowCapability> produces();
+    WorkflowContext execute(WorkflowContext context) throws Exception;
 }
 ```
 
-`WorkflowNodeResult`:
+Il runtime persistente descritto in questo documento puo ancora avere DTO di esecuzione, trace e relazioni nominali (`Success`, `Failure`, `Timeout`, ecc.). Tuttavia il nodo di dominio Raven non produce un `WorkflowNodeResult` separato: arricchisce il `WorkflowContext` con artifact tipizzati, eventi, warning, errori e metriche.
+
+Per compatibility con un rule engine persistente, un adapter puo tradurre l'esito di `execute` in una relazione runtime:
 
 ```text
-relation
-payload
-metadata
-errorCode
-errorMessage
+execute ok            -> Success
+execute throws        -> Failure
+timeout engine-side   -> Timeout
+canExecute false      -> Skipped oppure Failure, secondo policy workflow
 ```
 
-Regola: il nodo non deve modificare direttamente l'evento originale. Produce un nuovo payload/metadata da propagare al nodo successivo.
+Regola: il nodo non deve modificare direttamente l'evento originale. Lavora sul `WorkflowContext`, pubblica artifact tipizzati e lascia al runtime la decisione su relazione successiva, retry, skip o stop.
 
 ### 8.4 Error handling
 

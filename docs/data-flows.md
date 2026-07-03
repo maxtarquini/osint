@@ -28,9 +28,10 @@ flowchart TD
     Html["HtmlParser"]
     Pdf["PdfParser"]
     Api["JsonParser / ApiParser"]
+    Structured["StructuredDocument"]
     Article["ArticleDto"]
-    Document["DocumentDto (planned)"]
-    Post["PostDto / MessageDto (planned)"]
+    Document["PdfDocumentDto (planned)"]
+    Post["TelegramMessageDto / MessageDto (planned)"]
 
     Raw --> Mime
     Mime -->|"text/html"| Html
@@ -39,9 +40,46 @@ flowchart TD
     Html --> Article
     Pdf --> Document
     Api --> Post
+    Article --> Structured
+    Document --> Structured
+    Post --> Structured
 ```
 
 Status: DTO boundary defined; parsers planned.
+
+## Workflow Context and Node Flow
+
+`WorkflowContext` is the state carrier between parser output and enrichment/persistence nodes. `WorkflowNode` is the common contract implemented by those executable steps.
+
+```mermaid
+sequenceDiagram
+    participant Parser
+    participant Context as WorkflowContext
+    participant Metadata as Metadata WorkflowNode
+    participant Entity as Entity WorkflowNode
+    participant Assessment as Assessment WorkflowNode
+    participant Store as Persistence Adapter
+
+    Parser->>Context: document(StructuredDocument)
+    Parser->>Context: put(structured-document)
+    Metadata->>Metadata: requires structured-document
+    Metadata->>Metadata: produces metadata-extraction
+    Metadata->>Context: put(MetadataDto)
+    Entity->>Entity: requires structured-document
+    Entity->>Entity: produces entity-extraction
+    Entity->>Context: put(EntityExtractionResult)
+    Assessment->>Context: require(metadata-extraction)
+    Assessment->>Context: put(AssessmentDto)
+    Store->>Context: read document + outputs + metrics
+```
+
+The context and node flow is separate from the workflow engine. It is the engine-independent domain model that `SequentialWorkflowEngine` already passes between nodes, and that future runtime adapters can also use.
+
+Shared outputs are stored as `WorkflowArtifact` values. This means Raven can later answer questions such as "which node produced this taxonomy?" or "when were these entities extracted?" without adding provenance fields to every DTO.
+
+The node contract adds one more piece: nodes declare named capabilities through `requires()` and `produces()`. That makes dependency order explicit and gives `WorkflowCompiler` enough information to build an `ExecutionPlan` without hard-coding every pipeline or guessing from Java classes.
+
+Status: `WorkflowContext`, `WorkflowArtifact`, `WorkflowNode`, `WorkflowNodeCategory`, `WorkflowCompiler`, `WorkflowEngine`, `SequentialWorkflowEngine` and tests implemented; concrete production nodes and LangGraph4j adapter planned.
 
 ## Article Enrichment Flow
 
@@ -55,6 +93,7 @@ flowchart LR
     Assessment["Assessment"]
     Embedding["Embedding"]
     Provenance["Provenance"]
+    Context["WorkflowContext outputs"]
 
     Article0 --> Taxonomy
     Taxonomy --> Entities
@@ -64,6 +103,12 @@ flowchart LR
     Events --> Assessment
     Assessment --> Embedding
     Embedding --> Provenance
+    Taxonomy --> Context
+    Entities --> Context
+    Claims --> Context
+    Events --> Context
+    Assessment --> Context
+    Embedding --> Context
 ```
 
 Status: DTO model implemented; enrichment pipeline planned.

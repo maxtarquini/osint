@@ -9,7 +9,8 @@ At the current stage, Raven provides:
 - a full-screen terminal workspace;
 - connection status probes for Neo4j, Qdrant and MongoDB;
 - configuration editing for dependency endpoints and UI preferences;
-- foundational data models and Mongo repositories for OSINT sources, raw documents and articles.
+- foundational data models and Mongo repositories for OSINT sources, raw documents and articles;
+- an internal workflow context model and node contract for future parser, workflow node and AI agent execution.
 
 ## Start Raven
 
@@ -78,4 +79,6 @@ Use `Refresh` to rerun probes after starting or changing dependencies.
 
 ## Current Limitations
 
-The TUI does not yet expose source CRUD, acquisition execution, parsing, LLM analysis or knowledge graph exploration. Those workflows are documented as the target direction and are backed by the initial DTO and repository layers.
+The TUI does not yet expose source CRUD, acquisition execution, parsing, LLM analysis, workflow execution or knowledge graph exploration. Those workflows are documented as the target direction and are backed by the initial DTO, repository, workflow context and workflow node contract layers.
+
+`WorkflowContext` and `WorkflowNode` are currently internal developer-facing models. They are not yet visible in the TUI and do not yet imply that Raven has a runnable workflow engine. The contract for nodes exists so future connectors, parsers, AI extractors and persistence steps can be built consistently before the orchestration layer is introduced.

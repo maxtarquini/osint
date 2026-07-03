@@ -5,6 +5,8 @@ It is based on the current Spring Boot architecture and should be used as a refe
 
 For standalone Java terminal applications, also review `dev-guides/TUI_DEVELOPMENT_GUIDELINES.md`. Spring-specific package names such as `com.velia.components` and `com.velia.services` apply only to Spring modules; standalone TUI projects should preserve the same separation of concerns using their own base package and TUI/service/repository/graph layers.
 
+Raven-specific note: the `it.osint.raven.workflow` package contains engine-independent workflow domain state, node contracts and reusable agent contracts. Classes in this package must not depend on Spring, LangGraph4j, LangChain4j, OpenAI clients, MongoDB, Neo4j, Qdrant or concrete serialization frameworks.
+
 ## 1) Package organization
 
 Use package-by-layer with domain sub-packages where needed.
@@ -24,6 +26,7 @@ Use package-by-layer with domain sub-packages where needed.
 - `queues` → queue abstractions and queue wiring.
 - `utils` → stateless utility helpers/constants.
 - `agents` → AI agents organized by phase/domain.
+- `workflow` → engine-independent workflow execution state, events, artifacts and status models.
 
 ### 1.3 Domain-oriented sub-packages
 When a layer becomes large, split by domain:
@@ -44,6 +47,7 @@ When a layer becomes large, split by domain:
 - All agent classes (`*Agent`, `*Assistant`, related agent prompt loaders) must be placed under `com.velia.agents`.
 - Agents must be organized in thematic sub-packages (examples: `com.velia.agents.edt`, `com.velia.agents.phase1`, `com.velia.agents.classification`, `com.velia.agents.<domain>`).
 - Avoid placing agent classes under unrelated packages (`services`, `components`, `utils`) when they represent AI agent execution units.
+- Raven exception: engine-independent workflow agent contracts live under `it.osint.raven.workflow.agent`. These are domain contracts, not Spring-managed AI execution units, and must stay free from framework imports. Concrete application agents or adapters that use Spring, model clients, queues or prompt loaders belong outside the workflow domain.
 
 ---
 
@@ -80,6 +84,87 @@ Current codebase standard (recommended by default):
 - Use `@JsonIgnoreProperties(ignoreUnknown = true)` for resilient deserialization where appropriate.
 - Prefer Lombok consistency (`@Builder`, `@With`, `@EqualsAndHashCode`, `@ToString`, getters/setters) unless Java `record` is intentionally chosen.
 - If using Java `record`, annotate record components with `@Schema`.
+
+---
+
+## 2.6 Raven workflow domain standards
+
+These rules apply to `it.osint.raven.workflow` and its sub-packages.
+
+`WorkflowContext` is the only shared state object passed between workflow nodes and workflow agents. It is not a persistence DTO, not a Spring component and not a LangGraph4j state subclass.
+
+`WorkflowNode` is the engine-independent contract for executable workflow steps. It is also a domain contract, not a Spring bean contract and not a LangGraph4j node action.
+
+`WorkflowAgent` is the engine-independent contract for reusable business logic that can be called by workflow nodes, REST endpoints, CLI commands or batch jobs. It is not a workflow node, not a Spring service and not a LangChain4j assistant.
+
+`WorkflowRegistry` is the engine-independent registry for workflow nodes and workflow agents. It supports manual registration and Java `ServiceLoader`; it must not use Spring component scanning.
+
+`WorkflowDefinition` is the engine-independent workflow description. It declares workflow metadata and goals, not nodes and not a DAG.
+
+`WorkflowCompiler` transforms a `WorkflowDefinition` and `WorkflowRegistry` into an engine-independent `ExecutionPlan`. It must not use LangGraph4j.
+
+Implementation rules:
+
+- Keep workflow model classes independent from Spring annotations and dependency injection.
+- Keep workflow model classes independent from LangGraph4j APIs.
+- Keep workflow model classes independent from LangChain4j, OpenAI clients and prompt template implementations.
+- Keep workflow model classes independent from MongoDB, Neo4j and Qdrant driver types.
+- Keep `WorkflowNode` implementations that live in the workflow package free from framework imports. Runtime adapters may wrap them elsewhere.
+- Keep `WorkflowAgent` implementations that live in the workflow package free from framework imports. Runtime adapters, application services or concrete external-source clients may wrap them elsewhere.
+- Keep `WorkflowRegistry` independent from Spring and LangGraph4j. Service discovery in the workflow domain must use Java `ServiceLoader`; Spring bridges belong outside the domain.
+- Keep `WorkflowDefinition` independent from graph runtimes. Definitions describe goals only; DAG construction belongs to a later compiler.
+- Keep `WorkflowCompiler` runtime-independent. It may build Raven `DependencyGraph` and `ExecutionPlan` objects, but LangGraph4j adaptation belongs to a later engine layer.
+- Use Java 21 standard library types for timestamps, identifiers, maps and lists.
+- Use `ConcurrentHashMap` for concurrently updated maps.
+- Use thread-safe lists where concurrent node execution can append observations.
+- Prefer small records for immutable value objects such as events, errors and artifacts.
+- Keep `WorkflowError` serializable and safe: store exception class names or codes, not `Throwable` instances or stack traces.
+- Do not store database clients, service instances, model clients, prompt objects or framework state inside `WorkflowContext`.
+
+Workflow node contract rules:
+
+- Every executable node must implement `WorkflowNode`.
+- Every node must define a stable `id`, readable `name`, short `description`, and `WorkflowNodeCategory`.
+- Every node must declare mandatory upstream capabilities through `requires`.
+- Every node must declare produced capabilities through `produces`.
+- Use `WorkflowCapability` as a domain value object identified by namespace, id and version; `Class<?> type` is only for validation and must not define DAG dependencies.
+- `canExecute` should remain based on `WorkflowContext.contains(WorkflowCapability)`; do not replace it with reflection or framework metadata inspection.
+- Use `configuration` only for safe node metadata/configuration. Do not expose passwords, tokens, prompts, raw documents, clients or repositories.
+- Override `timeout`, `maxRetries`, `parallelizable`, `idempotent`, and `priority` whenever the defaults would misrepresent runtime behavior.
+- Non-idempotent persistence, webhook or external side-effect nodes must explicitly return `false` from `idempotent` unless they implement stable deduplication/upsert semantics.
+- Nodes may throw checked exceptions from `execute`; engines/adapters decide retry, branch, partial failure or terminal failure behavior.
+
+Workflow agent contract rules:
+
+- Every reusable domain agent must implement `WorkflowAgent` or one of its specializations.
+- Every agent must define a stable `id`, readable `name`, short `description`, and `WorkflowAgentType`.
+- Every agent must declare type-level inputs through `Set<Class<?>> requires()`.
+- Every agent must declare type-level outputs through `Set<Class<?>> produces()`.
+- Use `supports(StructuredDocument)` to restrict an agent to concrete document DTOs when needed.
+- Use `configuration` only for safe agent metadata/configuration. Do not expose passwords, tokens, prompts, raw documents, clients or repositories.
+- Deterministic algorithms should implement `DeterministicAgent`.
+- LLM-backed agents should implement `LlmAgent`, return `aiPowered() == true`, normally return `deterministic() == false`, and may expose `modelName()` and `promptId()`.
+- Connector-style agents should implement `ConnectorAgent` when they acquire data from external sources.
+- Agents may throw checked exceptions from `execute`; callers decide retry, branch, partial failure or terminal failure behavior.
+- Agents must not use loggers directly when they live in the workflow domain; record events, warnings, errors and metrics in `WorkflowContext`.
+
+Shared output rules:
+
+- Do not add a field to `WorkflowContext` for every new agent result.
+- Store node outputs through capability-aware `put`, backed by named capability artifacts.
+- Use `producedBy` whenever the producer node or agent is known.
+- Use `get` for optional inputs.
+- Use `require` for mandatory upstream inputs.
+- Remember that `canExecute` checks named capability artifacts through `contains`; if a starting value such as `StructuredDocument` is used in `requires`, seed it with `put(producedBy, STRUCTURED_DOCUMENT, document)` in addition to setting the convenience `document` field.
+- For multiple generic collections, introduce typed result DTOs and distinct capability ids. Do not model DAG dependencies with `List.class`.
+
+Observability rules:
+
+- Use `event` for node lifecycle and execution trace.
+- Use `warning` for recoverable degraded behavior.
+- Use `error` for failures that should remain visible after execution.
+- Use `metric` for counts, latency and resource usage.
+- Do not write raw document content, credentials, prompts, full LLM payloads or stack traces into context events, warnings, variables or metrics.
 
 ---
 
