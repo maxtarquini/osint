@@ -7,6 +7,8 @@ This guide defines a consistent structure for Java agent classes in this codebas
 
 It is derived from the implementation patterns used by example agents under `src/main/java/com/velia/agents/example`.
 
+Raven note: this guide applies to application-level AI execution units that use Spring, model clients, queues, prompt loaders and lifecycle publishers. It does not apply to the engine-independent workflow agent contracts under `it.osint.raven.workflow.agent`. Those contracts are pure domain interfaces and must not use Spring annotations, direct loggers, LangChain4j/OpenAI clients, queue handles, prompt loaders or persistence clients.
+
 ---
 
 ## 0. Agent package placement (mandatory)
@@ -185,4 +187,3 @@ public OutputDto execute(InputDto input) throws Exception {
 - [ ] Uses `log.info/warn/error` at appropriate severity.
 - [ ] Avoids sensitive-data logging.
 - [ ] Keeps transformation logic in private helper methods.
-

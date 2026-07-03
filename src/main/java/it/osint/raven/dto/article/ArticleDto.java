@@ -2,6 +2,7 @@ package it.osint.raven.dto.article;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import it.osint.raven.workflow.StructuredDocument;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ArticleDto {
+public class ArticleDto implements StructuredDocument {
 
     @JsonProperty("id")
     private UUID id;

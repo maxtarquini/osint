@@ -10,6 +10,9 @@ flowchart TD
     Services["Services"]
     Connectors["Source Connectors"]
     Parsers["Parsers"]
+    Context["Workflow Context"]
+    Nodes["Workflow Nodes"]
+    Agents["Workflow Agents"]
     Pipeline["LLM Pipeline"]
     Repositories["Repositories"]
     Mongo["MongoDB raven"]
@@ -19,7 +22,13 @@ flowchart TD
     TUI --> Services
     Services --> Connectors
     Services --> Parsers
-    Services --> Pipeline
+    Services --> Context
+    Parsers --> Context
+    Context --> Nodes
+    Nodes --> Context
+    Nodes --> Agents
+    Agents --> Context
+    Agents --> Pipeline
     Services --> Repositories
     Repositories --> Mongo
     Pipeline --> Neo4j
@@ -53,6 +62,9 @@ it.osint.raven
   services/        connection status and use-case services
   tui/             Lanterna windows and widgets
   utils/           stateless helpers
+  workflow/        engine-independent workflow context, node and agent contracts, artifacts and events
+  workflow/definition/ YAML-backed workflow goal definitions
+  workflow/registry/ central node and agent registry for future workflow compilation
 ```
 
 ## Core Model Boundaries
@@ -63,9 +75,224 @@ Raven separates acquisition from interpretation:
 - `SourceConnector` fetches content from a source.
 - `RawDocumentDto` stores acquired raw content without interpreting it.
 - Parsers convert raw documents into structured documents such as `ArticleDto`.
+- `WorkflowContext` carries the source, raw document, structured document and all shared node outputs during execution.
+- `WorkflowNode` is the domain contract implemented by executable workflow steps.
+- `WorkflowAgent` is the reusable business-logic contract that can be called by workflow nodes, REST endpoints, CLI commands or batch jobs.
 - LLM or rule-based analysis enriches structured documents with entities, claims, events and assessments.
 
 This prevents `ArticleDto` from knowing whether content came from a website, RSS feed, Telegram channel, PDF, API or filesystem.
+
+## Workflow Domain Boundary
+
+Raven's engine-independent workflow domain is located under:
+
+```text
+it.osint.raven.workflow
+```
+
+This package contains the state and contracts that describe a workflow run without committing the domain model to a specific engine. The current core types are:
+
+- `WorkflowContext`
+- `WorkflowNode`
+- `WorkflowNodeCategory`
+- `WorkflowArtifact`
+- `WorkflowEvent`
+- `WorkflowEventType`
+- `WorkflowError`
+- `WorkflowStatus`
+- `StructuredDocument`
+
+The workflow agent contracts live in:
+
+```text
+it.osint.raven.workflow.agent
+```
+
+The current agent types are:
+
+- `WorkflowAgent`
+- `WorkflowAgentType`
+- `DeterministicAgent`
+- `LlmAgent`
+- `ConnectorAgent`
+
+The workflow registry lives in:
+
+```text
+it.osint.raven.workflow.registry
+```
+
+It provides the central `WorkflowRegistry` contract for registering and discovering workflow nodes and agents.
+
+Workflow definitions live in:
+
+```text
+it.osint.raven.workflow.definition
+```
+
+`WorkflowDefinition` describes workflow goals and safe metadata. It does not describe a DAG and does not list nodes.
+
+`WorkflowContext` is intentionally not a LangGraph4j state class. `WorkflowNode` is intentionally not a LangGraph4j node action. `WorkflowAgent` is intentionally not a Spring service, LangChain4j assistant or model client. LangGraph4j can execute or checkpoint a graph that passes `WorkflowContext` between `WorkflowNode` implementations, and nodes can delegate to agents, but the context, node and agent contracts remain Raven domain objects.
+
+The dependency direction should stay this way:
+
+```text
+LangGraph4j adapter -> WorkflowDefinition + WorkflowRegistry -> WorkflowNode -> WorkflowAgent -> WorkflowContext
+```
+
+The workflow package must not import LangGraph4j, LangChain4j, OpenAI clients, Spring, MongoDB, Neo4j, Qdrant or framework-specific serializers.
+
+## Workflow Context
+
+The context contains:
+
+- workflow identifiers and timestamps;
+- `WorkflowStatus`;
+- the current `SourceDto`;
+- the acquired `RawDocumentDto`;
+- a parser output through the `StructuredDocument` marker interface;
+- typed shared outputs through `Map<Class<?>, WorkflowArtifact>` for legacy/type lookup;
+- named shared outputs through workflow capability ids;
+- temporary variables;
+- audit events;
+- warnings;
+- structured errors;
+- metrics.
+
+The shared output map is the extension point for node results. Instead of adding a new field for every agent result, nodes store typed artifacts:
+
+```java
+context.put("metadata-agent", metadata);
+context.put("entity-agent", ENTITY_EXTRACTION, entityExtractionResult);
+
+MetadataDto metadata = context.require(MetadataDto.class);
+EntityExtractionResult entities = context.require(ENTITY_EXTRACTION);
+```
+
+Each stored `WorkflowArtifact` includes provenance: id, declared type, value, producer and production timestamp. Capability-based storage adds a stable logical id, such as `entity-extraction` or `organization-resolution`, so two outputs with similar Java shapes do not collide in the DAG.
+
+See [Workflow context](workflow-context.md) for the full API and usage rules.
+
+## Workflow Node Contract
+
+`WorkflowNode` describes a single executable unit in a Raven workflow. Connectors, parsers, enrichment processors, AI extractors, validators, persistence adapters and exporters can all implement the same contract:
+
+```java
+WorkflowContext execute(WorkflowContext context) throws Exception;
+```
+
+Every node also declares:
+
+- stable `id`;
+- human-readable `name`;
+- short `description`;
+- `WorkflowNodeCategory`;
+- required capabilities through `requires`;
+- produced capabilities through `produces`;
+- default execution policy metadata such as timeout, retry count, parallelization, idempotency and priority.
+
+The key design choice is the capability declaration:
+
+```java
+Set<WorkflowCapability> requires();
+Set<WorkflowCapability> produces();
+```
+
+This gives the future DAG engine enough information to reason about ordering without relying only on Java classes. A node that requires capability `structured-document` cannot run before a parser has produced that capability. A relationship extraction node can require `entity-extraction`, while an organization enrichment node can require `organization-resolution`, even if both payloads contain entity-like data.
+
+The default `canExecute` method checks the declared requirements with `WorkflowContext.contains(WorkflowCapability)`. It does not use reflection over fields or annotations.
+
+See [Workflow nodes](workflow-nodes.md) for the full contract and implementation guidance.
+
+## Workflow Agent Contract
+
+`WorkflowAgent` describes reusable business logic that consumes and enriches a `WorkflowContext`:
+
+```java
+WorkflowContext execute(WorkflowContext context) throws Exception;
+```
+
+The same agent can be reused by multiple callers:
+
+```text
+MetadataWorkflowNode -> MetadataExtractionAgent
+REST Endpoint       -> MetadataExtractionAgent
+CLI Command         -> MetadataExtractionAgent
+Batch Job           -> MetadataExtractionAgent
+```
+
+Every agent declares:
+
+- stable `id`;
+- human-readable `name`;
+- short `description`;
+- `WorkflowAgentType`;
+- type-level requirements through `Set<Class<?>> requires()`;
+- type-level outputs through `Set<Class<?>> produces()`;
+- optional document support through `supports(StructuredDocument)`;
+- optional safe configuration metadata;
+- AI metadata such as `aiPowered`, `deterministic`, `modelName` and `promptId`.
+
+`WorkflowAgent` requirements intentionally use Java classes, while `WorkflowNode` requirements use named `WorkflowCapability` values. The agent declaration describes reusable business inputs and outputs. The node declaration describes DAG dependencies and can map an agent's type-level capabilities to stable workflow capability ids.
+
+See [Workflow agents](workflow-agents.md) for the full contract and implementation guidance.
+
+## Workflow Registry
+
+`WorkflowRegistry` is the central engine-independent registry for workflow nodes and agents:
+
+```java
+WorkflowRegistry registry = WorkflowRegistry.create()
+        .registerNode(metadataNode)
+        .registerAgent(metadataAgent);
+```
+
+It supports:
+
+- registering `WorkflowNode` instances;
+- registering `WorkflowAgent` instances;
+- finding nodes and agents by stable id;
+- finding nodes that produce a `WorkflowCapability`;
+- finding nodes that require a `WorkflowCapability`;
+- discovery through Java `ServiceLoader`.
+
+The registry deliberately does not use Spring component scanning. It is the base for the future workflow compiler, which can inspect registered nodes, compare `requires()` and `produces()`, and build a DAG without depending on LangGraph4j in the domain model.
+
+See [Workflow registry](workflow-registry.md) for the full contract and usage rules.
+
+## Workflow Definition
+
+`WorkflowDefinition` is the YAML-backed domain description of a workflow request:
+
+```yaml
+workflow:
+  id: libya-observer
+  version: 1.0
+
+goals:
+  - metadata
+  - entities
+  - claims
+  - assessment
+```
+
+It intentionally lists goals, not nodes. A future compiler will resolve these goals against `WorkflowRegistry` and registered `WorkflowCapability` declarations.
+
+See [Workflow definitions](workflow-definitions.md) for the full contract and YAML format.
+
+## Structured Document Boundary
+
+Raven uses `StructuredDocument` as the common contract for parser outputs consumed by workflow nodes.
+
+`ArticleDto` currently implements `StructuredDocument`, but the boundary is intentionally broader. Future parser outputs such as Telegram messages, PDF documents or API payload documents should implement the same interface instead of forcing every workflow to operate on `ArticleDto`.
+
+This keeps the document chain generic:
+
+```text
+RawDocumentDto -> StructuredDocument -> WorkflowContext -> WorkflowNode
+```
+
+Specialized nodes may still check for a concrete subtype when they truly need article-specific behavior.
 
 ## Persistence
 
