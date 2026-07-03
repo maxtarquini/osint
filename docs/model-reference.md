@@ -285,7 +285,7 @@ Set<WorkflowCapability> produces();
 WorkflowContext execute(WorkflowContext context) throws Exception;
 ```
 
-`WorkflowNode` is deliberately a domain interface. It depends on `WorkflowContext`, not on LangGraph4j or Spring. A future engine can adapt registered nodes into a DAG, but the node itself should not know which engine executes it.
+`WorkflowNode` is deliberately a domain interface. It depends on `WorkflowContext`, not on LangGraph4j or Spring. `SequentialWorkflowEngine` can execute registered nodes through an `ExecutionPlan`, and a future engine can adapt the same nodes into a DAG, but the node itself should not know which engine executes it.
 
 The most important part of the contract is the capability declaration:
 

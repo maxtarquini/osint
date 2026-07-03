@@ -12,6 +12,8 @@ flowchart TD
     Parsers["Parsers"]
     Context["Workflow Context"]
     Nodes["Workflow Nodes"]
+    Compiler["Workflow Compiler"]
+    Engine["Workflow Engine"]
     Agents["Workflow Agents"]
     Pipeline["LLM Pipeline"]
     Repositories["Repositories"]
@@ -24,6 +26,9 @@ flowchart TD
     Services --> Parsers
     Services --> Context
     Parsers --> Context
+    Context --> Compiler
+    Compiler --> Engine
+    Engine --> Nodes
     Context --> Nodes
     Nodes --> Context
     Nodes --> Agents
@@ -64,6 +69,7 @@ it.osint.raven
   utils/           stateless helpers
   workflow/        engine-independent workflow context, node and agent contracts, artifacts and events
   workflow/compiler/ runtime-independent workflow compiler and execution plan
+  workflow/engine/ runtime-independent workflow engine contract and sequential reference implementation
   workflow/definition/ YAML-backed workflow goal definitions
   workflow/registry/ central node and agent registry for future workflow compilation
 ```
@@ -141,12 +147,22 @@ it.osint.raven.workflow.compiler
 
 `WorkflowCompiler` transforms `WorkflowDefinition` plus `WorkflowRegistry` into an engine-independent `ExecutionPlan`.
 
+The workflow engine lives in:
+
+```text
+it.osint.raven.workflow.engine
+```
+
+`WorkflowEngine` executes an `ExecutionPlan` against a `WorkflowContext` and returns a `WorkflowResult`. `SequentialWorkflowEngine` is the reference implementation and executes nodes in the compiler-provided order without depending on LangGraph4j.
+
 `WorkflowContext` is intentionally not a LangGraph4j state class. `WorkflowNode` is intentionally not a LangGraph4j node action. `WorkflowAgent` is intentionally not a Spring service, LangChain4j assistant or model client. LangGraph4j can execute or checkpoint a graph that passes `WorkflowContext` between `WorkflowNode` implementations, and nodes can delegate to agents, but the context, node and agent contracts remain Raven domain objects.
 
 The dependency direction should stay this way:
 
 ```text
-WorkflowDefinition + WorkflowRegistry -> WorkflowCompiler -> ExecutionPlan -> LangGraphWorkflowEngine -> LangGraph4j DAG
+WorkflowDefinition + WorkflowRegistry -> WorkflowCompiler -> ExecutionPlan -> WorkflowEngine -> WorkflowResult
+WorkflowEngine -> SequentialWorkflowEngine
+WorkflowEngine -> LangGraphWorkflowEngine (planned)
 WorkflowNode -> WorkflowAgent -> WorkflowContext
 ```
 
@@ -208,7 +224,7 @@ Set<WorkflowCapability> requires();
 Set<WorkflowCapability> produces();
 ```
 
-This gives the future DAG engine enough information to reason about ordering without relying only on Java classes. A node that requires capability `structured-document` cannot run before a parser has produced that capability. A relationship extraction node can require `entity-extraction`, while an organization enrichment node can require `organization-resolution`, even if both payloads contain entity-like data.
+This gives `WorkflowCompiler` enough information to reason about ordering without relying only on Java classes. A node that requires capability `structured-document` cannot run before a parser has produced that capability. A relationship extraction node can require `entity-extraction`, while an organization enrichment node can require `organization-resolution`, even if both payloads contain entity-like data.
 
 The default `canExecute` method checks the declared requirements with `WorkflowContext.contains(WorkflowCapability)`. It does not use reflection over fields or annotations.
 
@@ -312,6 +328,29 @@ The compiler:
 It raises dedicated exceptions for missing capabilities, ambiguous producers and circular dependencies.
 
 See [Workflow compiler](workflow-compiler.md) for the full algorithm and output model.
+
+## Workflow Engine
+
+`WorkflowEngine` is the runtime contract for executing compiled plans:
+
+```java
+WorkflowResult result = engine.execute(plan, context);
+```
+
+The current `SequentialWorkflowEngine`:
+
+- follows `ExecutionPlan.executionOrder()`;
+- executes nodes one at a time;
+- calls node lifecycle hooks;
+- updates `WorkflowContext`;
+- applies retry only to idempotent nodes;
+- measures timeout after synchronous node execution;
+- records observability through context events, warnings, errors and metrics;
+- returns a `WorkflowResult` with status, timestamps, duration and node outcome lists.
+
+It does not build DAGs, resolve dependencies or choose nodes. It also does not use LangGraph4j, Spring, MongoDB, Neo4j or Qdrant.
+
+See [Workflow engine](workflow-engine.md) for the full contract and execution behavior.
 
 ## Structured Document Boundary
 

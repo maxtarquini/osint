@@ -13,6 +13,7 @@ The documentation is organized by audience and use case:
 - [Workflow registry](workflow-registry.md): central node and agent registry used for id lookup, capability lookup and future workflow compilation.
 - [Workflow definitions](workflow-definitions.md): workflow-level goal definitions loaded from YAML without describing a DAG.
 - [Workflow compiler](workflow-compiler.md): runtime-independent compiler from workflow definitions to execution plans.
+- [Workflow engine](workflow-engine.md): engine contract, sequential reference implementation and execution result model.
 - [Data flows](data-flows.md): end-to-end flows from Source to Knowledge Graph.
 - [Model reference](model-reference.md): current DTOs, repository collections and JSON contract.
 

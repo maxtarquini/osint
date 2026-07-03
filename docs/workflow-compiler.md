@@ -20,7 +20,7 @@ It does not use LangGraph4j.
 
 It does not execute a graph.
 
-It compiles a workflow request into a runtime-independent plan that a future engine can consume.
+It compiles a workflow request into a runtime-independent plan that a workflow engine can consume.
 
 ## Package
 
@@ -48,12 +48,11 @@ The intended flow is:
 WorkflowDefinition (YAML)
   -> WorkflowCompiler
   -> ExecutionPlan
-  -> LangGraphWorkflowEngine
-  -> LangGraph4j DAG
-  -> Execution
+  -> WorkflowEngine
+  -> WorkflowResult
 ```
 
-Only the future engine layer should know LangGraph4j. The compiler stays in Raven's domain layer.
+Only a future LangGraph-specific engine adapter should know LangGraph4j. The compiler stays in Raven's domain layer.
 
 ## Algorithm
 
@@ -154,8 +153,9 @@ Implemented:
 
 Not implemented yet:
 
-- engine execution;
 - LangGraph4j adapter;
 - checkpointing;
 - parallel stage grouping;
 - optional goal degradation policy.
+
+See [Workflow engine](workflow-engine.md) for the execution contract and the current sequential reference implementation.

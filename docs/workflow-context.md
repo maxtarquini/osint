@@ -128,7 +128,7 @@ context
         .put("html-parser", structuredDocument, article);
 ```
 
-The `document` field is the convenient current-document pointer. The capability artifact entry is the dependency declaration surface used by nodes and the future DAG engine.
+The `document` field is the convenient current-document pointer. The capability artifact entry is the dependency declaration surface used by nodes, `WorkflowCompiler` and future DAG adapters.
 
 ## Core Fields
 
@@ -393,7 +393,7 @@ The default runtime policy is conservative:
 - priority: `100`;
 - configuration: empty map.
 
-Those defaults are declarations for a future engine. The interface itself does not start threads, enforce timeouts, perform retries or choose branches.
+Those defaults are declarations for workflow engines. The interface itself does not start threads, enforce timeouts, perform retries or choose branches. `SequentialWorkflowEngine` currently reads timeout, retry and idempotency metadata while executing a compiled plan.
 
 Node categories are represented by `WorkflowNodeCategory`:
 

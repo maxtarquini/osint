@@ -73,13 +73,13 @@ sequenceDiagram
     Store->>Context: read document + outputs + metrics
 ```
 
-The context and node flow is not a workflow engine. It is the engine-independent domain model that a future engine can pass between nodes.
+The context and node flow is separate from the workflow engine. It is the engine-independent domain model that `SequentialWorkflowEngine` already passes between nodes, and that future runtime adapters can also use.
 
 Shared outputs are stored as `WorkflowArtifact` values. This means Raven can later answer questions such as "which node produced this taxonomy?" or "when were these entities extracted?" without adding provenance fields to every DTO.
 
-The node contract adds one more piece: nodes declare named capabilities through `requires()` and `produces()`. That makes dependency order explicit and gives the future DAG engine a way to build or validate execution without hard-coding every pipeline or guessing from Java classes.
+The node contract adds one more piece: nodes declare named capabilities through `requires()` and `produces()`. That makes dependency order explicit and gives `WorkflowCompiler` enough information to build an `ExecutionPlan` without hard-coding every pipeline or guessing from Java classes.
 
-Status: `WorkflowContext`, `WorkflowArtifact`, `WorkflowNode`, `WorkflowNodeCategory` and tests implemented; concrete production nodes and workflow engine planned.
+Status: `WorkflowContext`, `WorkflowArtifact`, `WorkflowNode`, `WorkflowNodeCategory`, `WorkflowCompiler`, `WorkflowEngine`, `SequentialWorkflowEngine` and tests implemented; concrete production nodes and LangGraph4j adapter planned.
 
 ## Article Enrichment Flow
 

@@ -343,7 +343,7 @@ default void onError(WorkflowContext context, Exception ex)
 
 These are hooks for a workflow engine or adapter to call around `execute`. They are intentionally no-ops by default.
 
-A future engine can use this sequence:
+`SequentialWorkflowEngine` uses this sequence:
 
 ```text
 beforeExecute(context)
@@ -375,7 +375,7 @@ default int maxRetries() {
 }
 ```
 
-These values are declarations. The domain contract does not enforce timeouts or retries by itself. A future engine will read them and decide how to apply them.
+These values are declarations. The domain contract does not enforce timeouts or retries by itself. `SequentialWorkflowEngine` reads them during execution, while future runtime adapters can apply equivalent policies in their own execution model.
 
 The default timeout is five minutes. The default retry count is zero. This is intentionally conservative: retrying AI calls, persistence operations or connector fetches can create duplicate side effects unless a node is explicitly designed to be idempotent.
 
@@ -445,7 +445,7 @@ Priority is useful when more than one node can satisfy the same capability. For 
 
 The engine can use priority to choose between equivalent nodes, or to order candidates before applying additional policy.
 
-The default priority is `100`. Lower values may be treated as more preferred by future engines, but the current domain contract only exposes the value; it does not define engine selection semantics.
+The default priority is `100`. Lower values may be treated as more preferred by compilers or future engines, but the current node contract only exposes the value; it does not define selection semantics by itself.
 
 ## Example Implementation
 
@@ -537,7 +537,7 @@ try {
 }
 ```
 
-The future engine can wrap this with timeout and retry behavior using `timeout()`, `maxRetries()` and `idempotent()`.
+`SequentialWorkflowEngine` wraps node execution with measured timeout and retry behavior using `timeout()`, `maxRetries()` and `idempotent()`.
 
 ## Relationship with WorkflowContext
 
