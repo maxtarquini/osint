@@ -101,6 +101,8 @@ These rules apply to `it.osint.raven.workflow` and its sub-packages.
 
 `WorkflowDefinition` is the engine-independent workflow description. It declares workflow metadata and goals, not nodes and not a DAG.
 
+`WorkflowCompiler` transforms a `WorkflowDefinition` and `WorkflowRegistry` into an engine-independent `ExecutionPlan`. It must not use LangGraph4j.
+
 Implementation rules:
 
 - Keep workflow model classes independent from Spring annotations and dependency injection.
@@ -111,6 +113,7 @@ Implementation rules:
 - Keep `WorkflowAgent` implementations that live in the workflow package free from framework imports. Runtime adapters, application services or concrete external-source clients may wrap them elsewhere.
 - Keep `WorkflowRegistry` independent from Spring and LangGraph4j. Service discovery in the workflow domain must use Java `ServiceLoader`; Spring bridges belong outside the domain.
 - Keep `WorkflowDefinition` independent from graph runtimes. Definitions describe goals only; DAG construction belongs to a later compiler.
+- Keep `WorkflowCompiler` runtime-independent. It may build Raven `DependencyGraph` and `ExecutionPlan` objects, but LangGraph4j adaptation belongs to a later engine layer.
 - Use Java 21 standard library types for timestamps, identifiers, maps and lists.
 - Use `ConcurrentHashMap` for concurrently updated maps.
 - Use thread-safe lists where concurrent node execution can append observations.

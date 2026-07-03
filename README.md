@@ -22,6 +22,7 @@ Current implementation focuses on:
 - [Workflow agents](docs/workflow-agents.md)
 - [Workflow registry](docs/workflow-registry.md)
 - [Workflow definitions](docs/workflow-definitions.md)
+- [Workflow compiler](docs/workflow-compiler.md)
 - [Data flows](docs/data-flows.md)
 - [Model reference](docs/model-reference.md)
 

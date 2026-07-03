@@ -28,6 +28,8 @@ The future compiler will combine:
 
 Only then will Raven build a concrete DAG or runtime plan.
 
+The implemented compiler is documented in [Workflow compiler](workflow-compiler.md).
+
 ## Package
 
 ```text

@@ -63,6 +63,7 @@ it.osint.raven
   tui/             Lanterna windows and widgets
   utils/           stateless helpers
   workflow/        engine-independent workflow context, node and agent contracts, artifacts and events
+  workflow/compiler/ runtime-independent workflow compiler and execution plan
   workflow/definition/ YAML-backed workflow goal definitions
   workflow/registry/ central node and agent registry for future workflow compilation
 ```
@@ -132,12 +133,21 @@ it.osint.raven.workflow.definition
 
 `WorkflowDefinition` describes workflow goals and safe metadata. It does not describe a DAG and does not list nodes.
 
+The workflow compiler lives in:
+
+```text
+it.osint.raven.workflow.compiler
+```
+
+`WorkflowCompiler` transforms `WorkflowDefinition` plus `WorkflowRegistry` into an engine-independent `ExecutionPlan`.
+
 `WorkflowContext` is intentionally not a LangGraph4j state class. `WorkflowNode` is intentionally not a LangGraph4j node action. `WorkflowAgent` is intentionally not a Spring service, LangChain4j assistant or model client. LangGraph4j can execute or checkpoint a graph that passes `WorkflowContext` between `WorkflowNode` implementations, and nodes can delegate to agents, but the context, node and agent contracts remain Raven domain objects.
 
 The dependency direction should stay this way:
 
 ```text
-LangGraph4j adapter -> WorkflowDefinition + WorkflowRegistry -> WorkflowNode -> WorkflowAgent -> WorkflowContext
+WorkflowDefinition + WorkflowRegistry -> WorkflowCompiler -> ExecutionPlan -> LangGraphWorkflowEngine -> LangGraph4j DAG
+WorkflowNode -> WorkflowAgent -> WorkflowContext
 ```
 
 The workflow package must not import LangGraph4j, LangChain4j, OpenAI clients, Spring, MongoDB, Neo4j, Qdrant or framework-specific serializers.
@@ -279,6 +289,29 @@ goals:
 It intentionally lists goals, not nodes. A future compiler will resolve these goals against `WorkflowRegistry` and registered `WorkflowCapability` declarations.
 
 See [Workflow definitions](workflow-definitions.md) for the full contract and YAML format.
+
+## Workflow Compiler
+
+`WorkflowCompiler` resolves a workflow definition into an execution plan:
+
+```java
+ExecutionPlan plan = new WorkflowCompiler()
+        .compile(definition, registry);
+```
+
+The compiler:
+
+- reads workflow goals;
+- finds nodes that produce those capabilities;
+- resolves required capabilities recursively;
+- adds dependency nodes automatically;
+- builds a dependency graph;
+- performs Kahn topological sort;
+- returns `ExecutionPlan`.
+
+It raises dedicated exceptions for missing capabilities, ambiguous producers and circular dependencies.
+
+See [Workflow compiler](workflow-compiler.md) for the full algorithm and output model.
 
 ## Structured Document Boundary
 

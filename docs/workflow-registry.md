@@ -18,6 +18,8 @@ It does not know:
 
 The registry is the foundation for the future workflow compiler. A compiler will be able to inspect registered nodes, compare required and produced capabilities, and derive a valid execution plan without hard-coded node references.
 
+`WorkflowCompiler` now consumes the registry to build an engine-independent `ExecutionPlan`.
+
 ## Package
 
 ```text
