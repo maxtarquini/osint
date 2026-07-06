@@ -4,7 +4,8 @@ This folder contains the first documentation set for Raven.
 
 The documentation is organized by audience and use case:
 
-- [User guide](user-guide.md): how to launch Raven, configure dependencies and understand the current TUI.
+- [User guide](user-guide.md): how to launch Raven, configure dependencies and use the current REST endpoints.
+- [REST API and OpenAPI](api-reference.md): current API surface, Swagger UI, schema generation and OpenAPI quality gates.
 - [Technical architecture](technical-architecture.md): package structure, persistence, DTO boundaries and current technology choices.
 - [Workflow guide](workflows.md): operational workflows for source management, acquisition and parsing.
 - [Workflow context](workflow-context.md): shared execution state used by workflow nodes and workflow agents.
@@ -22,3 +23,5 @@ The documentation is organized by audience and use case:
 Raven is still in an early platform stage. Some documents describe implemented behavior, while others define the target architecture that the code is being shaped toward.
 
 Each section marks future capabilities explicitly as `Planned`.
+
+The active application surface is REST-only. There is no Java TUI or server-rendered frontend in the current application. A future textual interface should live as a separate Python client that talks to the REST API.

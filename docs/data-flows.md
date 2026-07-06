@@ -120,14 +120,20 @@ flowchart TD
     SourceDto["SourceDto"]
     RawDocumentDto["RawDocumentDto"]
     ArticleDto["ArticleDto"]
+    SourceRepo["SourceRepository"]
+    RawRepo["RawDocumentRepository"]
+    ArticleRepo["ArticleRepository"]
     Mongo["MongoDB database: raven"]
     Sources["sources"]
     RawDocuments["raw_documents"]
     Articles["articles"]
 
-    SourceDto --> Sources
-    RawDocumentDto --> RawDocuments
-    ArticleDto --> Articles
+    SourceDto --> SourceRepo
+    RawDocumentDto --> RawRepo
+    ArticleDto --> ArticleRepo
+    SourceRepo --> Sources
+    RawRepo --> RawDocuments
+    ArticleRepo --> Articles
     Sources --> Mongo
     RawDocuments --> Mongo
     Articles --> Mongo
@@ -138,6 +144,8 @@ Implemented collections:
 - `sources`
 - `raw_documents`
 - `articles`
+
+Persistence is implemented through Spring Data MongoDB repository interfaces.
 
 ## Traceability Flow
 

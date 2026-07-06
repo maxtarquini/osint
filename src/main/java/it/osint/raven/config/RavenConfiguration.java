@@ -11,16 +11,12 @@ public class RavenConfiguration {
     private EndpointConfiguration neo4j;
     private QdrantConfiguration qdrant;
     private EndpointConfiguration mongodb;
-    private ThemeConfiguration theme;
-    private UiConfiguration ui;
 
     public static RavenConfiguration defaults() {
         return new RavenConfiguration(
                 new EndpointConfiguration("localhost", 7687),
                 new QdrantConfiguration("localhost", 6333, 6334),
-                new EndpointConfiguration("localhost", 27017),
-                ThemeConfiguration.defaults(),
-                UiConfiguration.defaults()
+                new EndpointConfiguration("localhost", 27017)
         );
     }
 }

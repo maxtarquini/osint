@@ -9,12 +9,16 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ConnectionStatusService {
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofMillis(250);
 
     public List<ConnectionProbe> check(RavenConfiguration configuration) {
+        Objects.requireNonNull(configuration, "configuration must not be null");
         return check(configuration, DEFAULT_TIMEOUT);
     }
 

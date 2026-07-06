@@ -2,11 +2,11 @@
 
 ## Overview
 
-Raven is a standalone Java 21 Maven application. It is currently a terminal-first OSINT workspace with a layered architecture intended to keep UI, orchestration, persistence and domain models separate.
+Raven is a Java 21 Spring Boot REST application with a layered architecture intended to keep HTTP endpoints, orchestration, persistence and domain models separate.
 
 ```mermaid
 flowchart TD
-    TUI["Lanterna TUI"]
+    REST["REST Controllers"]
     Services["Services"]
     Connectors["Source Connectors"]
     Parsers["Parsers"]
@@ -21,7 +21,7 @@ flowchart TD
     Neo4j["Neo4j Knowledge Graph"]
     Qdrant["Qdrant Vector Store"]
 
-    TUI --> Services
+    REST --> Services
     Services --> Connectors
     Services --> Parsers
     Services --> Context
@@ -44,10 +44,12 @@ flowchart TD
 
 - Java 21
 - Maven
-- Lanterna for terminal UI
-- MongoDB Java Driver sync
+- Spring Boot 4 REST stack
+- Spring WebMVC with embedded Tomcat
+- Spring Data MongoDB
 - Neo4j Java Driver
 - Qdrant Java Client
+- Springdoc OpenAPI and Swagger UI
 - Jackson for JSON/YAML serialization
 - Lombok for DTO boilerplate
 - JUnit 5 for tests
@@ -61,11 +63,14 @@ Current package responsibilities:
 it.osint.raven
   config/          typed configuration and YAML persistence
   connectors/      source connector contracts
+  controlleradvices/ REST exception mapping
+  controllers/     REST API endpoints
   dto/article/     structured intelligence article DTOs
   dto/source/      source and raw document DTOs
-  repositories/    MongoDB persistence adapters
+  dto/system/      system REST request/response DTOs
+  exceptions/      application-specific exceptions
+  repositories/    Spring Data MongoDB repository interfaces
   services/        connection status and use-case services
-  tui/             Lanterna windows and widgets
   utils/           stateless helpers
   workflow/        engine-independent workflow context, node and agent contracts, artifacts and events
   workflow/compiler/ runtime-independent workflow compiler and execution plan
@@ -366,6 +371,39 @@ RawDocumentDto -> StructuredDocument -> WorkflowContext -> WorkflowNode
 
 Specialized nodes may still check for a concrete subtype when they truly need article-specific behavior.
 
+## REST and OpenAPI
+
+Raven is a backend-only REST application. There is no Java TUI, MVC frontend or server-rendered UI in the active runtime.
+
+Current REST controllers live under:
+
+```text
+it.osint.raven.controllers
+```
+
+REST exception mapping lives under:
+
+```text
+it.osint.raven.controlleradvices
+```
+
+The OpenAPI contract is served through Springdoc:
+
+```text
+/v3/api-docs
+/swagger-ui.html
+```
+
+`OpenApiConfiguration` registers public DTO schemas, including DTOs that are not yet returned by active endpoints but are part of the planned API contract. This keeps future generated clients, including a Python textual client, aligned with the Java DTO model.
+
+OpenAPI stability is protected by tests in:
+
+```text
+src/test/java/it/osint/raven/openapi
+```
+
+Those tests verify controller annotations, DTO schema annotations, OpenAPI paths, OpenAPI component schemas and Swagger UI reachability.
+
 ## Persistence
 
 MongoDB database:
@@ -382,11 +420,13 @@ Collections:
 
 Repository classes:
 
-- `MongoSourceRepository`
-- `MongoRawDocumentRepository`
-- `MongoArticleRepository`
+- `SourceRepository`
+- `RawDocumentRepository`
+- `ArticleRepository`
 
-The repositories store DTOs as BSON documents through Jackson conversion. Public DTO JSON names use `snake_case` through explicit `@JsonProperty` annotations.
+These repositories are Spring Data MongoDB repository interfaces. Raven no longer maintains hand-written Mongo collection adapters for the standard source, raw document and article persistence paths.
+
+The repositories store DTOs as MongoDB documents using Spring Data MongoDB annotations such as `@Document`, `@Id`, `@Indexed` and `@CompoundIndex`. Public DTO JSON names use `snake_case` through explicit `@JsonProperty` annotations.
 
 ## Serialization
 
@@ -407,14 +447,14 @@ Raven configuration is stored at:
 config/raven.yaml
 ```
 
-The configuration contains endpoint settings for Neo4j, Qdrant and MongoDB, plus terminal theme and density settings.
+The configuration contains endpoint settings for Neo4j, Qdrant and MongoDB.
 
 ## Security Notes
 
-Source authentication DTOs can represent usernames, passwords, API keys and bearer tokens. They must not be logged, displayed in normal TUI screens or included in diagnostic output.
+Source authentication DTOs can represent usernames, passwords, API keys and bearer tokens. They must not be logged, returned by diagnostic endpoints or included in diagnostic output.
 
 Planned hardening:
 
-- secret masking in source management screens;
+- secret masking in source management API responses and future clients;
 - environment-variable backed secret resolution;
 - encrypted local secret storage or external secret provider integration.

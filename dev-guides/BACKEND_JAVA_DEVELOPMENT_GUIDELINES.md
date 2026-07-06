@@ -297,7 +297,7 @@ Current standard in code:
 - Parameterized logging (`log.info("... {}", value)`) instead of string concatenation.
 
 ### 7.2 Recommended log levels
-- `debug` → technical flow details (window parameters, counts, intermediate states).
+- `debug` → technical flow details (request parameters, counts, intermediate states).
 - `info` → main business flow milestones (request received, queued, saved).
 - `warn` → recoverable anomalies or invalid/empty input conditions.
 - `error` → failures/exceptions that impact flow.
@@ -340,6 +340,7 @@ Use:
 - Ensure response codes in docs match actual controller behavior.
 - Update Swagger docs whenever endpoint contract changes.
 - Swagger requirements apply to REST controllers under `/api/**`; exclude MVC template/fragment controllers.
+- Raven quality gate: update `OpenApiContractTest` and `OpenApiDocumentationQualityGateTest` when adding public endpoints or DTO schemas.
 
 ---
 
