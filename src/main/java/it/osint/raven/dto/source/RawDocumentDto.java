@@ -82,7 +82,10 @@ public class RawDocumentDto {
     private String contentHash;
 
     @JsonProperty("metadata")
-    @Schema(description = "Source-specific acquisition metadata.")
+    @Schema(
+            description = "Source-specific acquisition metadata.",
+            additionalProperties = Schema.AdditionalPropertiesValue.TRUE
+    )
     @Builder.Default
     private Map<String, Object> metadata = new HashMap<>();
 }

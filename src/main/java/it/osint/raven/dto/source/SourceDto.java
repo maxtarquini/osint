@@ -88,7 +88,10 @@ public class SourceDto {
     private AuthenticationDto authentication;
 
     @JsonProperty("configuration")
-    @Schema(description = "Source-specific non-secret connector configuration.")
+    @Schema(
+            description = "Source-specific non-secret connector configuration.",
+            additionalProperties = Schema.AdditionalPropertiesValue.TRUE
+    )
     @Builder.Default
     private Map<String, Object> configuration = new HashMap<>();
 
