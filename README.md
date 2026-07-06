@@ -9,12 +9,14 @@ Current implementation focuses on:
 - connection probes for external dependencies;
 - DTO model for OSINT sources, raw documents and intelligence articles;
 - engine-independent workflow context, node contract, reusable agent contract and sequential workflow engine;
-- MongoDB repositories for sources, raw documents and articles.
+- Spring Data MongoDB repositories for sources, raw documents and articles;
+- OpenAPI 3 documentation through Springdoc, including DTO schemas and Swagger UI.
 
 ## Documentation
 
 - [Documentation index](docs/README.md)
 - [User guide](docs/user-guide.md)
+- [REST API and OpenAPI](docs/api-reference.md)
 - [Technical architecture](docs/technical-architecture.md)
 - [Workflow guide](docs/workflows.md)
 - [Workflow context](docs/workflow-context.md)
@@ -33,6 +35,13 @@ Current implementation focuses on:
 mvn test
 ```
 
+The test suite includes OpenAPI quality gates that verify:
+
+- every REST controller under `/api/**` is tagged;
+- every mapped endpoint has `@Operation` and `@ApiResponses`;
+- every documented DTO and public enum has Swagger schema metadata;
+- `/v3/api-docs` and Swagger UI are served by the running Spring Boot application.
+
 ## Run
 
 ```bash
@@ -47,3 +56,12 @@ Initial REST endpoints:
 - `GET /api/system/configuration`
 - `PUT /api/system/configuration`
 - `GET /api/system/connections`
+
+OpenAPI endpoints:
+
+- `GET /v3/api-docs`
+- `GET /swagger-ui.html`
+
+## Interface Strategy
+
+The Java application is backend-only. The previous Java terminal UI has been removed. Any future textual interface should be implemented as a separate Python client, preferably with Textual, consuming the Spring Boot REST API and generated from `/v3/api-docs` where practical.

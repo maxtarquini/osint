@@ -6,6 +6,8 @@ Represents an operational OSINT source.
 
 Collection: `sources`
 
+Persistence repository: `SourceRepository`
+
 Key fields:
 
 - `id`
@@ -78,6 +80,8 @@ Represents acquired raw content, independent of source type.
 
 Collection: `raw_documents`
 
+Persistence repository: `RawDocumentRepository`
+
 Fields:
 
 - `id`
@@ -105,6 +109,8 @@ Examples of raw content:
 Represents a structured intelligence article derived from a raw document.
 
 Collection: `articles`
+
+Persistence repository: `ArticleRepository`
 
 Implements:
 
@@ -448,3 +454,16 @@ Examples:
 - `source_entity_id`
 - `target_entity_ids`
 - `extraction_time`
+
+## OpenAPI Contract
+
+DTOs and public enums that are part of the API contract are documented with Swagger `@Schema`.
+
+The generated OpenAPI components include:
+
+- system DTOs used by `/api/system`;
+- source and raw document DTOs used by persistence and planned source APIs;
+- article DTOs used by structured OSINT processing and planned workflow APIs;
+- public enums such as `SourceType`, `SourceStatus`, `AuthenticationType`, `ConnectionState`, `ClaimType`, `Confidence`, `EntityType` and `EvidenceType`.
+
+OpenAPI quality gates verify that these schemas remain present in `/v3/api-docs`.

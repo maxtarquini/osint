@@ -41,10 +41,10 @@ flowchart LR
 Implemented in the current REST API.
 
 1. Start Raven.
-2. Open `Config`.
-3. Set Neo4j, Qdrant and MongoDB endpoints.
-4. Save the configuration.
-5. Use `Refresh` to verify connection status.
+2. Open Swagger UI at `/swagger-ui.html` or use an HTTP client.
+3. Read the current configuration with `GET /api/system/configuration`.
+4. Set Neo4j, Qdrant and MongoDB endpoints with `PUT /api/system/configuration`.
+5. Verify connection status with `GET /api/system/connections`.
 
 Expected result:
 
@@ -55,8 +55,8 @@ Expected result:
 
 Planned REST workflow, persistence layer implemented.
 
-1. Open Sources.
-2. Create a new source.
+1. Call the future source creation endpoint.
+2. Create a new source payload.
 3. Choose `SourceType`, for example `WEBSITE`, `RSS`, `TELEGRAM`, `API` or `FILESYSTEM`.
 4. Set endpoint, polling interval, priority and tags.
 5. Add configuration map values specific to the connector.
@@ -65,6 +65,7 @@ Planned REST workflow, persistence layer implemented.
 Expected persistence:
 
 - saved to MongoDB collection `sources`;
+- persisted through `SourceRepository`;
 - source status defaults to `ENABLED`;
 - scheduler can later select enabled sources ordered by priority.
 

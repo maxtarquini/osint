@@ -46,9 +46,10 @@ flowchart TD
 - Maven
 - Spring Boot 4 REST stack
 - Spring WebMVC with embedded Tomcat
-- MongoDB Java Driver sync
+- Spring Data MongoDB
 - Neo4j Java Driver
 - Qdrant Java Client
+- Springdoc OpenAPI and Swagger UI
 - Jackson for JSON/YAML serialization
 - Lombok for DTO boilerplate
 - JUnit 5 for tests
@@ -68,7 +69,7 @@ it.osint.raven
   dto/source/      source and raw document DTOs
   dto/system/      system REST request/response DTOs
   exceptions/      application-specific exceptions
-  repositories/    MongoDB persistence adapters
+  repositories/    Spring Data MongoDB repository interfaces
   services/        connection status and use-case services
   utils/           stateless helpers
   workflow/        engine-independent workflow context, node and agent contracts, artifacts and events
@@ -370,6 +371,39 @@ RawDocumentDto -> StructuredDocument -> WorkflowContext -> WorkflowNode
 
 Specialized nodes may still check for a concrete subtype when they truly need article-specific behavior.
 
+## REST and OpenAPI
+
+Raven is a backend-only REST application. There is no Java TUI, MVC frontend or server-rendered UI in the active runtime.
+
+Current REST controllers live under:
+
+```text
+it.osint.raven.controllers
+```
+
+REST exception mapping lives under:
+
+```text
+it.osint.raven.controlleradvices
+```
+
+The OpenAPI contract is served through Springdoc:
+
+```text
+/v3/api-docs
+/swagger-ui.html
+```
+
+`OpenApiConfiguration` registers public DTO schemas, including DTOs that are not yet returned by active endpoints but are part of the planned API contract. This keeps future generated clients, including a Python textual client, aligned with the Java DTO model.
+
+OpenAPI stability is protected by tests in:
+
+```text
+src/test/java/it/osint/raven/openapi
+```
+
+Those tests verify controller annotations, DTO schema annotations, OpenAPI paths, OpenAPI component schemas and Swagger UI reachability.
+
 ## Persistence
 
 MongoDB database:
@@ -392,7 +426,7 @@ Repository classes:
 
 These repositories are Spring Data MongoDB repository interfaces. Raven no longer maintains hand-written Mongo collection adapters for the standard source, raw document and article persistence paths.
 
-The repositories store DTOs as BSON documents through Jackson conversion. Public DTO JSON names use `snake_case` through explicit `@JsonProperty` annotations.
+The repositories store DTOs as MongoDB documents using Spring Data MongoDB annotations such as `@Document`, `@Id`, `@Indexed` and `@CompoundIndex`. Public DTO JSON names use `snake_case` through explicit `@JsonProperty` annotations.
 
 ## Serialization
 
@@ -421,6 +455,6 @@ Source authentication DTOs can represent usernames, passwords, API keys and bear
 
 Planned hardening:
 
-- secret masking in source management screens;
+- secret masking in source management API responses and future clients;
 - environment-variable backed secret resolution;
 - encrypted local secret storage or external secret provider integration.

@@ -1,8 +1,23 @@
-# TUI Development Guidelines
+# Legacy Java TUI Development Guidelines
 
-These guidelines define the standards for Java terminal user interfaces, with `raven` as the reference standalone Maven application.
+These guidelines are retained as historical guidance for Java/Lanterna terminal user interfaces.
 
-Use this document before adding or changing terminal screens, Lanterna widgets, keyboard flows, graph/AI actions, Neo4j integrations, or command execution features.
+The active Raven application is now a Spring Boot REST backend and no longer contains Java TUI code. Do not add new Lanterna screens or Java terminal windows to the Spring Boot application.
+
+If Raven needs a textual interface, implement it as a separate Python client that consumes the REST API and OpenAPI contract exposed by:
+
+```text
+/v3/api-docs
+/swagger-ui.html
+```
+
+Recommended stack for a future textual interface:
+
+- Python Textual for the terminal UI;
+- generated or typed Python API client from OpenAPI;
+- HTTP calls to the Spring Boot REST backend.
+
+The rest of this document applies only if a separate Java/Lanterna TUI project is intentionally created again.
 
 ## 1) Scope And Principles
 

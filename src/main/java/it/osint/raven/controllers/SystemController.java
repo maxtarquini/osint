@@ -13,8 +13,7 @@ import it.osint.raven.dto.system.RavenConfigurationDto;
 import it.osint.raven.services.ApplicationInfoService;
 import it.osint.raven.services.ConnectionProbe;
 import it.osint.raven.services.SystemConfigurationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,9 +26,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/system")
 @Tag(name = "System", description = "System information, dependency checks and Raven configuration endpoints.")
+@Slf4j
 public class SystemController {
-
-    private static final Logger log = LoggerFactory.getLogger(SystemController.class);
 
     private final ApplicationInfoService applicationInfoService;
     private final SystemConfigurationService systemConfigurationService;

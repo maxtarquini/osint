@@ -37,10 +37,12 @@ import it.osint.raven.dto.system.EndpointConfigurationDto;
 import it.osint.raven.dto.system.QdrantConfigurationDto;
 import it.osint.raven.dto.system.RavenConfigurationDto;
 import it.osint.raven.services.ConnectionProbe;
+import it.osint.raven.services.ConnectionState;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -62,6 +64,7 @@ public class OpenApiConfiguration {
     private static final List<Class<?>> DOCUMENTED_DTOS = List.of(
             AppInfo.class,
             ConnectionProbe.class,
+            ConnectionState.class,
             ApiErrorResponse.class,
             EndpointConfigurationDto.class,
             QdrantConfigurationDto.class,
@@ -100,7 +103,27 @@ public class OpenApiConfiguration {
     OpenApiCustomizer ravenDtoSchemaCustomizer() {
         return openApi -> DOCUMENTED_DTOS.forEach(dtoClass -> {
             Map<String, Schema> schemas = ModelConverters.getInstance().readAll(dtoClass);
-            schemas.forEach(openApi::schema);
+            if (schemas.isEmpty() && dtoClass.isEnum()) {
+                openApi.schema(dtoClass.getSimpleName(), enumSchema(dtoClass));
+            } else {
+                schemas.forEach(openApi::schema);
+            }
         });
+    }
+
+    private static Schema<String> enumSchema(Class<?> enumClass) {
+        Schema<String> schema = new Schema<>();
+        schema.setType("string");
+        schema.setName(enumClass.getSimpleName());
+        schema.setEnum(Arrays.stream(enumClass.getEnumConstants())
+                .map(Object::toString)
+                .toList());
+
+        io.swagger.v3.oas.annotations.media.Schema annotation =
+                enumClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+        if (annotation != null && !annotation.description().isBlank()) {
+            schema.setDescription(annotation.description());
+        }
+        return schema;
     }
 }
