@@ -2,11 +2,11 @@
 
 ## Overview
 
-Raven is a standalone Java 21 Maven application. It is currently a terminal-first OSINT workspace with a layered architecture intended to keep UI, orchestration, persistence and domain models separate.
+Raven is a Java 21 Spring Boot REST application with a layered architecture intended to keep HTTP endpoints, orchestration, persistence and domain models separate.
 
 ```mermaid
 flowchart TD
-    TUI["Lanterna TUI"]
+    REST["REST Controllers"]
     Services["Services"]
     Connectors["Source Connectors"]
     Parsers["Parsers"]
@@ -21,7 +21,7 @@ flowchart TD
     Neo4j["Neo4j Knowledge Graph"]
     Qdrant["Qdrant Vector Store"]
 
-    TUI --> Services
+    REST --> Services
     Services --> Connectors
     Services --> Parsers
     Services --> Context
@@ -44,7 +44,8 @@ flowchart TD
 
 - Java 21
 - Maven
-- Lanterna for terminal UI
+- Spring Boot 4 REST stack
+- Spring WebMVC with embedded Tomcat
 - MongoDB Java Driver sync
 - Neo4j Java Driver
 - Qdrant Java Client
@@ -61,11 +62,14 @@ Current package responsibilities:
 it.osint.raven
   config/          typed configuration and YAML persistence
   connectors/      source connector contracts
+  controlleradvices/ REST exception mapping
+  controllers/     REST API endpoints
   dto/article/     structured intelligence article DTOs
   dto/source/      source and raw document DTOs
+  dto/system/      system REST request/response DTOs
+  exceptions/      application-specific exceptions
   repositories/    MongoDB persistence adapters
   services/        connection status and use-case services
-  tui/             Lanterna windows and widgets
   utils/           stateless helpers
   workflow/        engine-independent workflow context, node and agent contracts, artifacts and events
   workflow/compiler/ runtime-independent workflow compiler and execution plan
@@ -382,9 +386,11 @@ Collections:
 
 Repository classes:
 
-- `MongoSourceRepository`
-- `MongoRawDocumentRepository`
-- `MongoArticleRepository`
+- `SourceRepository`
+- `RawDocumentRepository`
+- `ArticleRepository`
+
+These repositories are Spring Data MongoDB repository interfaces. Raven no longer maintains hand-written Mongo collection adapters for the standard source, raw document and article persistence paths.
 
 The repositories store DTOs as BSON documents through Jackson conversion. Public DTO JSON names use `snake_case` through explicit `@JsonProperty` annotations.
 
@@ -407,11 +413,11 @@ Raven configuration is stored at:
 config/raven.yaml
 ```
 
-The configuration contains endpoint settings for Neo4j, Qdrant and MongoDB, plus terminal theme and density settings.
+The configuration contains endpoint settings for Neo4j, Qdrant and MongoDB.
 
 ## Security Notes
 
-Source authentication DTOs can represent usernames, passwords, API keys and bearer tokens. They must not be logged, displayed in normal TUI screens or included in diagnostic output.
+Source authentication DTOs can represent usernames, passwords, API keys and bearer tokens. They must not be logged, returned by diagnostic endpoints or included in diagnostic output.
 
 Planned hardening:
 

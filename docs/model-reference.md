@@ -70,7 +70,7 @@ Supported authentication types:
 
 Security rule:
 
-Authentication values must be treated as sensitive and excluded from logs and normal UI diagnostics.
+Authentication values must be treated as sensitive and excluded from logs and diagnostic API responses.
 
 ## RawDocumentDto
 

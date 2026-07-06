@@ -1,5 +1,8 @@
 package it.osint.raven.dto.source;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Supported OSINT source categories.")
 public enum SourceType {
     WEBSITE,
     RSS,

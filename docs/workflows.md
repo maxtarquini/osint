@@ -38,7 +38,7 @@ flowchart LR
 
 ## Workflow 1: Configure Infrastructure
 
-Implemented in the current TUI.
+Implemented in the current REST API.
 
 1. Start Raven.
 2. Open `Config`.
@@ -53,7 +53,7 @@ Expected result:
 
 ## Workflow 2: Register a Source
 
-Planned TUI workflow, persistence layer implemented.
+Planned REST workflow, persistence layer implemented.
 
 1. Open Sources.
 2. Create a new source.

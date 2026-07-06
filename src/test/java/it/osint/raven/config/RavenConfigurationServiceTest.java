@@ -28,11 +28,6 @@ class RavenConfigurationServiceTest {
         assertEquals(6334, configuration.getQdrant().getGrpcPort());
         assertEquals("localhost", configuration.getMongodb().getHost());
         assertEquals(27017, configuration.getMongodb().getPort());
-        assertEquals("GREEN_BRIGHT", configuration.getTheme().getOnlineColor());
-        assertEquals("RED_BRIGHT", configuration.getTheme().getOfflineColor());
-        assertEquals("YELLOW_BRIGHT", configuration.getTheme().getInvalidColor());
-        assertTrue(configuration.getUi().isMouseEnabled());
-        assertEquals("COMFORTABLE", configuration.getUi().getDensity());
     }
 
     @Test
@@ -42,9 +37,7 @@ class RavenConfigurationServiceTest {
         RavenConfiguration configuration = new RavenConfiguration(
                 new EndpointConfiguration("neo4j.local", 17687),
                 new QdrantConfiguration("qdrant.local", 16333, 16334),
-                new EndpointConfiguration("mongo.local", 37017),
-                new ThemeConfiguration("CYAN_BRIGHT", "MAGENTA_BRIGHT", "WHITE_BRIGHT"),
-                new UiConfiguration(false, "LARGE")
+                new EndpointConfiguration("mongo.local", 37017)
         );
 
         service.save(configuration);
@@ -58,11 +51,6 @@ class RavenConfigurationServiceTest {
         assertEquals(16334, loaded.getQdrant().getGrpcPort());
         assertEquals("mongo.local", loaded.getMongodb().getHost());
         assertEquals(37017, loaded.getMongodb().getPort());
-        assertEquals("CYAN_BRIGHT", loaded.getTheme().getOnlineColor());
-        assertEquals("MAGENTA_BRIGHT", loaded.getTheme().getOfflineColor());
-        assertEquals("WHITE_BRIGHT", loaded.getTheme().getInvalidColor());
-        assertEquals(false, loaded.getUi().isMouseEnabled());
-        assertEquals("LARGE", loaded.getUi().getDensity());
     }
 
     @Test
@@ -79,13 +67,6 @@ class RavenConfigurationServiceTest {
                 mongodb:
                   host: mongo.local
                   port: 0
-                theme:
-                  onlineColor: cyan_bright
-                  offlineColor: unknown
-                  invalidColor: " "
-                ui:
-                  mouseEnabled: true
-                  density: huge
                 """);
         RavenConfigurationService service = new RavenConfigurationService(configPath);
 
@@ -98,10 +79,5 @@ class RavenConfigurationServiceTest {
         assertEquals(6335, loaded.getQdrant().getGrpcPort());
         assertEquals("mongo.local", loaded.getMongodb().getHost());
         assertEquals(27017, loaded.getMongodb().getPort());
-        assertEquals("CYAN_BRIGHT", loaded.getTheme().getOnlineColor());
-        assertEquals("RED_BRIGHT", loaded.getTheme().getOfflineColor());
-        assertEquals("YELLOW_BRIGHT", loaded.getTheme().getInvalidColor());
-        assertTrue(loaded.getUi().isMouseEnabled());
-        assertEquals("COMFORTABLE", loaded.getUi().getDensity());
     }
 }

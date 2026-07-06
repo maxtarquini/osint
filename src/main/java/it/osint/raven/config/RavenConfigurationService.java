@@ -6,36 +6,50 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class RavenConfigurationService {
 
     public static final Path DEFAULT_CONFIG_PATH = Path.of("config", "raven.yaml");
 
     private final ObjectMapper objectMapper;
     private final Path configPath;
+    private final RavenConfiguration defaults;
 
     public RavenConfigurationService() {
         this(DEFAULT_CONFIG_PATH);
     }
 
-    public RavenConfigurationService(Path configPath) {
-        this(new ObjectMapper(new YAMLFactory()).findAndRegisterModules(), configPath);
+    @Autowired
+    public RavenConfigurationService(RavenProperties properties) {
+        this(Path.of(properties.getConfigPath()), properties.toConfiguration());
     }
 
-    RavenConfigurationService(ObjectMapper objectMapper, Path configPath) {
+    public RavenConfigurationService(Path configPath) {
+        this(configPath, RavenConfiguration.defaults());
+    }
+
+    RavenConfigurationService(Path configPath, RavenConfiguration defaults) {
+        this(new ObjectMapper(new YAMLFactory()).findAndRegisterModules(), configPath, defaults);
+    }
+
+    RavenConfigurationService(ObjectMapper objectMapper, Path configPath, RavenConfiguration defaults) {
         this.objectMapper = objectMapper;
         this.configPath = configPath;
+        this.defaults = mergeWithHardcodedDefaults(defaults);
     }
 
     public RavenConfiguration loadOrDefault() {
         if (!Files.exists(configPath)) {
-            return RavenConfiguration.defaults();
+            return defaults;
         }
         try {
             RavenConfiguration configuration = objectMapper.readValue(configPath.toFile(), RavenConfiguration.class);
             return mergeWithDefaults(configuration);
         } catch (IOException ex) {
-            return RavenConfiguration.defaults();
+            return defaults;
         }
     }
 
@@ -50,8 +64,7 @@ public class RavenConfigurationService {
         return configPath;
     }
 
-    private static RavenConfiguration mergeWithDefaults(RavenConfiguration configuration) {
-        RavenConfiguration defaults = RavenConfiguration.defaults();
+    private RavenConfiguration mergeWithDefaults(RavenConfiguration configuration) {
         if (configuration == null) {
             return defaults;
         }
@@ -59,9 +72,18 @@ public class RavenConfigurationService {
         EndpointConfiguration neo4j = normalizeEndpoint(configuration.getNeo4j(), defaults.getNeo4j());
         QdrantConfiguration qdrant = normalizeQdrant(configuration.getQdrant(), defaults.getQdrant());
         EndpointConfiguration mongodb = normalizeEndpoint(configuration.getMongodb(), defaults.getMongodb());
-        ThemeConfiguration theme = normalizeTheme(configuration.getTheme(), defaults.getTheme());
-        UiConfiguration ui = normalizeUi(configuration.getUi(), defaults.getUi());
-        return new RavenConfiguration(neo4j, qdrant, mongodb, theme, ui);
+        return new RavenConfiguration(neo4j, qdrant, mongodb);
+    }
+
+    private static RavenConfiguration mergeWithHardcodedDefaults(RavenConfiguration configuration) {
+        RavenConfiguration fallback = RavenConfiguration.defaults();
+        if (configuration == null) {
+            return fallback;
+        }
+        EndpointConfiguration neo4j = normalizeEndpoint(configuration.getNeo4j(), fallback.getNeo4j());
+        QdrantConfiguration qdrant = normalizeQdrant(configuration.getQdrant(), fallback.getQdrant());
+        EndpointConfiguration mongodb = normalizeEndpoint(configuration.getMongodb(), fallback.getMongodb());
+        return new RavenConfiguration(neo4j, qdrant, mongodb);
     }
 
     private static EndpointConfiguration normalizeEndpoint(EndpointConfiguration value, EndpointConfiguration defaults) {
@@ -81,46 +103,6 @@ public class RavenConfigurationService {
         int httpPort = validPort(value.getHttpPort()) ? value.getHttpPort() : defaults.getHttpPort();
         int grpcPort = validPort(value.getGrpcPort()) ? value.getGrpcPort() : defaults.getGrpcPort();
         return new QdrantConfiguration(host, httpPort, grpcPort);
-    }
-
-    private static ThemeConfiguration normalizeTheme(ThemeConfiguration value, ThemeConfiguration defaults) {
-        if (value == null) {
-            return defaults;
-        }
-        return new ThemeConfiguration(
-                normalizeColor(value.getOnlineColor(), defaults.getOnlineColor()),
-                normalizeColor(value.getOfflineColor(), defaults.getOfflineColor()),
-                normalizeColor(value.getInvalidColor(), defaults.getInvalidColor())
-        );
-    }
-
-    private static String normalizeColor(String value, String defaultValue) {
-        if (!hasText(value)) {
-            return defaultValue;
-        }
-        String normalized = value.trim().toUpperCase();
-        return switch (normalized) {
-            case "GREEN_BRIGHT", "RED_BRIGHT", "YELLOW_BRIGHT", "CYAN_BRIGHT", "MAGENTA_BRIGHT", "BLUE_BRIGHT", "WHITE_BRIGHT" -> normalized;
-            default -> defaultValue;
-        };
-    }
-
-    private static UiConfiguration normalizeUi(UiConfiguration value, UiConfiguration defaults) {
-        if (value == null) {
-            return defaults;
-        }
-        return new UiConfiguration(value.isMouseEnabled(), normalizeDensity(value.getDensity(), defaults.getDensity()));
-    }
-
-    private static String normalizeDensity(String value, String defaultValue) {
-        if (!hasText(value)) {
-            return defaultValue;
-        }
-        String normalized = value.trim().toUpperCase();
-        return switch (normalized) {
-            case "COMPACT", "COMFORTABLE", "LARGE" -> normalized;
-            default -> defaultValue;
-        };
     }
 
     private static boolean hasText(String value) {

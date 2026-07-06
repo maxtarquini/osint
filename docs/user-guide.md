@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Raven is a terminal application for OSINT workflows. It is designed to help operators configure external infrastructure, monitor connectivity and eventually run acquisition and analysis pipelines from a keyboard-first interface.
+Raven is a Spring Boot REST application for OSINT workflows. It is designed to help operators configure external infrastructure, monitor connectivity and eventually run acquisition and analysis pipelines through HTTP endpoints.
 
 At the current stage, Raven provides:
 
-- a full-screen terminal workspace;
+- REST endpoints under `/api/system`;
 - connection status probes for Neo4j, Qdrant and MongoDB;
-- configuration editing for dependency endpoints and UI preferences;
+- configuration read/update for dependency endpoints;
 - foundational data models and Mongo repositories for OSINT sources, raw documents and articles;
 - an internal workflow context model and node contract for future parser, workflow node and AI agent execution.
 
@@ -17,34 +17,41 @@ At the current stage, Raven provides:
 Build and run the application:
 
 ```bash
+mvn spring-boot:run
+```
+
+The main class is `it.osint.raven.RavenApplication`.
+The default local URL is:
+
+```text
+http://localhost:8080
+```
+
+You can also package and run the executable jar:
+
+```bash
 mvn -q -DskipTests package
 java -jar target/raven-0.1.0-SNAPSHOT.jar
 ```
 
-The main class is `it.osint.raven.RavenApplication`.
+## REST Endpoints
 
-## Main Screen
+The initial API surface is:
 
-The main screen contains:
-
-- top bar with `Refresh`, `Config` and `Exit`;
-- connection indicators for Neo4j, Qdrant HTTP, Qdrant gRPC and MongoDB;
-- sidebar placeholders for Dashboard, Graph, Agents, Config and Logs;
-- dashboard summary of enabled modules;
-- footer with current configuration path and UI density.
+- `GET /api/system/info`
+- `GET /api/system/configuration`
+- `PUT /api/system/configuration`
+- `GET /api/system/connections`
 
 ## Configure Dependencies
 
-Open `Config` from the top bar or sidebar.
+Use `GET /api/system/configuration` to read the effective configuration and `PUT /api/system/configuration` to save changes.
 
-The configuration dialog allows editing:
+The configuration payload allows editing:
 
 - Neo4j host and port;
 - Qdrant host, HTTP port and gRPC port;
 - MongoDB host and port;
-- status colors;
-- mouse input;
-- UI density.
 
 When saved, Raven writes normalized configuration to:
 
@@ -75,10 +82,10 @@ Raven shows each dependency as:
 - `offline`: TCP connection failed;
 - `invalid`: host or port is not valid.
 
-Use `Refresh` to rerun probes after starting or changing dependencies.
+Call `GET /api/system/connections` to rerun probes after starting or changing dependencies.
 
 ## Current Limitations
 
-The TUI does not yet expose source CRUD, acquisition execution, parsing, LLM analysis, workflow execution or knowledge graph exploration. Those workflows are documented as the target direction and are backed by the initial DTO, repository, workflow context and workflow node contract layers.
+The REST API does not yet expose source CRUD, acquisition execution, parsing, LLM analysis, workflow execution or knowledge graph exploration. Those workflows are documented as the target direction and are backed by the initial DTO, repository, workflow context and workflow node contract layers.
 
-`WorkflowContext` and `WorkflowNode` are currently internal developer-facing models. They are not yet visible in the TUI and do not yet imply that Raven has a runnable workflow engine. The contract for nodes exists so future connectors, parsers, AI extractors and persistence steps can be built consistently before the orchestration layer is introduced.
+`WorkflowContext` and `WorkflowNode` are currently internal developer-facing models. They are not yet exposed as public REST resources and do not yet imply that Raven has a complete production workflow API. The contract for nodes exists so future connectors, parsers, AI extractors and persistence steps can be built consistently before the orchestration layer is introduced.

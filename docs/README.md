@@ -4,7 +4,7 @@ This folder contains the first documentation set for Raven.
 
 The documentation is organized by audience and use case:
 
-- [User guide](user-guide.md): how to launch Raven, configure dependencies and understand the current TUI.
+- [User guide](user-guide.md): how to launch Raven, configure dependencies and use the current REST endpoints.
 - [Technical architecture](technical-architecture.md): package structure, persistence, DTO boundaries and current technology choices.
 - [Workflow guide](workflows.md): operational workflows for source management, acquisition and parsing.
 - [Workflow context](workflow-context.md): shared execution state used by workflow nodes and workflow agents.
