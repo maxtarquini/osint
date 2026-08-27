@@ -1,0 +1,411 @@
+{
+  "schema_version": "1.0",
+  "code": "KINETIC_SCENARIO",
+  "name": "Kinetic scenario",
+  "description": "Named actors, formations, assets, operations, events, facilities and operational areas involved in the preparation, conduct or aftermath of physical force.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": ["CORE"],
+  "entity_types": [
+    {
+      "code": "KIN_ARMED_FORCE",
+      "base_type": "ORGANIZATION",
+      "label": "Armed force",
+      "description": "A specifically named national or institutional armed force.",
+      "examples": [
+        "Ukrainian Armed Forces",
+        "Israel Defense Forces"
+      ]
+    },
+    {
+      "code": "KIN_MILITARY_COMMAND",
+      "base_type": "ORGANIZATION",
+      "label": "Military command",
+      "description": "A specifically named military command, headquarters or operational command.",
+      "examples": [
+        "United States Central Command",
+        "Allied Joint Force Command Naples"
+      ]
+    },
+    {
+      "code": "KIN_MILITARY_UNIT",
+      "base_type": "ORGANIZATION",
+      "label": "Military unit",
+      "description": "A formally organized and specifically named military formation or unit.",
+      "examples": [
+        "82nd Airborne Division",
+        "36th Marine Brigade"
+      ],
+      "exclude_when": [
+        "Do not use for an unnamed force concentration or a generic category such as infantry, artillery or special forces."
+      ]
+    },
+    {
+      "code": "KIN_ARMED_GROUP",
+      "base_type": "GROUP",
+      "label": "Armed group",
+      "description": "A specifically named non-state, irregular or informal armed collective."
+    },
+    {
+      "code": "KIN_PRIVATE_MILITARY_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Private military company",
+      "description": "A specifically named private military or security organization participating in kinetic activities."
+    },
+    {
+      "code": "KIN_JOINT_FORCE",
+      "base_type": "ORGANIZATION",
+      "label": "Joint force",
+      "description": "A specifically named multinational, inter-service or combined operational force.",
+      "examples": [
+        "Combined Joint Task Force – Operation Inherent Resolve"
+      ]
+    },
+    {
+      "code": "KIN_PEACEKEEPING_FORCE",
+      "base_type": "ORGANIZATION",
+      "label": "Peacekeeping force",
+      "description": "A specifically named peacekeeping, monitoring or stabilization force.",
+      "examples": [
+        "UNIFIL",
+        "KFOR"
+      ]
+    },
+    {
+      "code": "KIN_MILITARY_BASE",
+      "base_type": "FACILITY",
+      "label": "Military base",
+      "description": "A specifically named military installation, garrison or operating base."
+    },
+    {
+      "code": "KIN_AIR_BASE",
+      "base_type": "FACILITY",
+      "label": "Air base",
+      "description": "A specifically named military aviation base or airfield.",
+      "examples": [
+        "Ramstein Air Base",
+        "Khmeimim Air Base"
+      ]
+    },
+    {
+      "code": "KIN_NAVAL_BASE",
+      "base_type": "FACILITY",
+      "label": "Naval base",
+      "description": "A specifically named naval installation or military port."
+    },
+    {
+      "code": "KIN_FORWARD_OPERATING_BASE",
+      "base_type": "FACILITY",
+      "label": "Forward operating base",
+      "description": "A specifically named forward operating base or advanced military position."
+    },
+    {
+      "code": "KIN_COMMAND_POST",
+      "base_type": "FACILITY",
+      "label": "Command post",
+      "description": "A specifically named or uniquely identified command-and-control facility."
+    },
+    {
+      "code": "KIN_MILITARY_DEPOT",
+      "base_type": "FACILITY",
+      "label": "Military depot",
+      "description": "A specifically named ammunition, fuel, equipment or logistics depot."
+    },
+    {
+      "code": "KIN_DEFENSIVE_POSITION",
+      "base_type": "FACILITY",
+      "label": "Defensive position",
+      "description": "A specifically named fortification, defensive complex or fixed military position.",
+      "examples": [
+        "Surovikin Line",
+        "Bar Lev Line"
+      ]
+    },
+    {
+      "code": "KIN_CHECKPOINT",
+      "base_type": "FACILITY",
+      "label": "Checkpoint",
+      "description": "A specifically named or formally designated military, security or armed-group checkpoint."
+    },
+    {
+      "code": "KIN_TRAINING_AREA",
+      "base_type": "FACILITY",
+      "label": "Military training area",
+      "description": "A specifically named military range, proving ground or training complex."
+    },
+    {
+      "code": "KIN_WEAPON_SYSTEM",
+      "base_type": "PRODUCT",
+      "label": "Weapon system",
+      "description": "A specifically named weapon system, weapons family or integrated combat platform.",
+      "examples": [
+        "HIMARS",
+        "S-400",
+        "Patriot"
+      ]
+    },
+    {
+      "code": "KIN_MISSILE_SYSTEM",
+      "base_type": "PRODUCT",
+      "label": "Missile system",
+      "description": "A specifically named missile, missile family or missile-launch system.",
+      "examples": [
+        "Iskander-M",
+        "ATACMS",
+        "Storm Shadow"
+      ]
+    },
+    {
+      "code": "KIN_ARTILLERY_SYSTEM",
+      "base_type": "PRODUCT",
+      "label": "Artillery system",
+      "description": "A specifically named artillery, rocket-artillery or mortar system."
+    },
+    {
+      "code": "KIN_AIR_DEFENSE_SYSTEM",
+      "base_type": "PRODUCT",
+      "label": "Air-defense system",
+      "description": "A specifically named air- or missile-defense system."
+    },
+    {
+      "code": "KIN_COMBAT_VEHICLE_MODEL",
+      "base_type": "PRODUCT",
+      "label": "Combat vehicle model",
+      "description": "A specifically named tank, armored vehicle or military ground-platform model.",
+      "examples": [
+        "Leopard 2A6",
+        "M1A2 Abrams",
+        "T-90M"
+      ]
+    },
+    {
+      "code": "KIN_COMBAT_AIRCRAFT_MODEL",
+      "base_type": "PRODUCT",
+      "label": "Combat aircraft model",
+      "description": "A specifically named combat aircraft, helicopter or military unmanned-aircraft model."
+    },
+    {
+      "code": "KIN_NAVAL_PLATFORM_CLASS",
+      "base_type": "PRODUCT",
+      "label": "Naval platform class",
+      "description": "A specifically named class or design of military vessel or submarine."
+    },
+    {
+      "code": "KIN_MILITARY_VEHICLE",
+      "base_type": "VEHICLE",
+      "label": "Military vehicle",
+      "description": "A specifically identified individual military land vehicle."
+    },
+    {
+      "code": "KIN_MILITARY_AIRCRAFT",
+      "base_type": "AIRCRAFT",
+      "label": "Military aircraft",
+      "description": "A specifically identified individual military aircraft or unmanned aerial vehicle."
+    },
+    {
+      "code": "KIN_NAVAL_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Naval vessel",
+      "description": "A specifically identified individual naval or military-operated vessel."
+    },
+    {
+      "code": "KIN_MILITARY_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Military operation",
+      "description": "A specifically named coordinated military operation.",
+      "examples": [
+        "Operation Desert Storm",
+        "Operation Inherent Resolve"
+      ]
+    },
+    {
+      "code": "KIN_COMBAT_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Combat operation",
+      "description": "A specifically named operation involving direct combat activities."
+    },
+    {
+      "code": "KIN_AIR_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Air operation",
+      "description": "A specifically named coordinated air or air-defense operation."
+    },
+    {
+      "code": "KIN_NAVAL_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Naval operation",
+      "description": "A specifically named coordinated naval or maritime-security operation."
+    },
+    {
+      "code": "KIN_GROUND_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Ground operation",
+      "description": "A specifically named coordinated land operation."
+    },
+    {
+      "code": "KIN_SPECIAL_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Special operation",
+      "description": "A specifically named operation conducted by special-operations or similarly tasked forces."
+    },
+    {
+      "code": "KIN_COUNTERTERRORISM_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Counter-terrorism operation",
+      "description": "A specifically named counter-terrorism operation involving physical intervention."
+    },
+    {
+      "code": "KIN_EVACUATION_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Evacuation operation",
+      "description": "A specifically named military or protected evacuation operation."
+    },
+    {
+      "code": "KIN_SEARCH_AND_RESCUE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Search-and-rescue operation",
+      "description": "A specifically named combat, maritime or military search-and-rescue operation."
+    },
+    {
+      "code": "KIN_BATTLE",
+      "base_type": "EVENT",
+      "label": "Battle",
+      "description": "A specifically named battle or sustained armed engagement.",
+      "examples": [
+        "Battle of Mosul",
+        "Battle of Bakhmut"
+      ]
+    },
+    {
+      "code": "KIN_SIEGE",
+      "base_type": "EVENT",
+      "label": "Siege",
+      "description": "A specifically named siege or encirclement event."
+    },
+    {
+      "code": "KIN_AIRSTRIKE_EVENT",
+      "base_type": "EVENT",
+      "label": "Airstrike event",
+      "description": "A specifically named or uniquely identified airstrike event.",
+      "exclude_when": [
+        "Do not annotate generic references to airstrikes without a distinct identity, target, date or conventional name."
+      ]
+    },
+    {
+      "code": "KIN_MISSILE_STRIKE_EVENT",
+      "base_type": "EVENT",
+      "label": "Missile-strike event",
+      "description": "A specifically named or uniquely identified missile-strike event."
+    },
+    {
+      "code": "KIN_NAVAL_ENGAGEMENT",
+      "base_type": "EVENT",
+      "label": "Naval engagement",
+      "description": "A specifically named naval battle or armed maritime encounter."
+    },
+    {
+      "code": "KIN_BORDER_CLASH",
+      "base_type": "EVENT",
+      "label": "Border clash",
+      "description": "A specifically named or conventionally identified armed border incident."
+    },
+    {
+      "code": "KIN_MILITARY_EXERCISE",
+      "base_type": "EVENT",
+      "label": "Military exercise",
+      "description": "A specifically named military exercise or war game.",
+      "examples": [
+        "RIMPAC",
+        "Zapad 2021"
+      ]
+    },
+    {
+      "code": "KIN_COUP_EVENT",
+      "base_type": "EVENT",
+      "label": "Coup event",
+      "description": "A specifically named or conventionally identified coup or attempted coup."
+    },
+    {
+      "code": "KIN_INFRASTRUCTURE_ATTACK",
+      "base_type": "EVENT",
+      "label": "Infrastructure attack",
+      "description": "A specifically named or uniquely identified physical attack against critical infrastructure."
+    },
+    {
+      "code": "KIN_TERRITORIAL_OCCUPATION",
+      "base_type": "EVENT",
+      "label": "Territorial occupation",
+      "description": "A specifically named or formally recognized occupation of a territory or settlement."
+    },
+    {
+      "code": "KIN_OPERATIONAL_AREA",
+      "base_type": "LOCATION",
+      "label": "Operational area",
+      "description": "A specifically named military theater, area of operations or operational zone.",
+      "examples": [
+        "United States Central Command area of responsibility"
+      ]
+    },
+    {
+      "code": "KIN_FRONT",
+      "base_type": "LOCATION",
+      "label": "Front",
+      "description": "A specifically named military front or combat sector.",
+      "examples": [
+        "Eastern Front",
+        "Zaporizhzhia front"
+      ]
+    },
+    {
+      "code": "KIN_CONFLICT_ZONE",
+      "base_type": "LOCATION",
+      "label": "Conflict zone",
+      "description": "A specifically named geographic area identified as an active or recent conflict zone."
+    },
+    {
+      "code": "KIN_DEMILITARIZED_ZONE",
+      "base_type": "LOCATION",
+      "label": "Demilitarized zone",
+      "description": "A specifically named demilitarized, buffer or disengagement zone.",
+      "examples": [
+        "Korean Demilitarized Zone"
+      ]
+    },
+    {
+      "code": "KIN_HUMANITARIAN_CORRIDOR",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Humanitarian corridor",
+      "description": "A specifically named or formally designated humanitarian or evacuation corridor."
+    },
+    {
+      "code": "KIN_MILITARY_SUPPLY_ROUTE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Military supply route",
+      "description": "A specifically named military logistics, reinforcement or supply route."
+    },
+    {
+      "code": "KIN_CEASEFIRE_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Ceasefire agreement",
+      "description": "A specifically named ceasefire, cessation-of-hostilities or armistice agreement."
+    },
+    {
+      "code": "KIN_DISENGAGEMENT_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Disengagement agreement",
+      "description": "A specifically named agreement governing force separation, withdrawal or disengagement."
+    },
+    {
+      "code": "KIN_RULES_OF_ENGAGEMENT",
+      "base_type": "DOCUMENT",
+      "label": "Rules of engagement",
+      "description": "A specifically named or identified rules-of-engagement document."
+    },
+    {
+      "code": "KIN_BATTLE_DAMAGE_ASSESSMENT",
+      "base_type": "DOCUMENT",
+      "label": "Battle-damage assessment",
+      "description": "A specifically named or identified assessment of physical damage resulting from military action."
+    }
+  ]
+}

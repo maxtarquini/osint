@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "code": "MEDIA_INFORMATION",
+  "name": "Media and information",
+  "description": "News media, publications, online content and coordinated information activity.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": [
+    "CORE"
+  ],
+  "entity_types": [
+    {
+      "code": "MEDIA_OUTLET",
+      "base_type": "ORGANIZATION",
+      "label": "Media outlet",
+      "description": "A named news, broadcasting or publishing organization."
+    },
+    {
+      "code": "MEDIA_NEWS_ARTICLE",
+      "base_type": "MEDIA_CONTENT",
+      "label": "News article",
+      "description": "A specifically named or identified journalistic article."
+    },
+    {
+      "code": "MEDIA_SOCIAL_POST",
+      "base_type": "MEDIA_CONTENT",
+      "label": "Social-media post",
+      "description": "A specifically identified post published through a social platform."
+    },
+    {
+      "code": "MEDIA_BROADCAST",
+      "base_type": "MEDIA_CONTENT",
+      "label": "Broadcast",
+      "description": "A named or specifically identified television, radio or streaming broadcast."
+    },
+    {
+      "code": "MEDIA_PUBLICATION",
+      "base_type": "DOCUMENT",
+      "label": "Publication",
+      "description": "A named report, magazine, newspaper edition or other published documentary work."
+    },
+    {
+      "code": "MEDIA_INFORMATION_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Information campaign",
+      "description": "A named coordinated campaign that distributes messages or media content."
+    }
+  ]
+}

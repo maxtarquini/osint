@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0",
+  "code": "ELECTION_INTELLIGENCE",
+  "name": "Election intelligence",
+  "description": "Elections, referendums, electoral administration, political campaigns and election integrity OSINT investigations.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": ["CORE"],
+  "entity_types": [
+    {
+      "code": "ELE_ELECTION",
+      "base_type": "EVENT",
+      "label": "Election",
+      "description": "A specifically named election.",
+      "examples": [
+        "2024 European Parliament election",
+        "2020 United States presidential election"
+      ]
+    },
+    {
+      "code": "ELE_REFERENDUM",
+      "base_type": "EVENT",
+      "label": "Referendum",
+      "description": "A specifically named referendum.",
+      "examples": [
+        "2016 United Kingdom European Union membership referendum"
+      ]
+    },
+    {
+      "code": "ELE_ELECTORAL_AUTHORITY",
+      "base_type": "ORGANIZATION",
+      "label": "Electoral authority",
+      "description": "A specifically named electoral commission, election authority or election management body.",
+      "examples": [
+        "Federal Election Commission",
+        "Independent Electoral Commission"
+      ]
+    },
+    {
+      "code": "ELE_ELECTION_OBSERVER_MISSION",
+      "base_type": "ORGANIZATION",
+      "label": "Election observer mission",
+      "description": "A specifically named domestic or international election observation mission.",
+      "examples": [
+        "OSCE/ODIHR Election Observation Mission",
+        "EU Election Observation Mission"
+      ]
+    },
+    {
+      "code": "ELE_POLLING_STATION",
+      "base_type": "FACILITY",
+      "label": "Polling station",
+      "description": "A specifically named polling station or voting center."
+    },
+    {
+      "code": "ELE_ELECTORAL_DISTRICT",
+      "base_type": "LOCATION",
+      "label": "Electoral district",
+      "description": "A specifically named constituency, electoral district or voting precinct."
+    },
+    {
+      "code": "ELE_CANDIDACY",
+      "base_type": "EVENT",
+      "label": "Candidacy",
+      "description": "A specifically named or formally announced candidacy."
+    },
+    {
+      "code": "ELE_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Election campaign",
+      "description": "A specifically named electoral campaign."
+    },
+    {
+      "code": "ELE_CAMPAIGN_COMMITTEE",
+      "base_type": "ORGANIZATION",
+      "label": "Campaign committee",
+      "description": "A specifically named campaign committee or electoral committee."
+    },
+    {
+      "code": "ELE_POLITICAL_ACTION_COMMITTEE",
+      "base_type": "ORGANIZATION",
+      "label": "Political action committee",
+      "description": "A specifically named political action committee or equivalent political financing organization."
+    },
+    {
+      "code": "ELE_DEBATE",
+      "base_type": "EVENT",
+      "label": "Election debate",
+      "description": "A specifically named election debate."
+    },
+    {
+      "code": "ELE_MANIFESTO",
+      "base_type": "DOCUMENT",
+      "label": "Election manifesto",
+      "description": "A specifically named election manifesto, party platform or campaign program."
+    },
+    {
+      "code": "ELE_VOTER_REGISTRY",
+      "base_type": "DATASET",
+      "label": "Voter registry",
+      "description": "A specifically named electoral register or voter registry."
+    },
+    {
+      "code": "ELE_BALLOT",
+      "base_type": "DOCUMENT",
+      "label": "Ballot",
+      "description": "A specifically named ballot paper or official ballot template."
+    },
+    {
+      "code": "ELE_ELECTION_RESULT",
+      "base_type": "DOCUMENT",
+      "label": "Election result",
+      "description": "A specifically named official election result, certification or declaration."
+    },
+    {
+      "code": "ELE_RECOUNT",
+      "base_type": "EVENT",
+      "label": "Recount",
+      "description": "A specifically named electoral recount."
+    },
+    {
+      "code": "ELE_ELECTION_PETITION",
+      "base_type": "LEGAL_CASE",
+      "label": "Election petition",
+      "description": "A specifically named election challenge, electoral appeal or election-related legal proceeding."
+    },
+    {
+      "code": "ELE_ELECTION_MONITORING_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Election monitoring program",
+      "description": "A specifically named election monitoring, transparency or integrity program."
+    },
+    {
+      "code": "ELE_DISINFORMATION_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Election disinformation campaign",
+      "description": "A specifically named disinformation or influence campaign targeting an electoral process."
+    },
+    {
+      "code": "ELE_VOTER_OUTREACH_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Voter outreach program",
+      "description": "A specifically named voter education, registration or outreach program."
+    }
+  ]
+}

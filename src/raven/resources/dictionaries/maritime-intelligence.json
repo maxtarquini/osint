@@ -1,0 +1,612 @@
+{
+  "schema_version": "1.0",
+  "code": "MARITIME_INTELLIGENCE",
+  "name": "Maritime intelligence",
+  "description": "Vessels, ports, shipping organizations, maritime infrastructure, routes and maritime-security OSINT investigations.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": ["CORE"],
+  "entity_types": [
+    {
+      "code": "MAR_SHIPPING_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Shipping company",
+      "description": "A specifically named company providing maritime transport or shipping services.",
+      "examples": [
+        "Maersk",
+        "Mediterranean Shipping Company",
+        "CMA CGM"
+      ]
+    },
+    {
+      "code": "MAR_VESSEL_OWNER",
+      "base_type": "ORGANIZATION",
+      "label": "Vessel owner",
+      "description": "A specifically named organization explicitly identified as the registered, legal or beneficial owner of one or more vessels."
+    },
+    {
+      "code": "MAR_VESSEL_OPERATOR",
+      "base_type": "ORGANIZATION",
+      "label": "Vessel operator",
+      "description": "A specifically named organization responsible for the commercial or technical operation of a vessel."
+    },
+    {
+      "code": "MAR_SHIP_MANAGER",
+      "base_type": "ORGANIZATION",
+      "label": "Ship manager",
+      "description": "A specifically named organization providing technical, crew or safety management for vessels."
+    },
+    {
+      "code": "MAR_CHARTERER",
+      "base_type": "ORGANIZATION",
+      "label": "Charterer",
+      "description": "A specifically named organization that charters or hires a vessel under a maritime charter agreement."
+    },
+    {
+      "code": "MAR_PORT_AUTHORITY",
+      "base_type": "ORGANIZATION",
+      "label": "Port authority",
+      "description": "A specifically named authority responsible for administering, regulating or operating a port.",
+      "examples": [
+        "Port of Rotterdam Authority",
+        "Port Authority of New York and New Jersey"
+      ]
+    },
+    {
+      "code": "MAR_TERMINAL_OPERATOR",
+      "base_type": "ORGANIZATION",
+      "label": "Terminal operator",
+      "description": "A specifically named organization operating a maritime cargo, container, oil, gas or passenger terminal."
+    },
+    {
+      "code": "MAR_CLASSIFICATION_SOCIETY",
+      "base_type": "ORGANIZATION",
+      "label": "Classification society",
+      "description": "A specifically named organization that establishes and verifies technical standards for ships and offshore structures.",
+      "examples": [
+        "Lloyd's Register",
+        "DNV",
+        "Bureau Veritas"
+      ]
+    },
+    {
+      "code": "MAR_FLAG_ADMINISTRATION",
+      "base_type": "ORGANIZATION",
+      "label": "Flag administration",
+      "description": "A specifically named governmental or delegated authority responsible for a vessel registry."
+    },
+    {
+      "code": "MAR_MARITIME_AUTHORITY",
+      "base_type": "ORGANIZATION",
+      "label": "Maritime authority",
+      "description": "A specifically named governmental authority responsible for maritime regulation, navigation or safety.",
+      "examples": [
+        "Maritime and Coastguard Agency",
+        "Panama Maritime Authority"
+      ]
+    },
+    {
+      "code": "MAR_COAST_GUARD",
+      "base_type": "ORGANIZATION",
+      "label": "Coast guard",
+      "description": "A specifically named coast guard or equivalent maritime law-enforcement service.",
+      "examples": [
+        "United States Coast Guard",
+        "Italian Coast Guard"
+      ]
+    },
+    {
+      "code": "MAR_NAVAL_FORCE",
+      "base_type": "ORGANIZATION",
+      "label": "Naval force",
+      "description": "A specifically named national, multinational or operational naval force.",
+      "examples": [
+        "Royal Navy",
+        "European Union Naval Force"
+      ]
+    },
+    {
+      "code": "MAR_MARITIME_SECURITY_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Maritime security company",
+      "description": "A specifically named company providing armed protection, risk management or other maritime-security services."
+    },
+    {
+      "code": "MAR_PILOTAGE_ORGANIZATION",
+      "base_type": "ORGANIZATION",
+      "label": "Pilotage organization",
+      "description": "A specifically named organization providing maritime pilotage services."
+    },
+    {
+      "code": "MAR_P_AND_I_CLUB",
+      "base_type": "ORGANIZATION",
+      "label": "Protection and indemnity club",
+      "description": "A specifically named mutual marine liability insurance association.",
+      "examples": [
+        "UK P&I Club",
+        "Gard"
+      ]
+    },
+    {
+      "code": "MAR_MARINE_INSURER",
+      "base_type": "ORGANIZATION",
+      "label": "Marine insurer",
+      "description": "A specifically named insurer or underwriting organization providing marine insurance."
+    },
+    {
+      "code": "MAR_SHIPYARD",
+      "base_type": "FACILITY",
+      "label": "Shipyard",
+      "description": "A specifically named facility where ships are constructed, repaired, converted or dismantled.",
+      "examples": [
+        "Harland and Wolff shipyard",
+        "Fincantieri Monfalcone shipyard"
+      ]
+    },
+    {
+      "code": "MAR_PORT",
+      "base_type": "FACILITY",
+      "label": "Port",
+      "description": "A specifically named maritime port or harbor complex.",
+      "examples": [
+        "Port of Shanghai",
+        "Port of Piraeus"
+      ]
+    },
+    {
+      "code": "MAR_CARGO_TERMINAL",
+      "base_type": "FACILITY",
+      "label": "Cargo terminal",
+      "description": "A specifically named maritime terminal handling general, bulk or project cargo."
+    },
+    {
+      "code": "MAR_CONTAINER_TERMINAL",
+      "base_type": "FACILITY",
+      "label": "Container terminal",
+      "description": "A specifically named maritime terminal handling containerized cargo.",
+      "examples": [
+        "PSA Singapore Terminal",
+        "Burchardkai Container Terminal"
+      ]
+    },
+    {
+      "code": "MAR_OIL_TERMINAL",
+      "base_type": "FACILITY",
+      "label": "Oil terminal",
+      "description": "A specifically named maritime terminal used for loading, unloading or storing crude oil or petroleum products."
+    },
+    {
+      "code": "MAR_LNG_TERMINAL",
+      "base_type": "FACILITY",
+      "label": "LNG terminal",
+      "description": "A specifically named maritime facility used for liquefied-natural-gas import, export or regasification."
+    },
+    {
+      "code": "MAR_PASSENGER_TERMINAL",
+      "base_type": "FACILITY",
+      "label": "Passenger terminal",
+      "description": "A specifically named ferry or cruise passenger terminal."
+    },
+    {
+      "code": "MAR_NAVAL_BASE",
+      "base_type": "FACILITY",
+      "label": "Naval base",
+      "description": "A specifically named naval installation or military port.",
+      "examples": [
+        "Naval Station Norfolk",
+        "Sevastopol Naval Base"
+      ]
+    },
+    {
+      "code": "MAR_DRY_DOCK",
+      "base_type": "FACILITY",
+      "label": "Dry dock",
+      "description": "A specifically named dry dock or graving dock used for vessel construction or maintenance."
+    },
+    {
+      "code": "MAR_ANCHORAGE",
+      "base_type": "LOCATION",
+      "label": "Anchorage",
+      "description": "A specifically named or formally designated maritime anchorage area."
+    },
+    {
+      "code": "MAR_ROADSTEAD",
+      "base_type": "LOCATION",
+      "label": "Roadstead",
+      "description": "A specifically named offshore anchorage or roadstead used by vessels awaiting port access or cargo operations."
+    },
+    {
+      "code": "MAR_STRAIT",
+      "base_type": "LOCATION",
+      "label": "Strait",
+      "description": "A specifically named strait or narrow maritime passage.",
+      "examples": [
+        "Strait of Hormuz",
+        "Strait of Malacca"
+      ]
+    },
+    {
+      "code": "MAR_CANAL",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Maritime canal",
+      "description": "A specifically named artificial waterway used by maritime traffic.",
+      "examples": [
+        "Suez Canal",
+        "Panama Canal"
+      ]
+    },
+    {
+      "code": "MAR_SHIPPING_LANE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Shipping lane",
+      "description": "A specifically named or formally designated maritime traffic lane."
+    },
+    {
+      "code": "MAR_TRAFFIC_SEPARATION_SCHEME",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Traffic separation scheme",
+      "description": "A specifically named or formally designated maritime traffic separation scheme."
+    },
+    {
+      "code": "MAR_SEA_ROUTE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Sea route",
+      "description": "A specifically named maritime trade, navigation or transport route.",
+      "examples": [
+        "Northern Sea Route",
+        "Trans-Pacific shipping route"
+      ]
+    },
+    {
+      "code": "MAR_SUBMARINE_CABLE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Submarine cable",
+      "description": "A specifically named submarine telecommunications or power cable."
+    },
+    {
+      "code": "MAR_OFFSHORE_PLATFORM",
+      "base_type": "FACILITY",
+      "label": "Offshore platform",
+      "description": "A specifically named offshore oil, gas, production, drilling or accommodation platform.",
+      "examples": [
+        "Deepwater Horizon",
+        "Troll A"
+      ]
+    },
+    {
+      "code": "MAR_OFFSHORE_WIND_FARM",
+      "base_type": "FACILITY",
+      "label": "Offshore wind farm",
+      "description": "A specifically named offshore wind-energy installation."
+    },
+    {
+      "code": "MAR_LIGHTHOUSE",
+      "base_type": "FACILITY",
+      "label": "Lighthouse",
+      "description": "A specifically named lighthouse or major navigational-light facility."
+    },
+    {
+      "code": "MAR_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Maritime vessel",
+      "description": "A specifically identified maritime vessel.",
+      "examples": [
+        "Ever Given",
+        "MSC Gülsün",
+        "Admiral Kuznetsov"
+      ]
+    },
+    {
+      "code": "MAR_MERCHANT_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Merchant vessel",
+      "description": "A specifically identified vessel used for commercial cargo or passenger transport."
+    },
+    {
+      "code": "MAR_CONTAINER_SHIP",
+      "base_type": "VESSEL",
+      "label": "Container ship",
+      "description": "A specifically identified vessel designed primarily to transport shipping containers."
+    },
+    {
+      "code": "MAR_BULK_CARRIER",
+      "base_type": "VESSEL",
+      "label": "Bulk carrier",
+      "description": "A specifically identified vessel designed primarily to transport unpackaged bulk cargo."
+    },
+    {
+      "code": "MAR_TANKER",
+      "base_type": "VESSEL",
+      "label": "Tanker",
+      "description": "A specifically identified vessel designed to transport liquid cargo."
+    },
+    {
+      "code": "MAR_LNG_CARRIER",
+      "base_type": "VESSEL",
+      "label": "LNG carrier",
+      "description": "A specifically identified vessel designed to transport liquefied natural gas."
+    },
+    {
+      "code": "MAR_LPG_CARRIER",
+      "base_type": "VESSEL",
+      "label": "LPG carrier",
+      "description": "A specifically identified vessel designed to transport liquefied petroleum gas."
+    },
+    {
+      "code": "MAR_RO_RO_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Ro-ro vessel",
+      "description": "A specifically identified roll-on/roll-off cargo or vehicle vessel."
+    },
+    {
+      "code": "MAR_PASSENGER_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Passenger vessel",
+      "description": "A specifically identified ferry, cruise ship or other passenger-carrying vessel."
+    },
+    {
+      "code": "MAR_FISHING_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Fishing vessel",
+      "description": "A specifically identified vessel used for commercial or industrial fishing."
+    },
+    {
+      "code": "MAR_RESEARCH_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Research vessel",
+      "description": "A specifically identified vessel used for scientific, hydrographic or oceanographic research."
+    },
+    {
+      "code": "MAR_OFFSHORE_SUPPORT_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Offshore support vessel",
+      "description": "A specifically identified vessel supporting offshore energy or construction operations."
+    },
+    {
+      "code": "MAR_TUG",
+      "base_type": "VESSEL",
+      "label": "Tug",
+      "description": "A specifically identified tugboat or harbor-assistance vessel."
+    },
+    {
+      "code": "MAR_DREDGER",
+      "base_type": "VESSEL",
+      "label": "Dredger",
+      "description": "A specifically identified vessel used for dredging or seabed excavation."
+    },
+    {
+      "code": "MAR_NAVAL_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Naval vessel",
+      "description": "A specifically identified commissioned or military-operated naval vessel."
+    },
+    {
+      "code": "MAR_SUBMARINE",
+      "base_type": "VESSEL",
+      "label": "Submarine",
+      "description": "A specifically identified military or civilian submarine."
+    },
+    {
+      "code": "MAR_UNMANNED_SURFACE_VESSEL",
+      "base_type": "VESSEL",
+      "label": "Unmanned surface vessel",
+      "description": "A specifically identified unmanned or remotely operated surface vessel."
+    },
+    {
+      "code": "MAR_UNMANNED_UNDERWATER_VEHICLE",
+      "base_type": "DEVICE",
+      "label": "Unmanned underwater vehicle",
+      "description": "A specifically identified autonomous or remotely operated underwater vehicle."
+    },
+    {
+      "code": "MAR_VESSEL_CLASS",
+      "base_type": "PRODUCT",
+      "label": "Vessel class",
+      "description": "A specifically named commercial or military vessel class or design.",
+      "examples": [
+        "Triple E class",
+        "Arleigh Burke class"
+      ]
+    },
+    {
+      "code": "MAR_PORT_CALL",
+      "base_type": "EVENT",
+      "label": "Port call",
+      "description": "A specifically identified vessel call at a named port, terminal or anchorage.",
+      "exclude_when": [
+        "Do not use for a generic or hypothetical visit without a specific vessel and location."
+      ]
+    },
+    {
+      "code": "MAR_VOYAGE",
+      "base_type": "EVENT",
+      "label": "Voyage",
+      "description": "A specifically identified maritime voyage or journey."
+    },
+    {
+      "code": "MAR_MARITIME_ACCIDENT",
+      "base_type": "EVENT",
+      "label": "Maritime accident",
+      "description": "A specifically named or conventionally identified maritime accident.",
+      "examples": [
+        "Costa Concordia disaster",
+        "Exxon Valdez oil spill"
+      ]
+    },
+    {
+      "code": "MAR_COLLISION",
+      "base_type": "EVENT",
+      "label": "Vessel collision",
+      "description": "A specifically identified collision involving one or more named vessels."
+    },
+    {
+      "code": "MAR_GROUNDING",
+      "base_type": "EVENT",
+      "label": "Vessel grounding",
+      "description": "A specifically identified grounding involving a named vessel.",
+      "examples": [
+        "Ever Given grounding"
+      ]
+    },
+    {
+      "code": "MAR_SHIPWRECK",
+      "base_type": "EVENT",
+      "label": "Shipwreck",
+      "description": "A specifically named or historically identified vessel-loss event."
+    },
+    {
+      "code": "MAR_PIRACY_INCIDENT",
+      "base_type": "EVENT",
+      "label": "Piracy incident",
+      "description": "A specifically identified piracy or armed-robbery incident involving a named vessel or location."
+    },
+    {
+      "code": "MAR_HIJACKING",
+      "base_type": "EVENT",
+      "label": "Vessel hijacking",
+      "description": "A specifically identified seizure or hijacking of a named vessel."
+    },
+    {
+      "code": "MAR_MARITIME_INTERDICTION",
+      "base_type": "OPERATION",
+      "label": "Maritime interdiction operation",
+      "description": "A specifically named or identified operation to inspect, seize, divert or prevent the movement of vessels or cargo."
+    },
+    {
+      "code": "MAR_SEARCH_AND_RESCUE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Maritime search-and-rescue operation",
+      "description": "A specifically named or identified maritime search-and-rescue operation."
+    },
+    {
+      "code": "MAR_NAVAL_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Naval operation",
+      "description": "A specifically named coordinated naval or maritime-security operation.",
+      "examples": [
+        "Operation Atalanta",
+        "Operation Sea Guardian"
+      ]
+    },
+    {
+      "code": "MAR_BLOCKADE",
+      "base_type": "OPERATION",
+      "label": "Maritime blockade",
+      "description": "A specifically named or formally declared maritime blockade operation."
+    },
+    {
+      "code": "MAR_MARITIME_EXERCISE",
+      "base_type": "EVENT",
+      "label": "Maritime exercise",
+      "description": "A specifically named naval or maritime-security exercise.",
+      "examples": [
+        "RIMPAC",
+        "Exercise Dynamic Mongoose"
+      ]
+    },
+    {
+      "code": "MAR_SHIPPING_SERVICE",
+      "base_type": "SERVICE",
+      "label": "Shipping service",
+      "description": "A specifically named scheduled maritime transport service or liner service."
+    },
+    {
+      "code": "MAR_FERRY_SERVICE",
+      "base_type": "SERVICE",
+      "label": "Ferry service",
+      "description": "A specifically named passenger or vehicle ferry service."
+    },
+    {
+      "code": "MAR_VESSEL_TRACKING_SERVICE",
+      "base_type": "SERVICE",
+      "label": "Vessel tracking service",
+      "description": "A specifically named digital service providing vessel-location, AIS or maritime-movement information.",
+      "examples": [
+        "MarineTraffic",
+        "VesselFinder"
+      ]
+    },
+    {
+      "code": "MAR_VESSEL_REGISTRY",
+      "base_type": "DATASET",
+      "label": "Vessel registry",
+      "description": "A specifically named official or commercial registry containing vessel identity, ownership or registration data."
+    },
+    {
+      "code": "MAR_PORT_REGISTRY",
+      "base_type": "DATASET",
+      "label": "Port registry",
+      "description": "A specifically named registry or structured dataset of ports, terminals or maritime facilities."
+    },
+    {
+      "code": "MAR_AIS_DATASET",
+      "base_type": "DATASET",
+      "label": "AIS dataset",
+      "description": "A specifically named collection of Automatic Identification System vessel-position or voyage data."
+    },
+    {
+      "code": "MAR_BILL_OF_LADING",
+      "base_type": "DOCUMENT",
+      "label": "Bill of lading",
+      "description": "A specifically identified maritime bill of lading or sea-transport document."
+    },
+    {
+      "code": "MAR_CARGO_MANIFEST",
+      "base_type": "DOCUMENT",
+      "label": "Cargo manifest",
+      "description": "A specifically identified vessel cargo manifest."
+    },
+    {
+      "code": "MAR_VESSEL_CERTIFICATE",
+      "base_type": "DOCUMENT",
+      "label": "Vessel certificate",
+      "description": "A specifically identified statutory, classification, safety or registration certificate issued for a vessel."
+    },
+    {
+      "code": "MAR_CHARTER_PARTY",
+      "base_type": "AGREEMENT",
+      "label": "Charter party",
+      "description": "A specifically named or identified agreement for the charter or hire of a vessel."
+    },
+    {
+      "code": "MAR_SHIP_MANAGEMENT_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Ship management agreement",
+      "description": "A specifically named or identified agreement governing the technical or commercial management of a vessel."
+    },
+    {
+      "code": "MAR_PORT_CONCESSION",
+      "base_type": "AGREEMENT",
+      "label": "Port concession",
+      "description": "A specifically named or identified concession agreement for the development or operation of a port or terminal."
+    },
+    {
+      "code": "MAR_MARITIME_BOUNDARY_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Maritime boundary agreement",
+      "description": "A specifically named agreement defining or settling maritime boundaries."
+    },
+    {
+      "code": "MAR_EXCLUSIVE_ECONOMIC_ZONE",
+      "base_type": "LOCATION",
+      "label": "Exclusive economic zone",
+      "description": "A specifically identified national exclusive economic zone or formally delimited EEZ."
+    },
+    {
+      "code": "MAR_DISPUTED_MARITIME_AREA",
+      "base_type": "LOCATION",
+      "label": "Disputed maritime area",
+      "description": "A specifically named maritime area explicitly described as disputed or contested.",
+      "examples": [
+        "South China Sea",
+        "Eastern Mediterranean"
+      ]
+    },
+    {
+      "code": "MAR_MARINE_PROTECTED_AREA",
+      "base_type": "LOCATION",
+      "label": "Marine protected area",
+      "description": "A specifically named protected maritime or coastal area."
+    }
+  ]
+}

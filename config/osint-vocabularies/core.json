@@ -1,0 +1,257 @@
+{
+  "schema_version": "1.0",
+  "code": "CORE",
+  "name": "OSINT core",
+  "description": "Stable cross-domain entity and observable types available to every OSINT investigation.",
+  "version": "2.0.0",
+  "selectable_domain": false,
+  "extends": [],
+  "entity_types": [
+    {
+      "code": "PERSON",
+      "base_type": "PERSON",
+      "label": "Person",
+      "description": "A specifically named natural person."
+    },
+    {
+      "code": "ORGANIZATION",
+      "base_type": "ORGANIZATION",
+      "label": "Organization",
+      "description": "A named formal organization, institution, company, agency or association."
+    },
+    {
+      "code": "LOCATION",
+      "base_type": "LOCATION",
+      "label": "Location",
+      "description": "A named geographic area, administrative region, settlement or physical place."
+    },
+    {
+      "code": "FACILITY",
+      "base_type": "FACILITY",
+      "label": "Facility",
+      "description": "A named physical site with a specific operational function."
+    },
+    {
+      "code": "GROUP",
+      "base_type": "GROUP",
+      "label": "Group",
+      "description": "A named informal collective that is not necessarily a formal organization."
+    },
+    {
+      "code": "EVENT",
+      "base_type": "EVENT",
+      "label": "Event",
+      "description": "A named occurrence bounded in time or described as having happened."
+    },
+    {
+      "code": "PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Program",
+      "description": "A named structured and continuing initiative or programme."
+    },
+    {
+      "code": "OPERATION",
+      "base_type": "OPERATION",
+      "label": "Operation",
+      "description": "A named coordinated operation with an explicit objective."
+    },
+    {
+      "code": "CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Campaign",
+      "description": "A named coordinated series of activities directed toward an objective."
+    },
+    {
+      "code": "DOCUMENT",
+      "base_type": "DOCUMENT",
+      "label": "Document",
+      "description": "A named document, report, filing, record or documentary artifact."
+    },
+    {
+      "code": "MEDIA_CONTENT",
+      "base_type": "MEDIA_CONTENT",
+      "label": "Media content",
+      "description": "A named article, post, image, video, audio item, broadcast or publication."
+    },
+    {
+      "code": "DATASET",
+      "base_type": "DATASET",
+      "label": "Dataset",
+      "description": "A named database, register, corpus, leak or structured collection of data."
+    },
+    {
+      "code": "AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Agreement",
+      "description": "A named contract, treaty, memorandum, concession or other agreement."
+    },
+    {
+      "code": "LEGAL_CASE",
+      "base_type": "LEGAL_CASE",
+      "label": "Legal case",
+      "description": "A named judicial, regulatory, arbitration or administrative proceeding."
+    },
+    {
+      "code": "BRAND",
+      "base_type": "BRAND",
+      "label": "Brand",
+      "description": "A named commercial or institutional brand."
+    },
+    {
+      "code": "PRODUCT",
+      "base_type": "PRODUCT",
+      "label": "Product",
+      "description": "A named manufactured, commercial or published product."
+    },
+    {
+      "code": "SERVICE",
+      "base_type": "SERVICE",
+      "label": "Service",
+      "description": "A named commercial, public or digital service."
+    },
+    {
+      "code": "SOFTWARE",
+      "base_type": "SOFTWARE",
+      "label": "Software",
+      "description": "A named software application, platform, model or system."
+    },
+    {
+      "code": "DEVICE",
+      "base_type": "DEVICE",
+      "label": "Device",
+      "description": "A specifically identified physical electronic or communications device."
+    },
+    {
+      "code": "ASSET",
+      "base_type": "ASSET",
+      "label": "Asset",
+      "description": "A named asset that is not represented by a more specific core type."
+    },
+    {
+      "code": "INFRASTRUCTURE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Infrastructure",
+      "description": "A named transport, energy, communications or other infrastructure system."
+    },
+    {
+      "code": "FINANCIAL_ACCOUNT",
+      "base_type": "FINANCIAL_ACCOUNT",
+      "label": "Financial account",
+      "description": "A specifically identified bank, investment, exchange or other financial account."
+    },
+    {
+      "code": "DOMAIN",
+      "base_type": "DOMAIN",
+      "label": "Domain",
+      "description": "An explicitly observed internet domain name."
+    },
+    {
+      "code": "HOSTNAME",
+      "base_type": "HOSTNAME",
+      "label": "Hostname",
+      "description": "An explicitly observed host name."
+    },
+    {
+      "code": "URL",
+      "base_type": "URL",
+      "label": "URL",
+      "description": "An explicitly observed web or network resource locator."
+    },
+    {
+      "code": "EMAIL_ADDRESS",
+      "base_type": "EMAIL_ADDRESS",
+      "label": "Email address",
+      "description": "An explicitly observed email address."
+    },
+    {
+      "code": "PHONE_NUMBER",
+      "base_type": "PHONE_NUMBER",
+      "label": "Phone number",
+      "description": "An explicitly observed telephone number."
+    },
+    {
+      "code": "IP_ADDRESS",
+      "base_type": "IP_ADDRESS",
+      "label": "IP address",
+      "description": "An explicitly observed IP address."
+    },
+    {
+      "code": "USERNAME",
+      "base_type": "USERNAME",
+      "label": "Username",
+      "description": "An explicitly observed username or handle without an identified account."
+    },
+    {
+      "code": "SOCIAL_ACCOUNT",
+      "base_type": "SOCIAL_ACCOUNT",
+      "label": "Social account",
+      "description": "A specifically identified social-media profile or account."
+    },
+    {
+      "code": "ONLINE_ACCOUNT",
+      "base_type": "ONLINE_ACCOUNT",
+      "label": "Online account",
+      "description": "A specifically identified non-social online account."
+    },
+    {
+      "code": "FILE_HASH",
+      "base_type": "FILE_HASH",
+      "label": "File hash",
+      "description": "An explicitly observed cryptographic file digest."
+    },
+    {
+      "code": "CRYPTOCURRENCY_ADDRESS",
+      "base_type": "CRYPTOCURRENCY_ADDRESS",
+      "label": "Cryptocurrency address",
+      "description": "An explicitly observed cryptocurrency address."
+    },
+    {
+      "code": "IBAN",
+      "base_type": "IBAN",
+      "label": "IBAN",
+      "description": "An explicitly observed International Bank Account Number."
+    },
+    {
+      "code": "LICENSE_PLATE",
+      "base_type": "LICENSE_PLATE",
+      "label": "License plate",
+      "description": "An explicitly observed vehicle registration plate."
+    },
+    {
+      "code": "VEHICLE",
+      "base_type": "VEHICLE",
+      "label": "Vehicle",
+      "description": "A specifically identified land vehicle."
+    },
+    {
+      "code": "VESSEL",
+      "base_type": "VESSEL",
+      "label": "Vessel",
+      "description": "A specifically identified maritime vessel."
+    },
+    {
+      "code": "AIRCRAFT",
+      "base_type": "AIRCRAFT",
+      "label": "Aircraft",
+      "description": "A specifically identified aircraft."
+    },
+    {
+      "code": "PASSPORT_NUMBER",
+      "base_type": "PASSPORT_NUMBER",
+      "label": "Passport number",
+      "description": "An explicitly observed passport identifier."
+    },
+    {
+      "code": "NATIONAL_ID",
+      "base_type": "NATIONAL_ID",
+      "label": "National ID",
+      "description": "An explicitly observed national identity identifier."
+    },
+    {
+      "code": "TAX_IDENTIFIER",
+      "base_type": "TAX_IDENTIFIER",
+      "label": "Tax identifier",
+      "description": "An explicitly observed tax or company fiscal identifier."
+    }
+  ]
+}

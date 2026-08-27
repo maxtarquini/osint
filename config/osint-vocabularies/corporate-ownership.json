@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "code": "CORPORATE_OWNERSHIP",
+  "name": "Corporate ownership",
+  "description": "Companies, beneficial ownership, governance, products, contracts and commercial activity.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": ["CORE"],
+  "entity_types": [
+    {"code":"CORP_COMPANY","base_type":"ORGANIZATION","label":"Company","description":"A named incorporated or commercially operating company."},
+    {"code":"CORP_SUBSIDIARY","base_type":"ORGANIZATION","label":"Subsidiary","description":"A company explicitly described as controlled by a parent organization."},
+    {"code":"CORP_HOLDING_COMPANY","base_type":"ORGANIZATION","label":"Holding company","description":"A named company primarily described as holding or controlling other entities."},
+    {"code":"CORP_INVESTMENT_FUND","base_type":"ORGANIZATION","label":"Investment fund","description":"A named investment fund or collective investment vehicle."},
+    {"code":"CORP_JOINT_VENTURE","base_type":"ORGANIZATION","label":"Joint venture","description":"A named jointly controlled commercial venture."},
+    {"code":"CORP_COMMERCIAL_FACILITY","base_type":"FACILITY","label":"Commercial facility","description":"A named factory, warehouse, office, mine, plant or other operating site."},
+    {"code":"CORP_BUSINESS_PROGRAM","base_type":"PROGRAM","label":"Business program","description":"A named corporate, investment or industrial programme."},
+    {"code":"CORP_COMMERCIAL_SERVICE","base_type":"SERVICE","label":"Commercial service","description":"A named service offered by an organization to customers or partners."},
+    {"code":"CORP_CONTRACT","base_type":"AGREEMENT","label":"Contract","description":"A specifically named or identified commercial contract or procurement agreement."}
+  ]
+}

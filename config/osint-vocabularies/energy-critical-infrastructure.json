@@ -1,0 +1,447 @@
+{
+  "schema_version": "1.0",
+  "code": "ENERGY_CRITICAL_INFRASTRUCTURE",
+  "name": "Energy and critical infrastructure",
+  "description": "Energy systems, utilities, strategic facilities and critical-infrastructure OSINT investigations.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": ["CORE"],
+  "entity_types": [
+    {
+      "code": "ECI_ENERGY_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Energy company",
+      "description": "A specifically named company primarily involved in energy production, processing, transmission, distribution or supply.",
+      "examples": [
+        "Gazprom",
+        "Électricité de France",
+        "Saudi Aramco"
+      ]
+    },
+    {
+      "code": "ECI_UTILITY_OPERATOR",
+      "base_type": "ORGANIZATION",
+      "label": "Utility operator",
+      "description": "A specifically named organization operating electricity, gas, water or district-heating utility services.",
+      "examples": [
+        "National Grid",
+        "Thames Water"
+      ]
+    },
+    {
+      "code": "ECI_GRID_OPERATOR",
+      "base_type": "ORGANIZATION",
+      "label": "Grid operator",
+      "description": "A specifically named electricity transmission or distribution system operator.",
+      "examples": [
+        "Terna",
+        "RTE",
+        "TenneT"
+      ]
+    },
+    {
+      "code": "ECI_PIPELINE_OPERATOR",
+      "base_type": "ORGANIZATION",
+      "label": "Pipeline operator",
+      "description": "A specifically named organization responsible for operating an oil, gas or product pipeline.",
+      "examples": [
+        "Nord Stream AG",
+        "Transneft"
+      ]
+    },
+    {
+      "code": "ECI_WATER_UTILITY",
+      "base_type": "ORGANIZATION",
+      "label": "Water utility",
+      "description": "A specifically named organization responsible for water supply, treatment or wastewater services."
+    },
+    {
+      "code": "ECI_TELECOM_OPERATOR",
+      "base_type": "ORGANIZATION",
+      "label": "Telecommunications operator",
+      "description": "A specifically named organization operating strategically significant telecommunications infrastructure.",
+      "examples": [
+        "Telecom Italia",
+        "Orange",
+        "Vodafone"
+      ]
+    },
+    {
+      "code": "ECI_INFRASTRUCTURE_AUTHORITY",
+      "base_type": "ORGANIZATION",
+      "label": "Infrastructure authority",
+      "description": "A specifically named public authority responsible for regulating, supervising or protecting critical infrastructure."
+    },
+    {
+      "code": "ECI_POWER_PLANT",
+      "base_type": "FACILITY",
+      "label": "Power plant",
+      "description": "A specifically named facility that generates electrical power.",
+      "examples": [
+        "Drax Power Station",
+        "Bankhead Power Plant"
+      ]
+    },
+    {
+      "code": "ECI_NUCLEAR_POWER_PLANT",
+      "base_type": "FACILITY",
+      "label": "Nuclear power plant",
+      "description": "A specifically named nuclear facility used to generate electrical power.",
+      "examples": [
+        "Zaporizhzhia Nuclear Power Plant",
+        "Olkiluoto Nuclear Power Plant"
+      ]
+    },
+    {
+      "code": "ECI_NUCLEAR_FACILITY",
+      "base_type": "FACILITY",
+      "label": "Nuclear facility",
+      "description": "A specifically named nuclear research, enrichment, fuel-processing, storage or waste-management facility.",
+      "exclude_when": [
+        "Use ECI_NUCLEAR_POWER_PLANT when the named facility is specifically an electricity-generating nuclear plant."
+      ],
+      "examples": [
+        "Natanz Nuclear Facility",
+        "Sellafield"
+      ]
+    },
+    {
+      "code": "ECI_HYDROELECTRIC_PLANT",
+      "base_type": "FACILITY",
+      "label": "Hydroelectric plant",
+      "description": "A specifically named hydroelectric generation facility.",
+      "examples": [
+        "Three Gorges Power Station",
+        "Kakhovka Hydroelectric Power Plant"
+      ]
+    },
+    {
+      "code": "ECI_SOLAR_POWER_PLANT",
+      "base_type": "FACILITY",
+      "label": "Solar power plant",
+      "description": "A specifically named utility-scale solar generation facility.",
+      "examples": [
+        "Benban Solar Park",
+        "Bhadla Solar Park"
+      ]
+    },
+    {
+      "code": "ECI_WIND_FARM",
+      "base_type": "FACILITY",
+      "label": "Wind farm",
+      "description": "A specifically named onshore or offshore wind-generation facility.",
+      "examples": [
+        "Hornsea Wind Farm",
+        "Gansu Wind Farm"
+      ]
+    },
+    {
+      "code": "ECI_REFINERY",
+      "base_type": "FACILITY",
+      "label": "Refinery",
+      "description": "A specifically named petroleum or hydrocarbon refining facility.",
+      "examples": [
+        "Jamnagar Refinery",
+        "Ras Tanura Refinery"
+      ]
+    },
+    {
+      "code": "ECI_PETROCHEMICAL_PLANT",
+      "base_type": "FACILITY",
+      "label": "Petrochemical plant",
+      "description": "A specifically named petrochemical processing or production facility."
+    },
+    {
+      "code": "ECI_LNG_TERMINAL",
+      "base_type": "FACILITY",
+      "label": "LNG terminal",
+      "description": "A specifically named liquefied-natural-gas liquefaction, import, export or regasification terminal.",
+      "examples": [
+        "Sabine Pass LNG Terminal",
+        "Świnoujście LNG Terminal"
+      ]
+    },
+    {
+      "code": "ECI_OIL_TERMINAL",
+      "base_type": "FACILITY",
+      "label": "Oil terminal",
+      "description": "A specifically named crude-oil or petroleum-product storage, loading or transfer terminal."
+    },
+    {
+      "code": "ECI_FUEL_DEPOT",
+      "base_type": "FACILITY",
+      "label": "Fuel depot",
+      "description": "A specifically named strategic fuel-storage or distribution facility."
+    },
+    {
+      "code": "ECI_GAS_STORAGE_FACILITY",
+      "base_type": "FACILITY",
+      "label": "Gas storage facility",
+      "description": "A specifically named underground or above-ground natural-gas storage facility."
+    },
+    {
+      "code": "ECI_SUBSTATION",
+      "base_type": "FACILITY",
+      "label": "Electrical substation",
+      "description": "A specifically named electrical transmission or distribution substation."
+    },
+    {
+      "code": "ECI_CONTROL_CENTER",
+      "base_type": "FACILITY",
+      "label": "Infrastructure control center",
+      "description": "A specifically named control, dispatch or operations center responsible for managing critical infrastructure."
+    },
+    {
+      "code": "ECI_WATER_TREATMENT_PLANT",
+      "base_type": "FACILITY",
+      "label": "Water treatment plant",
+      "description": "A specifically named drinking-water treatment facility."
+    },
+    {
+      "code": "ECI_WASTEWATER_TREATMENT_PLANT",
+      "base_type": "FACILITY",
+      "label": "Wastewater treatment plant",
+      "description": "A specifically named sewage or wastewater treatment facility."
+    },
+    {
+      "code": "ECI_DESALINATION_PLANT",
+      "base_type": "FACILITY",
+      "label": "Desalination plant",
+      "description": "A specifically named facility that produces fresh water through desalination.",
+      "examples": [
+        "Sorek Desalination Plant",
+        "Ras Al-Khair Desalination Plant"
+      ]
+    },
+    {
+      "code": "ECI_DAM",
+      "base_type": "FACILITY",
+      "label": "Dam",
+      "description": "A specifically named dam or water-retention structure.",
+      "examples": [
+        "Mosul Dam",
+        "Nova Kakhovka Dam"
+      ]
+    },
+    {
+      "code": "ECI_RESERVOIR",
+      "base_type": "LOCATION",
+      "label": "Reservoir",
+      "description": "A specifically named artificial reservoir associated with water or energy infrastructure."
+    },
+    {
+      "code": "ECI_DATA_CENTER",
+      "base_type": "FACILITY",
+      "label": "Data center",
+      "description": "A specifically named data-processing or hosting facility described as strategically or operationally significant."
+    },
+    {
+      "code": "ECI_CABLE_LANDING_STATION",
+      "base_type": "FACILITY",
+      "label": "Cable landing station",
+      "description": "A specifically named facility where one or more submarine telecommunications cables connect to terrestrial networks."
+    },
+    {
+      "code": "ECI_SATELLITE_GROUND_STATION",
+      "base_type": "FACILITY",
+      "label": "Satellite ground station",
+      "description": "A specifically named terrestrial facility used to communicate with or control satellites."
+    },
+    {
+      "code": "ECI_ENERGY_PIPELINE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Energy pipeline",
+      "description": "A specifically named oil, gas, hydrogen or petroleum-product pipeline system.",
+      "examples": [
+        "Nord Stream",
+        "Druzhba Pipeline",
+        "Trans-Anatolian Natural Gas Pipeline"
+      ]
+    },
+    {
+      "code": "ECI_POWER_GRID",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Power grid",
+      "description": "A specifically named national, regional or interconnected electricity grid."
+    },
+    {
+      "code": "ECI_TRANSMISSION_LINE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Transmission line",
+      "description": "A specifically named high-voltage electricity transmission line or corridor."
+    },
+    {
+      "code": "ECI_ELECTRIC_INTERCONNECTOR",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Electric interconnector",
+      "description": "A specifically named cross-border or interregional electricity interconnection.",
+      "examples": [
+        "BritNed",
+        "North Sea Link"
+      ]
+    },
+    {
+      "code": "ECI_SUBMARINE_POWER_CABLE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Submarine power cable",
+      "description": "A specifically named undersea cable used for electrical power transmission."
+    },
+    {
+      "code": "ECI_SUBMARINE_TELECOM_CABLE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Submarine telecommunications cable",
+      "description": "A specifically named undersea fiber-optic telecommunications cable.",
+      "examples": [
+        "SEA-ME-WE 5",
+        "Marea"
+      ]
+    },
+    {
+      "code": "ECI_WATER_SUPPLY_NETWORK",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Water supply network",
+      "description": "A specifically named aqueduct, water-transfer system or strategic water-distribution network."
+    },
+    {
+      "code": "ECI_DISTRICT_HEATING_NETWORK",
+      "base_type": "INFRASTRUCTURE",
+      "label": "District heating network",
+      "description": "A specifically named district-heating or centralized thermal-energy network."
+    },
+    {
+      "code": "ECI_STRATEGIC_TRANSPORT_CORRIDOR",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Strategic transport corridor",
+      "description": "A specifically named transport corridor explicitly described as critical to energy or infrastructure operations."
+    },
+    {
+      "code": "ECI_ENERGY_FIELD",
+      "base_type": "LOCATION",
+      "label": "Energy field",
+      "description": "A specifically named oil, natural-gas or geothermal extraction field.",
+      "examples": [
+        "Ghawar Field",
+        "Groningen Gas Field"
+      ]
+    },
+    {
+      "code": "ECI_OFFSHORE_ENERGY_ZONE",
+      "base_type": "LOCATION",
+      "label": "Offshore energy zone",
+      "description": "A specifically named offshore geographic area associated with energy extraction or generation."
+    },
+    {
+      "code": "ECI_ENERGY_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Energy program",
+      "description": "A specifically named national, international or corporate energy-development program."
+    },
+    {
+      "code": "ECI_NUCLEAR_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Nuclear program",
+      "description": "A specifically named civilian or dual-use nuclear-development program."
+    },
+    {
+      "code": "ECI_INFRASTRUCTURE_PROTECTION_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Infrastructure protection program",
+      "description": "A specifically named program for protecting or increasing the resilience of critical infrastructure."
+    },
+    {
+      "code": "ECI_INFRASTRUCTURE_PROJECT",
+      "base_type": "PROGRAM",
+      "label": "Infrastructure project",
+      "description": "A specifically named project for constructing, expanding or modernizing major energy or critical infrastructure."
+    },
+    {
+      "code": "ECI_INFRASTRUCTURE_INCIDENT",
+      "base_type": "EVENT",
+      "label": "Infrastructure incident",
+      "description": "A specifically named or conventionally identified incident affecting critical infrastructure.",
+      "exclude_when": [
+        "Do not annotate routine unnamed outages, failures or maintenance events."
+      ],
+      "examples": [
+        "Northeast blackout of 2003",
+        "Colonial Pipeline ransomware incident"
+      ]
+    },
+    {
+      "code": "ECI_BLACKOUT",
+      "base_type": "EVENT",
+      "label": "Blackout",
+      "description": "A specifically named or conventionally identified large-scale electrical blackout.",
+      "examples": [
+        "2019 Argentina and Uruguay blackout",
+        "2003 Italy blackout"
+      ]
+    },
+    {
+      "code": "ECI_INFRASTRUCTURE_ATTACK",
+      "base_type": "EVENT",
+      "label": "Infrastructure attack",
+      "description": "A specifically named attack or sabotage event targeting energy or critical infrastructure."
+    },
+    {
+      "code": "ECI_NUCLEAR_ACCIDENT",
+      "base_type": "EVENT",
+      "label": "Nuclear accident",
+      "description": "A specifically named nuclear or radiological accident.",
+      "examples": [
+        "Chernobyl disaster",
+        "Fukushima Daiichi nuclear disaster"
+      ]
+    },
+    {
+      "code": "ECI_ENERGY_CRISIS",
+      "base_type": "EVENT",
+      "label": "Energy crisis",
+      "description": "A specifically named or conventionally identified energy-supply crisis.",
+      "examples": [
+        "1973 oil crisis",
+        "European energy crisis"
+      ]
+    },
+    {
+      "code": "ECI_EMERGENCY_RESPONSE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Infrastructure emergency operation",
+      "description": "A specifically named emergency, restoration or containment operation involving critical infrastructure."
+    },
+    {
+      "code": "ECI_INFRASTRUCTURE_RECOVERY_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Infrastructure recovery operation",
+      "description": "A specifically named operation to restore damaged or disrupted critical infrastructure."
+    },
+    {
+      "code": "ECI_ENERGY_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Energy agreement",
+      "description": "A specifically named interstate, public-private or commercial agreement concerning energy supply, transit or infrastructure."
+    },
+    {
+      "code": "ECI_ENERGY_SUPPLY_CONTRACT",
+      "base_type": "AGREEMENT",
+      "label": "Energy supply contract",
+      "description": "A specifically named or identified contract for the supply of electricity, gas, oil, fuel or another energy commodity."
+    },
+    {
+      "code": "ECI_PIPELINE_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Pipeline agreement",
+      "description": "A specifically named construction, transit, access or operating agreement concerning a pipeline."
+    },
+    {
+      "code": "ECI_ENERGY_MARKET",
+      "base_type": "SERVICE",
+      "label": "Energy market",
+      "description": "A specifically named organized electricity, gas or energy-trading market.",
+      "examples": [
+        "Nord Pool",
+        "European Energy Exchange"
+      ]
+    }
+  ]
+}

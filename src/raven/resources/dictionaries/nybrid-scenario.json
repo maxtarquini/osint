@@ -1,0 +1,448 @@
+{
+  "schema_version": "1.0",
+  "code": "HYBRID_SCENARIO",
+  "name": "Hybrid scenario",
+  "description": "Named actors, operations, campaigns, infrastructure, instruments and events combining military, cyber, informational, political, economic, intelligence or proxy activity.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": ["CORE"],
+  "entity_types": [
+    {
+      "code": "HYB_STATE_ACTOR",
+      "base_type": "ORGANIZATION",
+      "label": "State actor",
+      "description": "A specifically named state authority or state organization conducting or directing hybrid activity."
+    },
+    {
+      "code": "HYB_INTELLIGENCE_AGENCY",
+      "base_type": "ORGANIZATION",
+      "label": "Intelligence agency",
+      "description": "A specifically named civilian or military intelligence organization."
+    },
+    {
+      "code": "HYB_SECURITY_SERVICE",
+      "base_type": "ORGANIZATION",
+      "label": "Security service",
+      "description": "A specifically named internal-security, counter-intelligence or state-security organization."
+    },
+    {
+      "code": "HYB_PROXY_ORGANIZATION",
+      "base_type": "ORGANIZATION",
+      "label": "Proxy organization",
+      "description": "A specifically named organization explicitly described as acting on behalf of, under the influence of or with material support from another actor.",
+      "exclude_when": [
+        "Do not infer proxy status solely from ideological alignment or unverified allegations."
+      ]
+    },
+    {
+      "code": "HYB_PROXY_GROUP",
+      "base_type": "GROUP",
+      "label": "Proxy group",
+      "description": "A specifically named informal or non-state group explicitly described as operating as a proxy."
+    },
+    {
+      "code": "HYB_FRONT_ORGANIZATION",
+      "base_type": "ORGANIZATION",
+      "label": "Front organization",
+      "description": "A specifically named organization explicitly identified as concealing, representing or facilitating another actor's activities."
+    },
+    {
+      "code": "HYB_INFLUENCE_ORGANIZATION",
+      "base_type": "ORGANIZATION",
+      "label": "Influence organization",
+      "description": "A specifically named organization whose identified function includes coordinated political, social or informational influence."
+    },
+    {
+      "code": "HYB_STATE_MEDIA_OUTLET",
+      "base_type": "ORGANIZATION",
+      "label": "State media outlet",
+      "description": "A specifically named media organization formally owned, controlled or operated by a state."
+    },
+    {
+      "code": "HYB_COVERT_MEDIA_OUTLET",
+      "base_type": "ORGANIZATION",
+      "label": "Covert media outlet",
+      "description": "A specifically named media outlet explicitly identified as concealing its controlling or sponsoring actor."
+    },
+    {
+      "code": "HYB_THINK_TANK",
+      "base_type": "ORGANIZATION",
+      "label": "Influence-linked think tank",
+      "description": "A specifically named research or policy organization explicitly connected to a hybrid influence activity."
+    },
+    {
+      "code": "HYB_NON_GOVERNMENTAL_PROXY",
+      "base_type": "ORGANIZATION",
+      "label": "Proxy non-governmental organization",
+      "description": "A specifically named non-governmental organization explicitly identified as being directed, financed or used as an intermediary by another actor."
+    },
+    {
+      "code": "HYB_PRIVATE_MILITARY_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Private military company",
+      "description": "A specifically named private military or security company involved in deniable, indirect or combined activity."
+    },
+    {
+      "code": "HYB_CYBER_THREAT_GROUP",
+      "base_type": "GROUP",
+      "label": "Cyber threat group",
+      "description": "A specifically named intrusion set, advanced persistent threat or cyber-threat actor.",
+      "examples": [
+        "APT28",
+        "Sandworm",
+        "Lazarus Group"
+      ]
+    },
+    {
+      "code": "HYB_HACKTIVIST_GROUP",
+      "base_type": "GROUP",
+      "label": "Hacktivist group",
+      "description": "A specifically named group conducting politically or ideologically motivated cyber activity."
+    },
+    {
+      "code": "HYB_TROLL_FARM",
+      "base_type": "ORGANIZATION",
+      "label": "Troll farm",
+      "description": "A specifically named organization or coordinated facility operating deceptive online personas at scale."
+    },
+    {
+      "code": "HYB_BOT_NETWORK",
+      "base_type": "GROUP",
+      "label": "Bot network",
+      "description": "A specifically named or distinctly identified coordinated network of automated or semi-automated accounts."
+    },
+    {
+      "code": "HYB_COORDINATED_ACCOUNT_NETWORK",
+      "base_type": "GROUP",
+      "label": "Coordinated account network",
+      "description": "A specifically named or distinctly identified cluster of online accounts acting in coordination."
+    },
+    {
+      "code": "HYB_CYBER_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Cyber operation",
+      "description": "A specifically named offensive, disruptive, espionage or preparatory cyber operation.",
+      "examples": [
+        "Operation Aurora",
+        "SolarWinds campaign"
+      ]
+    },
+    {
+      "code": "HYB_INFORMATION_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Information operation",
+      "description": "A specifically named coordinated operation using information to influence perceptions, behavior or decision-making."
+    },
+    {
+      "code": "HYB_PSYCHOLOGICAL_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Psychological operation",
+      "description": "A specifically named psychological operation or coordinated perception-management operation."
+    },
+    {
+      "code": "HYB_COVERT_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Covert operation",
+      "description": "A specifically named operation explicitly described as concealing the identity or responsibility of its sponsor."
+    },
+    {
+      "code": "HYB_INFLUENCE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Influence operation",
+      "description": "A specifically named coordinated operation intended to influence political, social or institutional outcomes."
+    },
+    {
+      "code": "HYB_SABOTAGE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Sabotage operation",
+      "description": "A specifically named coordinated operation intended to damage, disable or disrupt physical or digital systems."
+    },
+    {
+      "code": "HYB_ECONOMIC_PRESSURE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Economic pressure operation",
+      "description": "A specifically named coordinated operation using trade, finance, energy, investment or market access as coercive instruments."
+    },
+    {
+      "code": "HYB_POLITICAL_INTERFERENCE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Political interference operation",
+      "description": "A specifically named coordinated operation intended to covertly alter political or institutional processes."
+    },
+    {
+      "code": "HYB_ELECTION_INTERFERENCE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Election interference operation",
+      "description": "A specifically named coordinated operation targeting an election, referendum or electoral institution."
+    },
+    {
+      "code": "HYB_BORDER_PRESSURE_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Border pressure operation",
+      "description": "A specifically named coordinated operation using border activity, migration flows or controlled incidents for coercive purposes."
+    },
+    {
+      "code": "HYB_HYBRID_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Hybrid operation",
+      "description": "A specifically named coordinated operation explicitly combining multiple military and non-military instruments."
+    },
+    {
+      "code": "HYB_DISINFORMATION_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Disinformation campaign",
+      "description": "A specifically named coordinated campaign distributing false or misleading information."
+    },
+    {
+      "code": "HYB_PROPAGANDA_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Propaganda campaign",
+      "description": "A specifically named coordinated campaign promoting a political, ideological or strategic narrative."
+    },
+    {
+      "code": "HYB_INFLUENCE_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Influence campaign",
+      "description": "A specifically named coordinated campaign intended to shape opinions, behavior or policy."
+    },
+    {
+      "code": "HYB_HARASSMENT_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Online harassment campaign",
+      "description": "A specifically named or distinctly identified coordinated campaign targeting individuals or organizations with online harassment."
+    },
+    {
+      "code": "HYB_NARRATIVE_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Narrative campaign",
+      "description": "A specifically named coordinated campaign centered on disseminating and reinforcing an identifiable strategic narrative."
+    },
+    {
+      "code": "HYB_LAWFARE_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Lawfare campaign",
+      "description": "A specifically named coordinated campaign explicitly using legal or regulatory mechanisms for strategic pressure."
+    },
+    {
+      "code": "HYB_SANCTIONS_EVASION_NETWORK",
+      "base_type": "GROUP",
+      "label": "Sanctions-evasion network",
+      "description": "A specifically named or distinctly identified network used to evade sanctions or export restrictions."
+    },
+    {
+      "code": "HYB_FINANCIAL_NETWORK",
+      "base_type": "GROUP",
+      "label": "Influence-financing network",
+      "description": "A specifically named or distinctly identified network financing political, informational, cyber or proxy activity."
+    },
+    {
+      "code": "HYB_PROCUREMENT_NETWORK",
+      "base_type": "GROUP",
+      "label": "Covert procurement network",
+      "description": "A specifically named or distinctly identified network used to acquire controlled goods, technology or services."
+    },
+    {
+      "code": "HYB_SMUGGLING_NETWORK",
+      "base_type": "GROUP",
+      "label": "Smuggling network",
+      "description": "A specifically named or distinctly identified network moving goods, people, funds or equipment outside lawful channels."
+    },
+    {
+      "code": "HYB_SHELL_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Shell company",
+      "description": "A specifically named company explicitly identified as lacking substantial independent operations and used as an intermediary."
+    },
+    {
+      "code": "HYB_COVER_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Cover company",
+      "description": "A specifically named company explicitly identified as concealing intelligence, military, procurement or influence activity."
+    },
+    {
+      "code": "HYB_CRYPTOCURRENCY_ADDRESS",
+      "base_type": "CRYPTOCURRENCY_ADDRESS",
+      "label": "Operational cryptocurrency address",
+      "description": "A specifically observed cryptocurrency address linked by evidence to a hybrid operation, campaign or network."
+    },
+    {
+      "code": "HYB_FINANCIAL_ACCOUNT",
+      "base_type": "FINANCIAL_ACCOUNT",
+      "label": "Operational financial account",
+      "description": "A specifically identified financial account linked by evidence to hybrid activity."
+    },
+    {
+      "code": "HYB_MALWARE_FAMILY",
+      "base_type": "SOFTWARE",
+      "label": "Malware family",
+      "description": "A specifically named malware family used in a hybrid or state-linked operation.",
+      "examples": [
+        "Industroyer",
+        "NotPetya",
+        "BlackEnergy"
+      ]
+    },
+    {
+      "code": "HYB_EXPLOIT_TOOL",
+      "base_type": "SOFTWARE",
+      "label": "Exploit tool",
+      "description": "A specifically named software tool or exploit framework used in a hybrid operation."
+    },
+    {
+      "code": "HYB_SURVEILLANCE_SOFTWARE",
+      "base_type": "SOFTWARE",
+      "label": "Surveillance software",
+      "description": "A specifically named spyware or surveillance platform used in political, intelligence or coercive activity."
+    },
+    {
+      "code": "HYB_COMMAND_AND_CONTROL_INFRASTRUCTURE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Command-and-control infrastructure",
+      "description": "A specifically identified digital infrastructure used to control malware, accounts or coordinated cyber activity."
+    },
+    {
+      "code": "HYB_COVERT_COMMUNICATION_CHANNEL",
+      "base_type": "SERVICE",
+      "label": "Covert communication channel",
+      "description": "A specifically named or identified communication service or channel used to coordinate concealed activity."
+    },
+    {
+      "code": "HYB_PROPAGANDA_OUTLET",
+      "base_type": "ORGANIZATION",
+      "label": "Propaganda outlet",
+      "description": "A specifically named publication or media organization explicitly identified as a propaganda outlet."
+    },
+    {
+      "code": "HYB_MESSAGING_CHANNEL",
+      "base_type": "SOCIAL_ACCOUNT",
+      "label": "Operational messaging channel",
+      "description": "A specifically identified social-media or messaging-platform channel linked to a hybrid operation or campaign."
+    },
+    {
+      "code": "HYB_SOCIAL_ACCOUNT",
+      "base_type": "SOCIAL_ACCOUNT",
+      "label": "Operational social account",
+      "description": "A specifically identified social-media account participating in a coordinated hybrid activity."
+    },
+    {
+      "code": "HYB_FALSE_PERSONA",
+      "base_type": "ONLINE_ACCOUNT",
+      "label": "False online persona",
+      "description": "A specifically identified online identity explicitly determined to be fabricated or deceptively operated."
+    },
+    {
+      "code": "HYB_LEAK_PLATFORM",
+      "base_type": "SERVICE",
+      "label": "Leak platform",
+      "description": "A specifically named website, service or channel used to publish stolen, manipulated or strategically released information."
+    },
+    {
+      "code": "HYB_INFORMATION_PORTAL",
+      "base_type": "SERVICE",
+      "label": "Influence portal",
+      "description": "A specifically named online portal used as part of a coordinated influence activity."
+    },
+    {
+      "code": "HYB_CRITICAL_INFRASTRUCTURE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Targeted critical infrastructure",
+      "description": "A specifically named infrastructure system targeted, exploited or leveraged in a hybrid operation."
+    },
+    {
+      "code": "HYB_ENERGY_INFRASTRUCTURE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Targeted energy infrastructure",
+      "description": "A specifically named energy network, pipeline, grid or system involved in coercion, disruption or strategic pressure."
+    },
+    {
+      "code": "HYB_TELECOMMUNICATIONS_INFRASTRUCTURE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Targeted telecommunications infrastructure",
+      "description": "A specifically named telecommunications network, cable or communications system involved in hybrid activity."
+    },
+    {
+      "code": "HYB_BORDER_INFRASTRUCTURE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Border infrastructure",
+      "description": "A specifically named border-management system, crossing network or barrier involved in hybrid pressure."
+    },
+    {
+      "code": "HYB_INFLUENCE_EVENT",
+      "base_type": "EVENT",
+      "label": "Influence event",
+      "description": "A specifically named conference, forum, protest or public event explicitly organized as part of a coordinated influence activity."
+    },
+    {
+      "code": "HYB_CYBER_INCIDENT",
+      "base_type": "EVENT",
+      "label": "Cyber incident",
+      "description": "A specifically named or uniquely identified cyber incident associated with wider political, military or coercive activity."
+    },
+    {
+      "code": "HYB_SABOTAGE_EVENT",
+      "base_type": "EVENT",
+      "label": "Sabotage event",
+      "description": "A specifically named or uniquely identified sabotage event."
+    },
+    {
+      "code": "HYB_ELECTION_INTERFERENCE_EVENT",
+      "base_type": "EVENT",
+      "label": "Election-interference event",
+      "description": "A specifically named or uniquely identified interference event affecting an electoral process."
+    },
+    {
+      "code": "HYB_BORDER_INCIDENT",
+      "base_type": "EVENT",
+      "label": "Hybrid border incident",
+      "description": "A specifically named or uniquely identified border event associated with coordinated political or coercive pressure."
+    },
+    {
+      "code": "HYB_ATTRIBUTION_REPORT",
+      "base_type": "DOCUMENT",
+      "label": "Attribution report",
+      "description": "A specifically named report attributing a cyber, influence, sabotage or covert activity to an actor."
+    },
+    {
+      "code": "HYB_THREAT_REPORT",
+      "base_type": "DOCUMENT",
+      "label": "Hybrid-threat report",
+      "description": "A specifically named analytical report concerning hybrid threats, actors or operations."
+    },
+    {
+      "code": "HYB_LEAKED_DATASET",
+      "base_type": "DATASET",
+      "label": "Leaked dataset",
+      "description": "A specifically named or distinctly identified leaked collection of data used in or resulting from a hybrid activity."
+    },
+    {
+      "code": "HYB_SANCTIONS_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Sanctions program",
+      "description": "A specifically named sanctions regime or restrictive-measures program used in strategic pressure or response."
+    },
+    {
+      "code": "HYB_FOREIGN_INFLUENCE_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Foreign influence program",
+      "description": "A specifically named continuing program intended to build or exercise political, cultural, economic or informational influence."
+    },
+    {
+      "code": "HYB_RESILIENCE_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Hybrid-threat resilience program",
+      "description": "A specifically named program designed to detect, resist or respond to hybrid threats."
+    },
+    {
+      "code": "HYB_SECURITY_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Hybrid-security agreement",
+      "description": "A specifically named agreement concerning cooperation against cyber, information, economic or other hybrid threats."
+    },
+    {
+      "code": "HYB_INFORMATION_SHARING_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Information-sharing agreement",
+      "description": "A specifically named agreement for sharing threat, intelligence, cyber or security information."
+    }
+  ]
+}

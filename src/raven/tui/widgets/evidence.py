@@ -1,0 +1,53 @@
+"""Reusable evidence-document rows for investigation workspaces."""
+
+from __future__ import annotations
+
+from dataclasses import replace
+
+from textual.app import ComposeResult
+from textual.containers import Horizontal
+from textual.message import Message
+from textual.widgets import Button, Static
+
+from raven.models import EvidenceDocument, EvidenceIngestionState
+
+STATE_LABELS = {
+    EvidenceIngestionState.PENDING: "Pending",
+    EvidenceIngestionState.PROCESSING: "Indexing…",
+    EvidenceIngestionState.READY: "Indexed",
+    EvidenceIngestionState.FAILED: "Index failed",
+}
+
+
+class EvidenceRow(Horizontal):
+    """One accessible evidence row with an explicit delete action."""
+
+    class DeleteRequested(Message):
+        def __init__(self, document: EvidenceDocument) -> None:
+            self.document = document
+            super().__init__()
+
+    def __init__(self, document: EvidenceDocument) -> None:
+        self.document = document
+        super().__init__(id=f"evidence-{document.document_id}", classes="evidence-row")
+
+    def compose(self) -> ComposeResult:
+        yield Static(self.document.original_name, classes="evidence-name", markup=False)
+        yield Static(self.document.file_format, classes="evidence-format")
+        yield Static(self.document.page_label, classes="evidence-pages")
+        yield Static(
+            STATE_LABELS[self.document.ingestion_state],
+            classes=f"evidence-state {self.document.ingestion_state.value}",
+        )
+        yield Button("Delete", classes="delete-evidence")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.has_class("delete-evidence"):
+            event.stop()
+            self.post_message(self.DeleteRequested(self.document))
+
+    def set_ingestion_state(self, state: EvidenceIngestionState) -> None:
+        self.document = replace(self.document, ingestion_state=state)
+        status = self.query_one(".evidence-state", Static)
+        status.set_classes(f"evidence-state {state.value}")
+        status.update(STATE_LABELS[state])

@@ -1,0 +1,409 @@
+{
+  "schema_version": "1.0",
+  "code": "GEOPOLITICAL_CONFLICT",
+  "name": "Geopolitical conflict",
+  "description": "Geopolitical, diplomatic, defence and conflict-oriented OSINT investigations.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": [
+    "CORE"
+  ],
+  "entity_types": [
+    {
+      "code": "GEO_GOVERNMENT_BODY",
+      "base_type": "ORGANIZATION",
+      "label": "Government body",
+      "description": "A named ministry, authority, agency or other governmental institution.",
+      "examples": [
+        "ministry",
+        "regulator",
+        "government agency"
+      ]
+    },
+    {
+      "code": "GEO_POLITICAL_PARTY",
+      "base_type": "ORGANIZATION",
+      "label": "Political party",
+      "description": "A named political party with an organized institutional identity."
+    },
+    {
+      "code": "GEO_INTERGOVERNMENTAL_ORGANIZATION",
+      "base_type": "ORGANIZATION",
+      "label": "Intergovernmental organization",
+      "description": "A named organization established by multiple states."
+    },
+    {
+      "code": "MIL_MILITARY_UNIT",
+      "base_type": "ORGANIZATION",
+      "label": "Military unit",
+      "description": "A formally organized and explicitly named military command, formation or unit.",
+      "exclude_when": [
+        "Do not use for a weapon, vehicle, operation or informal armed group."
+      ],
+      "examples": [
+        "brigade",
+        "battalion",
+        "naval command"
+      ]
+    },
+    {
+      "code": "GEO_ARMED_GROUP",
+      "base_type": "GROUP",
+      "label": "Armed group",
+      "description": "A named non-state or informal armed collective."
+    },
+    {
+      "code": "GEO_DIPLOMATIC_MISSION",
+      "base_type": "FACILITY",
+      "label": "Diplomatic mission",
+      "description": "A named embassy, consulate, permanent mission or diplomatic premises."
+    },
+    {
+      "code": "MIL_DEFENSE_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Defence program",
+      "description": "A named defence, procurement or military development programme."
+    },
+    {
+      "code": "MIL_MILITARY_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Military operation",
+      "description": "A named coordinated military operation."
+    },
+    {
+      "code": "GEO_INFLUENCE_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Influence campaign",
+      "description": "A named coordinated influence or information campaign explicitly described by the evidence."
+    },
+    {
+      "code": "GEO_CRITICAL_INFRASTRUCTURE",
+      "base_type": "INFRASTRUCTURE",
+      "label": "Critical infrastructure",
+      "description": "A named infrastructure system explicitly described as critical or strategically significant."
+    },
+    {
+      "code": "GEO_STATE",
+      "base_type": "ORGANIZATION",
+      "label": "State",
+      "description": "A specifically named sovereign state or state authority.",
+      "examples": [
+        "France",
+        "Russian Federation",
+        "State of Israel"
+      ]
+    },
+    {
+      "code": "GEO_GOVERNMENT",
+      "base_type": "ORGANIZATION",
+      "label": "Government",
+      "description": "A specifically named national, regional or transitional government.",
+      "examples": [
+        "Government of National Unity",
+        "Federal Government of Somalia"
+      ]
+    },
+    {
+      "code": "GEO_INTELLIGENCE_AGENCY",
+      "base_type": "ORGANIZATION",
+      "label": "Intelligence agency",
+      "description": "A specifically named civilian or military intelligence organization.",
+      "examples": [
+        "CIA",
+        "MI6",
+        "Mossad",
+        "GRU"
+      ]
+    },
+    {
+      "code": "GEO_SECURITY_SERVICE",
+      "base_type": "ORGANIZATION",
+      "label": "Security service",
+      "description": "A specifically named internal security or counter-intelligence organization.",
+      "examples": [
+        "FSB",
+        "Shin Bet",
+        "Security Service of Ukraine"
+      ]
+    },
+    {
+      "code": "GEO_LAW_ENFORCEMENT_AGENCY",
+      "base_type": "ORGANIZATION",
+      "label": "Law-enforcement agency",
+      "description": "A specifically named police, border-control or law-enforcement organization.",
+      "examples": [
+        "Europol",
+        "Federal Police of Brazil"
+      ]
+    },
+    {
+      "code": "MIL_ARMED_FORCE",
+      "base_type": "ORGANIZATION",
+      "label": "Armed force",
+      "description": "A specifically named national or institutional armed force.",
+      "examples": [
+        "Ukrainian Armed Forces",
+        "Israel Defense Forces"
+      ]
+    },
+    {
+      "code": "MIL_MILITARY_COMMAND",
+      "base_type": "ORGANIZATION",
+      "label": "Military command",
+      "description": "A specifically named military command or headquarters.",
+      "examples": [
+        "United States Central Command",
+        "NATO Allied Command Operations"
+      ]
+    },
+    {
+      "code": "MIL_PRIVATE_MILITARY_COMPANY",
+      "base_type": "ORGANIZATION",
+      "label": "Private military company",
+      "description": "A specifically named private military or security company.",
+      "examples": [
+        "Wagner Group",
+        "Academi"
+      ]
+    },
+    {
+      "code": "MIL_MILITARY_BASE",
+      "base_type": "FACILITY",
+      "label": "Military base",
+      "description": "A specifically named military base or installation.",
+      "examples": [
+        "Ramstein Air Base",
+        "Naval Station Rota"
+      ]
+    },
+    {
+      "code": "MIL_AIR_BASE",
+      "base_type": "FACILITY",
+      "label": "Air base",
+      "description": "A specifically named military aviation base.",
+      "examples": [
+        "Khmeimim Air Base",
+        "Incirlik Air Base"
+      ]
+    },
+    {
+      "code": "MIL_NAVAL_BASE",
+      "base_type": "FACILITY",
+      "label": "Naval base",
+      "description": "A specifically named naval base or military port.",
+      "examples": [
+        "Sevastopol Naval Base",
+        "Naval Support Activity Bahrain"
+      ]
+    },
+    {
+      "code": "GEO_BORDER_CROSSING",
+      "base_type": "FACILITY",
+      "label": "Border crossing",
+      "description": "A specifically named border crossing, checkpoint or gate.",
+      "examples": [
+        "Rafah Crossing",
+        "Kerem Shalom Crossing"
+      ]
+    },
+    {
+      "code": "GEO_REFUGEE_CAMP",
+      "base_type": "FACILITY",
+      "label": "Refugee camp",
+      "description": "A specifically named refugee or displacement camp.",
+      "examples": [
+        "Zaatari Refugee Camp",
+        "Jabalia Camp"
+      ]
+    },
+    {
+      "code": "MIL_WEAPON_SYSTEM",
+      "base_type": "PRODUCT",
+      "label": "Weapon system",
+      "description": "A specifically named weapon system, platform or weapons family.",
+      "examples": [
+        "Patriot",
+        "HIMARS",
+        "S-400"
+      ]
+    },
+    {
+      "code": "MIL_MISSILE_SYSTEM",
+      "base_type": "PRODUCT",
+      "label": "Missile system",
+      "description": "A specifically named missile or missile system.",
+      "examples": [
+        "Iskander-M",
+        "Storm Shadow",
+        "ATACMS"
+      ]
+    },
+    {
+      "code": "MIL_COMBAT_AIRCRAFT_MODEL",
+      "base_type": "PRODUCT",
+      "label": "Combat aircraft model",
+      "description": "A specifically named military aircraft model.",
+      "examples": [
+        "F-16 Fighting Falcon",
+        "Su-35",
+        "Bayraktar TB2"
+      ]
+    },
+    {
+      "code": "MIL_ARMORED_VEHICLE_MODEL",
+      "base_type": "PRODUCT",
+      "label": "Armored vehicle model",
+      "description": "A specifically named tank or armored vehicle model.",
+      "examples": [
+        "Leopard 2",
+        "M1 Abrams",
+        "T-90"
+      ]
+    },
+    {
+      "code": "MIL_NAVAL_VESSEL_CLASS",
+      "base_type": "PRODUCT",
+      "label": "Naval vessel class",
+      "description": "A specifically named class or model of military vessel.",
+      "examples": [
+        "Arleigh Burke class",
+        "Kilo class"
+      ]
+    },
+    {
+      "code": "MIL_MILITARY_EXERCISE",
+      "base_type": "EVENT",
+      "label": "Military exercise",
+      "description": "A specifically named military exercise.",
+      "examples": [
+        "Defender Europe",
+        "Zapad 2021",
+        "RIMPAC"
+      ]
+    },
+    {
+      "code": "MIL_BATTLE",
+      "base_type": "EVENT",
+      "label": "Battle",
+      "description": "A specifically named battle or armed engagement.",
+      "examples": [
+        "Battle of Bakhmut",
+        "Battle of Mosul"
+      ]
+    },
+    {
+      "code": "GEO_COUP",
+      "base_type": "EVENT",
+      "label": "Coup",
+      "description": "A specifically named or conventionally identified coup event.",
+      "examples": [
+        "2023 Niger coup",
+        "2014 Thai coup"
+      ]
+    },
+    {
+      "code": "GEO_PEACE_PROCESS",
+      "base_type": "PROGRAM",
+      "label": "Peace process",
+      "description": "A specifically named diplomatic or peace process.",
+      "examples": [
+        "Oslo peace process",
+        "Astana Process"
+      ]
+    },
+    {
+      "code": "GEO_SANCTIONS_REGIME",
+      "base_type": "PROGRAM",
+      "label": "Sanctions regime",
+      "description": "A specifically named sanctions regime or sanctions program.",
+      "examples": [
+        "Global Magnitsky sanctions program",
+        "EU sanctions regime on Syria"
+      ]
+    },
+    {
+      "code": "GEO_PEACEKEEPING_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Peacekeeping operation",
+      "description": "A specifically named peacekeeping or stabilization operation.",
+      "examples": [
+        "UNIFIL",
+        "MINUSMA",
+        "KFOR"
+      ]
+    },
+    {
+      "code": "CYBER_THREAT_ACTOR",
+      "base_type": "GROUP",
+      "label": "Cyber threat actor",
+      "description": "A specifically named cyber-threat group or attributed intrusion set.",
+      "examples": [
+        "APT28",
+        "Lazarus Group",
+        "Sandworm"
+      ]
+    },
+    {
+      "code": "CYBER_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Cyber operation",
+      "description": "A specifically named cyber operation or intrusion campaign.",
+      "examples": [
+        "Operation Aurora",
+        "SolarWinds campaign"
+      ]
+    },
+    {
+      "code": "GEO_CEASEFIRE_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Ceasefire agreement",
+      "description": "A specifically named ceasefire or armistice agreement.",
+      "examples": [
+        "Minsk Protocol",
+        "Korean Armistice Agreement"
+      ]
+    },
+    {
+      "code": "GEO_PEACE_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Peace agreement",
+      "description": "A specifically named peace agreement or settlement.",
+      "examples": [
+        "Dayton Agreement",
+        "Good Friday Agreement"
+      ]
+    },
+    {
+      "code": "GEO_DEFENSE_AGREEMENT",
+      "base_type": "AGREEMENT",
+      "label": "Defense agreement",
+      "description": "A specifically named defence, security or military-cooperation agreement.",
+      "examples": [
+        "AUKUS",
+        "Enhanced Defense Cooperation Agreement"
+      ]
+    },
+    {
+      "code": "GEO_DISPUTED_TERRITORY",
+      "base_type": "LOCATION",
+      "label": "Disputed territory",
+      "description": "A specifically named territory explicitly described as disputed or contested.",
+      "examples": [
+        "Western Sahara",
+        "Nagorno-Karabakh",
+        "Golan Heights"
+      ]
+    },
+    {
+      "code": "GEO_CONFLICT_ZONE",
+      "base_type": "LOCATION",
+      "label": "Conflict zone",
+      "description": "A specifically named geographic area identified as a conflict or operational zone.",
+      "examples": [
+        "Gaza Strip",
+        "Donbas",
+        "Sahel"
+      ]
+    }
+  ]
+}

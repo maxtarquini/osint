@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "code": "TERRORISM_EXTREMISM",
+  "name": "Terrorism and extremism",
+  "description": "Terrorism, violent extremism, radicalization and counter-terrorism OSINT investigations.",
+  "version": "1.0.0",
+  "selectable_domain": true,
+  "extends": ["CORE"],
+  "entity_types": [
+    {
+      "code": "TER_TERRORIST_ORGANIZATION",
+      "base_type": "ORGANIZATION",
+      "label": "Terrorist organization",
+      "description": "A specifically named organization designated or described as a terrorist organization.",
+      "examples": [
+        "Islamic State",
+        "Al-Qaeda"
+      ]
+    },
+    {
+      "code": "TER_EXTREMIST_GROUP",
+      "base_type": "GROUP",
+      "label": "Extremist group",
+      "description": "A specifically named extremist or violent ideological group.",
+      "exclude_when": [
+        "Do not use for formally constituted political parties or state organizations."
+      ]
+    },
+    {
+      "code": "TER_TERRORIST_CELL",
+      "base_type": "GROUP",
+      "label": "Terrorist cell",
+      "description": "A specifically named operational terrorist cell or local network."
+    },
+    {
+      "code": "TER_AFFILIATE",
+      "base_type": "ORGANIZATION",
+      "label": "Affiliate organization",
+      "description": "A specifically named affiliate, regional branch or franchise of a terrorist organization."
+    },
+    {
+      "code": "TER_RECRUITMENT_NETWORK",
+      "base_type": "GROUP",
+      "label": "Recruitment network",
+      "description": "A specifically named recruitment or facilitation network."
+    },
+    {
+      "code": "TER_TRAINING_CAMP",
+      "base_type": "FACILITY",
+      "label": "Training camp",
+      "description": "A specifically named terrorist or extremist training facility."
+    },
+    {
+      "code": "TER_SAFEHOUSE",
+      "base_type": "FACILITY",
+      "label": "Safehouse",
+      "description": "A specifically named safehouse or operational hideout."
+    },
+    {
+      "code": "TER_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Terrorist operation",
+      "description": "A specifically named terrorist operation or coordinated attack."
+    },
+    {
+      "code": "TER_ATTACK",
+      "base_type": "EVENT",
+      "label": "Terrorist attack",
+      "description": "A specifically named terrorist attack or bombing.",
+      "examples": [
+        "2015 Paris attacks",
+        "2019 Easter bombings"
+      ]
+    },
+    {
+      "code": "TER_HOSTAGE_CRISIS",
+      "base_type": "EVENT",
+      "label": "Hostage crisis",
+      "description": "A specifically named hostage-taking or siege event."
+    },
+    {
+      "code": "TER_MANIFESTO",
+      "base_type": "DOCUMENT",
+      "label": "Manifesto",
+      "description": "A specifically named extremist manifesto, declaration or ideological document."
+    },
+    {
+      "code": "TER_PROPAGANDA_PUBLICATION",
+      "base_type": "DOCUMENT",
+      "label": "Propaganda publication",
+      "description": "A specifically named extremist publication, magazine or newsletter."
+    },
+    {
+      "code": "TER_MEDIA_CHANNEL",
+      "base_type": "SERVICE",
+      "label": "Media channel",
+      "description": "A specifically named propaganda outlet, media channel or dissemination platform."
+    },
+    {
+      "code": "TER_RECRUITMENT_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Recruitment campaign",
+      "description": "A specifically named extremist recruitment campaign."
+    },
+    {
+      "code": "TER_PROPAGANDA_CAMPAIGN",
+      "base_type": "CAMPAIGN",
+      "label": "Propaganda campaign",
+      "description": "A specifically named propaganda or influence campaign."
+    },
+    {
+      "code": "TER_RADICALIZATION_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Radicalization program",
+      "description": "A specifically named radicalization or ideological indoctrination program."
+    },
+    {
+      "code": "TER_DERADICALIZATION_PROGRAM",
+      "base_type": "PROGRAM",
+      "label": "Deradicalization program",
+      "description": "A specifically named deradicalization or disengagement program."
+    },
+    {
+      "code": "TER_COUNTERTERRORISM_OPERATION",
+      "base_type": "OPERATION",
+      "label": "Counter-terrorism operation",
+      "description": "A specifically named counter-terrorism operation."
+    },
+    {
+      "code": "TER_COUNTERTERRORISM_UNIT",
+      "base_type": "ORGANIZATION",
+      "label": "Counter-terrorism unit",
+      "description": "A specifically named law-enforcement or military counter-terrorism unit."
+    },
+    {
+      "code": "TER_DESIGNATION",
+      "base_type": "DOCUMENT",
+      "label": "Terrorist designation",
+      "description": "A specifically named terrorist designation list or official designation document."
+    }
+  ]
+}

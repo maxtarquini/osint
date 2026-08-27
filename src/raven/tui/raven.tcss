@@ -1,0 +1,1806 @@
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+Screen {
+    background: $background;
+    color: $ink;
+}
+
+Input,
+Select,
+TextArea {
+    background: $surface-raised;
+    color: $ink;
+    border: tall $muted;
+}
+
+Input:focus,
+Select:focus,
+TextArea:focus {
+    border: tall $accent;
+}
+
+Button {
+    text-style: bold;
+}
+
+#top-navigation {
+    width: 100%;
+    height: 3;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+}
+
+#navigation-brand {
+    width: 12;
+    height: 3;
+    content-align: center middle;
+    color: $accent;
+    text-style: bold;
+}
+
+#navigation-context {
+    width: 1fr;
+    height: 3;
+    padding-right: 2;
+    content-align: right middle;
+    color: $muted;
+    text-style: italic;
+}
+
+.navigation-item {
+    width: auto;
+    min-width: 12;
+    height: 3;
+    border: none;
+    background: $surface;
+    color: $muted;
+}
+
+.navigation-item.active {
+    background: $accent-dark;
+    color: $accent;
+    border-bottom: heavy $accent;
+    text-style: bold;
+}
+
+.navigation-item:hover {
+    background: $surface-raised;
+    color: $ink;
+}
+
+.navigation-item.active:hover {
+    background: $accent-dark;
+    color: $accent;
+}
+
+#home-shell {
+    width: 100%;
+    height: 1fr;
+    align: center middle;
+    padding: 0 1;
+}
+
+#brand-logo {
+    width: 100%;
+    height: auto;
+    color: $accent;
+    text-align: center;
+    text-style: bold;
+}
+
+#tagline {
+    width: 100%;
+    color: $muted;
+    text-align: center;
+    text-style: bold;
+}
+
+#primary-action-row {
+    width: 100%;
+    height: auto;
+}
+
+#infrastructure-status {
+    width: 100%;
+    height: 5;
+    align: center middle;
+}
+
+.service-status {
+    width: 1fr;
+    max-width: 24;
+    height: 5;
+    margin: 0 1;
+    padding: 1 0;
+    border: round $muted;
+    background: $surface;
+    text-align: center;
+    text-style: bold;
+}
+
+.service-status.checking {
+    color: $warning;
+    border: round $warning;
+}
+
+.service-status.connected {
+    color: $accent;
+    border: round $accent;
+}
+
+.service-status.authentication-required {
+    color: $warning;
+    border: round $warning;
+}
+
+.service-status.configuration-required {
+    color: $warning;
+    border: round $warning;
+}
+
+.service-status.unavailable {
+    color: $error;
+    border: round $error;
+}
+
+#new-investigation {
+    width: 32;
+    min-width: 24;
+}
+
+#configuration-title {
+    width: 100%;
+    height: 4;
+    padding: 0 2;
+    content-align: left middle;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+    color: $accent;
+    text-style: bold;
+}
+
+#secret-hint {
+    width: 100%;
+    height: 2;
+    content-align: center middle;
+    background: $surface-raised;
+    color: $muted;
+    text-align: center;
+}
+
+#configuration-tabs {
+    width: 100%;
+    height: 1fr;
+    margin: 1 2 0 2;
+}
+
+.config-form {
+    padding: 1 2 2 2;
+    background: $surface;
+    border: round $accent-dark;
+}
+
+.config-form Label {
+    margin-top: 1;
+    color: $muted;
+}
+
+.config-form Input {
+    width: 100%;
+}
+
+.config-form Select {
+    width: 100%;
+}
+
+.config-section-title {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+    padding: 1 1 0 1;
+    background: $surface-raised;
+    border-bottom: solid $accent-dark;
+    color: $accent;
+    text-style: bold;
+}
+
+.ai-parameter-row {
+    width: 100%;
+    height: 5;
+}
+
+.ai-parameter-field {
+    width: 1fr;
+    height: 5;
+    margin-right: 1;
+}
+
+.ai-parameter-field Label {
+    margin-top: 0;
+}
+
+.config-field-hint {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    color: $muted;
+}
+
+#storage-root-row,
+#dictionary-root-row {
+    width: 100%;
+    height: 3;
+}
+
+#evidence-storage-root,
+#dictionary-root {
+    width: 1fr;
+}
+
+#browse-evidence-storage,
+#browse-dictionary-root {
+    width: 12;
+}
+
+#storage-layout-hint,
+#storage-change-warning,
+#storage-environment-hint {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    color: $muted;
+}
+
+#dictionary-layout-hint,
+#dictionary-environment-hint {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    color: $muted;
+}
+
+#storage-change-warning {
+    color: $warning;
+}
+
+#neo4j-password-status {
+    width: 100%;
+    height: 1;
+    margin-top: 1;
+    color: $muted;
+}
+
+#neo4j-password-status.saved {
+    color: $accent;
+}
+
+#neo4j-password-status.pending {
+    color: $warning;
+}
+
+#test-ai-node {
+    width: 14;
+}
+
+#ai-test-result {
+    width: 18;
+    height: 3;
+    padding-left: 2;
+    content-align: left middle;
+    color: $muted;
+}
+
+#ai-test-result.checking,
+#ai-test-result.authentication-required,
+#ai-test-result.configuration-required {
+    color: $warning;
+}
+
+#ai-test-result.connected {
+    color: $accent;
+}
+
+#ai-test-result.unavailable {
+    color: $error;
+}
+
+#configuration-actions {
+    width: 100%;
+    height: 5;
+    padding: 1 0;
+    background: $surface;
+    border-top: solid $accent-dark;
+}
+
+#configuration-actions Horizontal {
+    width: 64;
+    height: 3;
+}
+
+#save-configuration,
+#cancel-configuration {
+    width: 16;
+}
+
+ConfigurationScreen.compact-configuration #configuration-title {
+    height: 3;
+}
+
+ConfigurationScreen.compact-configuration #secret-hint {
+    height: 1;
+}
+
+ConfigurationScreen.compact-configuration #configuration-tabs {
+    margin: 0 1;
+}
+
+ConfigurationScreen.compact-configuration .config-form {
+    padding: 0 1;
+    border: none;
+}
+
+ConfigurationScreen.compact-configuration #configuration-actions {
+    height: 3;
+    padding: 0;
+}
+
+Footer {
+    background: $surface;
+    color: $ink;
+}
+
+HelpScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+#help-dialog {
+    width: 42;
+    height: auto;
+    padding: 1 2;
+    border: round $accent;
+    background: $surface;
+}
+
+#help-title {
+    width: 100%;
+    margin-bottom: 1;
+    color: $accent;
+    text-align: center;
+    text-style: bold;
+}
+
+#close-help {
+    width: 100%;
+    margin-top: 1;
+}
+
+#investigation-title {
+    width: 100%;
+    height: 4;
+    padding: 0 2;
+    content-align: left middle;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+    color: $accent;
+    text-style: bold;
+}
+
+#investigation-hint,
+#evidence-formats {
+    width: 100%;
+    height: 2;
+    content-align: center middle;
+    background: $surface-raised;
+    color: $muted;
+    text-align: center;
+}
+
+#investigation-form {
+    width: 100%;
+    height: 1fr;
+    margin: 1 2 0 2;
+    padding: 1 2 2 2;
+    background: $surface;
+    border: round $accent-dark;
+}
+
+#investigation-form Label {
+    margin-top: 1;
+    color: $muted;
+}
+
+#investigation-form Input,
+#investigation-form Select,
+#investigation-form TextArea {
+    width: 100%;
+}
+
+#investigation-form .short-editor {
+    height: 4;
+    border: round $muted;
+}
+
+#investigation-form .questions-editor {
+    height: 12;
+    min-height: 12;
+    border: round $muted;
+}
+
+InvestigationCreateScreen.compact-investigation-form #investigation-form .questions-editor {
+    height: 7;
+    min-height: 7;
+}
+
+#investigation-domain-description {
+    width: 100%;
+    height: auto;
+    color: $muted;
+    padding: 0 1;
+}
+
+#investigation-actions {
+    width: 100%;
+    height: 5;
+    padding: 1 0;
+    background: $surface;
+    border-top: solid $accent-dark;
+}
+
+#investigation-actions Horizontal {
+    width: 64;
+    height: 3;
+}
+
+#investigation-create-status {
+    width: 32;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#investigation-create-status.running {
+    color: $warning;
+}
+
+#investigation-create-status.error {
+    color: $error;
+}
+
+#investigation-create-status.cancelled {
+    color: $warning;
+}
+
+#create-investigation,
+#cancel-investigation {
+    width: 16;
+}
+
+.hidden {
+    display: none;
+}
+
+#workspace-summary {
+    width: 100%;
+    height: 6;
+    padding: 1 2;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+}
+
+#workspace-heading {
+    width: 1fr;
+    height: 4;
+    padding-left: 1;
+}
+
+.section-kicker {
+    width: 100%;
+    height: 1;
+    color: $muted;
+    text-style: bold;
+}
+
+#workspace-title {
+    width: 100%;
+    height: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+#workspace-identifier {
+    width: 100%;
+    height: 1;
+    color: $muted;
+}
+
+#workspace-metrics {
+    width: 39;
+    height: 4;
+}
+
+.workspace-metric {
+    width: 13;
+    height: 4;
+    padding: 0 1;
+    border-left: solid $accent-dark;
+    content-align: left middle;
+    color: $ink;
+}
+
+#workspace-tabs {
+    width: 100%;
+    height: 1fr;
+    margin: 1 2 0 2;
+}
+
+#workspace-overview {
+    padding: 1;
+}
+
+#overview-grid {
+    width: 100%;
+    height: 12;
+}
+
+#overview-case-actions {
+    width: 100%;
+    height: 5;
+    margin-top: 1;
+    padding: 1 2;
+    background: $surface-raised;
+    border-top: solid $accent-dark;
+}
+
+#overview-case-actions-hint {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#edit-investigation {
+    width: 20;
+}
+
+#delete-investigation {
+    width: 22;
+}
+
+.overview-card {
+    height: auto;
+    min-height: 5;
+    padding: 1 2 2 2;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#overview-brief-card {
+    width: 2fr;
+    height: 12;
+    margin-right: 1;
+}
+
+#overview-profile-card {
+    width: 1fr;
+    height: 12;
+}
+
+#overview-questions-card {
+    width: 100%;
+    margin-top: 1;
+}
+
+.panel-title {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    border-left: heavy $accent;
+    color: $accent;
+    content-align: left middle;
+    text-style: bold;
+}
+
+#workspace-description,
+#workspace-questions,
+#workspace-profile {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+}
+
+#workspace-profile {
+    color: $muted;
+}
+
+#evidence-section-header {
+    width: 100%;
+    height: 9;
+    padding: 1 2;
+    background: $surface-raised;
+    border: round $accent-dark;
+}
+
+.section-heading {
+    width: 1fr;
+    height: 5;
+    padding: 0;
+}
+
+.section-description {
+    width: 100%;
+    height: 2;
+    padding-left: 1;
+    content-align: left middle;
+    color: $muted;
+}
+
+#index-evidence-rag,
+#cancel-rag-index,
+#add-evidence,
+#cancel-evidence-upload {
+    width: 12;
+    margin: 1 0;
+}
+
+#index-evidence-rag,
+#cancel-rag-index {
+    width: 13;
+}
+
+#evidence-operation-status {
+    width: 100%;
+    height: 2;
+    padding-left: 2;
+    content-align: left middle;
+    color: $muted;
+}
+
+#evidence-operation-status.running,
+#evidence-operation-status.cancelled {
+    color: $warning;
+}
+
+#evidence-operation-status.success {
+    color: $accent;
+}
+
+#evidence-operation-status.error {
+    color: $error;
+}
+
+#evidence-count {
+    width: 12;
+    height: 5;
+    padding-right: 1;
+    content-align: right middle;
+    color: $muted;
+}
+
+#evidence-header {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    background: $surface;
+    content-align: left middle;
+    color: $muted;
+    text-style: bold;
+}
+
+#evidence-list {
+    width: 100%;
+    height: 1fr;
+    margin: 0 1 1 1;
+    border: round $accent-dark;
+    background: $background;
+}
+
+#evidence-empty {
+    width: 100%;
+    height: 3;
+    content-align: center middle;
+    color: $muted;
+}
+
+.evidence-row {
+    width: 100%;
+    height: 4;
+    border-bottom: solid $accent-dark;
+}
+
+.evidence-row Static {
+    height: 4;
+    content-align: left middle;
+}
+
+.evidence-name {
+    width: 1fr;
+    padding-left: 1;
+}
+
+.evidence-format {
+    width: 8;
+    padding-left: 1;
+}
+
+.evidence-pages {
+    width: 7;
+    padding-left: 1;
+}
+
+.evidence-state {
+    width: 16;
+    padding-left: 1;
+}
+
+.evidence-state.pending,
+.evidence-state.processing {
+    color: $warning;
+}
+
+.evidence-state.ready {
+    color: $accent;
+}
+
+.evidence-state.failed {
+    color: $error;
+}
+
+.evidence-action,
+.delete-evidence {
+    width: 9;
+}
+
+EvidenceFilePicker,
+EvidenceStorageDirectoryPicker,
+MarkdownExportPicker,
+NewDirectoryDialog,
+ConfirmEvidenceDelete {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.path-picker-dialog {
+    width: 96%;
+    min-width: 52;
+    max-width: 120;
+    height: 94%;
+    min-height: 22;
+    padding: 1 2;
+    border: round $accent;
+    background: $surface;
+}
+
+.path-picker-header {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    background: $surface-raised;
+}
+
+.path-picker-title,
+#delete-evidence-title {
+    width: 1fr;
+    height: 2;
+    content-align: left middle;
+    color: $accent;
+    text-style: bold;
+}
+
+#delete-evidence-title {
+    width: 100%;
+    text-align: center;
+}
+
+.path-picker-help {
+    width: auto;
+    height: 2;
+    content-align: right middle;
+    color: $muted;
+    text-align: right;
+}
+
+.path-picker-locations {
+    width: 100%;
+    height: 4;
+    padding-top: 1;
+}
+
+.path-picker-locations Button {
+    width: 9;
+    min-width: 8;
+}
+
+#storage-picker-add-folder,
+#export-picker-add-folder {
+    width: 12;
+    min-width: 11;
+}
+
+.path-picker-root {
+    width: 1fr;
+    height: 3;
+    padding-left: 1;
+    content-align: left middle;
+    color: $muted;
+}
+
+#evidence-directory-tree,
+#storage-directory-tree,
+#markdown-export-directory-tree {
+    width: 100%;
+    height: 1fr;
+    border: round $muted;
+    background: $background;
+}
+
+.path-picker-selection {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    background: $surface-raised;
+}
+
+.path-picker-selection-label {
+    width: 10;
+    height: 2;
+    content-align: left middle;
+    color: $accent;
+    text-style: bold;
+}
+
+.path-picker-selection-value {
+    width: 1fr;
+    height: 2;
+    content-align: left middle;
+    color: $ink;
+}
+
+#selected-evidence-format {
+    width: 10;
+    height: 2;
+    content-align: right middle;
+    color: $muted;
+}
+
+.path-picker-actions {
+    width: 100%;
+    height: 4;
+    padding-top: 1;
+}
+
+.path-picker-formats {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#confirm-evidence-file,
+#confirm-storage-directory {
+    width: 13;
+    min-width: 12;
+}
+
+#confirm-markdown-export {
+    width: 18;
+    min-width: 18;
+}
+
+#cancel-evidence-file,
+#cancel-storage-directory,
+#cancel-markdown-export {
+    width: 10;
+    min-width: 9;
+}
+
+.markdown-export-name-row {
+    width: 100%;
+    height: 4;
+    padding-top: 1;
+}
+
+.markdown-export-name-label {
+    width: 12;
+    height: 3;
+    color: $accent;
+    content-align: left middle;
+    text-style: bold;
+}
+
+#markdown-export-name {
+    width: 1fr;
+}
+
+#markdown-export-error {
+    width: 100%;
+    height: 1;
+    color: $error;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-dialog,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-dialog,
+MarkdownExportPicker.compact-path-picker .path-picker-dialog {
+    padding: 0 1;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-header,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-header,
+MarkdownExportPicker.compact-path-picker .path-picker-header,
+EvidenceFilePicker.compact-path-picker .path-picker-title,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-title,
+MarkdownExportPicker.compact-path-picker .path-picker-title,
+EvidenceFilePicker.compact-path-picker .path-picker-help,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-help,
+MarkdownExportPicker.compact-path-picker .path-picker-help {
+    height: 1;
+    padding: 0;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-locations,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-locations,
+MarkdownExportPicker.compact-path-picker .path-picker-locations {
+    height: 3;
+    padding-top: 0;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-selection,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-selection,
+MarkdownExportPicker.compact-path-picker .path-picker-selection,
+EvidenceFilePicker.compact-path-picker .path-picker-selection-label,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-selection-label,
+MarkdownExportPicker.compact-path-picker .path-picker-selection-label,
+EvidenceFilePicker.compact-path-picker .path-picker-selection-value,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-selection-value,
+MarkdownExportPicker.compact-path-picker .path-picker-selection-value,
+EvidenceFilePicker.compact-path-picker #selected-evidence-format {
+    height: 1;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-actions,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-actions,
+MarkdownExportPicker.compact-path-picker .path-picker-actions {
+    height: 3;
+    padding-top: 0;
+}
+
+MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
+    height: 3;
+    padding-top: 0;
+}
+
+#new-directory-dialog {
+    width: 90%;
+    min-width: 42;
+    max-width: 52;
+    height: 13;
+    padding: 1 2;
+    border: round $accent;
+    background: $surface;
+}
+
+#new-directory-title {
+    width: 100%;
+    height: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+#new-directory-parent {
+    width: 100%;
+    height: 1;
+    color: $muted;
+}
+
+#new-directory-name {
+    width: 100%;
+    margin-top: 1;
+}
+
+#new-directory-error {
+    width: 100%;
+    height: 1;
+    color: $error;
+}
+
+#new-directory-actions {
+    width: 100%;
+    height: 3;
+    align-horizontal: right;
+}
+
+#confirm-new-directory,
+#cancel-new-directory {
+    width: 11;
+    min-width: 10;
+}
+
+#delete-evidence-dialog {
+    width: 60;
+    height: auto;
+    padding: 1 2;
+    border: round $error;
+    background: $surface;
+}
+
+#delete-evidence-name,
+#delete-evidence-warning {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    text-align: center;
+}
+
+#delete-evidence-warning {
+    color: $muted;
+}
+
+#delete-evidence-actions {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+    align: center middle;
+}
+
+#confirm-delete-evidence,
+#cancel-delete-evidence {
+    width: 16;
+}
+
+#catalog-title {
+    width: 100%;
+    height: 4;
+    padding: 0 2;
+    content-align: left middle;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+    color: $accent;
+    text-style: bold;
+}
+
+#catalog-toolbar {
+    width: 100%;
+    height: 5;
+    margin: 1 2 0 2;
+    padding: 0 1;
+    background: $surface-raised;
+    border: round $accent-dark;
+}
+
+#catalog-search {
+    width: 1fr;
+}
+
+#catalog-sort {
+    width: 16;
+}
+
+#refresh-investigations {
+    width: 12;
+    min-width: 12;
+}
+
+#new-investigation-catalog {
+    width: 20;
+}
+
+#catalog-load-status {
+    width: 100%;
+    height: 2;
+    margin: 0 2;
+    padding-left: 1;
+    content-align: left middle;
+    color: $muted;
+}
+
+#catalog-load-status.loading {
+    color: $warning;
+}
+
+#catalog-load-status.error {
+    color: $error;
+}
+
+#catalog-header {
+    width: 100%;
+    height: 2;
+    margin: 0 2;
+    padding: 0 1;
+    background: $surface;
+    content-align: left middle;
+    color: $muted;
+    text-style: bold;
+}
+
+#catalog-list {
+    width: 100%;
+    height: 1fr;
+    margin: 0 2 1 2;
+    border: round $accent-dark;
+    background: $background;
+}
+
+#catalog-empty {
+    width: 100%;
+    height: 3;
+    content-align: center middle;
+    color: $muted;
+}
+
+.investigation-row {
+    width: 100%;
+    height: 4;
+    border-bottom: solid $accent-dark;
+}
+
+.investigation-row Static {
+    height: 4;
+    content-align: left middle;
+}
+
+.catalog-name {
+    width: 1fr;
+    padding-left: 1;
+}
+
+.catalog-status {
+    width: 10;
+    padding-left: 1;
+}
+
+.catalog-updated {
+    width: 18;
+    padding-left: 1;
+}
+
+.catalog-evidence-count {
+    width: 10;
+    padding-left: 1;
+    text-align: center;
+}
+
+.catalog-action,
+.catalog-actions {
+    width: 20;
+}
+
+.catalog-actions {
+    height: 4;
+    align-vertical: middle;
+}
+
+.open-investigation,
+.delete-investigation-catalog {
+    width: 10;
+    min-width: 10;
+}
+
+#graph-toolbar {
+    width: 100%;
+    height: 10;
+    padding: 1 2;
+    background: $surface-raised;
+    border: round $accent-dark;
+}
+
+#graph-mode-control {
+    width: 1fr;
+    height: 6;
+    padding: 0;
+}
+
+.field-label {
+    width: 100%;
+    height: 1;
+    color: $muted;
+    text-style: bold;
+}
+
+#graph-preparation-mode {
+    width: 100%;
+}
+
+#graph-actions {
+    width: 31;
+    height: 5;
+    padding: 1 0;
+}
+
+#analyze-evidence {
+    width: 19;
+}
+
+#cancel-graph-analysis {
+    width: 12;
+}
+
+#graph-analysis-status {
+    width: 100%;
+    height: 2;
+    padding-left: 2;
+    content-align: left middle;
+    color: $muted;
+}
+
+#graph-analysis-status.running,
+#graph-analysis-status.cancelled,
+#graph-analysis-status.warning {
+    color: $warning;
+}
+
+#graph-analysis-status.success {
+    color: $accent;
+}
+
+#graph-analysis-status.error {
+    color: $error;
+}
+
+#graph-statistics {
+    width: 1fr;
+    height: 1;
+    color: $muted;
+    text-align: right;
+}
+
+#graph-body {
+    width: 100%;
+    height: 1fr;
+    padding: 1;
+}
+
+#graph-visual-panel {
+    width: 1fr;
+    height: 100%;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#graph-panel-header {
+    width: 100%;
+    height: 6;
+    border-bottom: solid $accent-dark;
+}
+
+#graph-panel-title-row {
+    width: 100%;
+    height: 3;
+    padding: 0 2;
+    content-align: left middle;
+}
+
+#graph-panel-title-row Static {
+    height: 2;
+}
+
+#graph-view-controls {
+    width: 100%;
+    height: 3;
+    padding-left: 1;
+    background: $surface;
+}
+
+#graph-navigation-hint {
+    width: 1fr;
+    height: 3;
+    color: $muted;
+    content-align: left middle;
+}
+
+#graph-zoom-label {
+    width: 6;
+    height: 3;
+    color: $accent;
+    text-style: bold;
+    content-align: center middle;
+}
+
+.graph-view-button {
+    width: 5;
+    min-width: 5;
+    height: 3;
+}
+
+#graph-canvas {
+    width: 100%;
+    height: 1fr;
+    min-height: 4;
+    padding: 0;
+    scrollbar-size: 1 1;
+}
+
+#graph-canvas:focus {
+    outline: tall $accent;
+}
+
+#graph-details-panel {
+    width: 30;
+    height: 100%;
+    margin-left: 1;
+    padding: 1 2;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#graph-entity-search {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+}
+
+#graph-selection-detail {
+    color: $ink;
+}
+
+.graph-detail-block {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    padding-bottom: 1;
+    border-bottom: solid $accent-dark;
+    color: $muted;
+}
+
+#graph-provenance-hint {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    color: $muted;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #workspace-summary {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #evidence-section-header {
+    height: 6;
+    padding: 0 1;
+    border: none;
+    border-bottom: solid $accent-dark;
+}
+
+InvestigationWorkspaceScreen.compact-workspace .panel-title {
+    height: 1;
+    padding: 0;
+    border-left: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #overview-case-actions-hint {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #workspace-heading,
+InvestigationWorkspaceScreen.compact-workspace #workspace-metrics,
+InvestigationWorkspaceScreen.compact-workspace .workspace-metric {
+    height: 2;
+}
+
+InvestigationWorkspaceScreen.compact-workspace .section-kicker,
+InvestigationWorkspaceScreen.compact-workspace .field-label {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-mode-control,
+InvestigationWorkspaceScreen.compact-workspace #graph-actions {
+    height: 5;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-toolbar {
+    height: 6;
+    padding: 0 1;
+    border: none;
+    border-bottom: solid $accent-dark;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-panel-header {
+    height: 4;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-panel-title-row {
+    height: 1;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-view-controls {
+    height: 3;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-navigation-hint {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-body {
+    padding: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-details-panel > .panel-title,
+InvestigationWorkspaceScreen.compact-workspace #graph-language-detail,
+InvestigationWorkspaceScreen.compact-workspace #graph-domain-detail,
+InvestigationWorkspaceScreen.compact-workspace #graph-evidence-detail,
+InvestigationWorkspaceScreen.compact-workspace #graph-breakdown,
+InvestigationWorkspaceScreen.compact-workspace #graph-provenance-hint {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #graph-details-panel {
+    width: 24;
+    padding: 1;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #graph-navigation-hint {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-actions {
+    padding: 1 0;
+}
+
+#chat-toolbar {
+    width: 100%;
+    height: 6;
+    padding: 1 2;
+    background: $surface-raised;
+    border: round $accent-dark;
+}
+
+#chat-heading {
+    width: 1fr;
+}
+
+#chat-token-usage {
+    width: 20;
+    height: 4;
+    padding-right: 1;
+    content-align: right middle;
+    color: $muted;
+    text-align: right;
+}
+
+#index-chat-kb,
+#clear-chat {
+    width: 13;
+    margin-top: 1;
+}
+
+#chat-operation-status {
+    width: 100%;
+    height: 2;
+    padding-left: 2;
+    content-align: left middle;
+    color: $muted;
+}
+
+#chat-operation-status.running,
+#chat-operation-status.warning,
+#chat-operation-status.cancelled {
+    color: $warning;
+}
+
+#chat-operation-status.success,
+#chat-operation-status.ready {
+    color: $accent;
+}
+
+#chat-operation-status.error {
+    color: $error;
+}
+
+#chat-body {
+    width: 100%;
+    height: 1fr;
+    padding: 1;
+}
+
+#chat-conversation {
+    width: 1fr;
+    height: 100%;
+    padding: 1 2;
+    border: round $accent-dark;
+    background: $background;
+}
+
+#chat-empty {
+    width: 100%;
+    height: auto;
+    min-height: 5;
+    padding: 2;
+    content-align: center middle;
+    color: $muted;
+    text-align: center;
+}
+
+#chat-context-panel {
+    width: 29;
+    height: 100%;
+    margin-left: 1;
+    padding: 1 2 2 2;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#chat-context-summary,
+.chat-context-note {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    color: $muted;
+}
+
+.chat-context-note {
+    padding-top: 1;
+    border-top: solid $accent-dark;
+}
+
+#chat-composer {
+    width: 100%;
+    height: 8;
+    padding: 1 2 0 2;
+    background: $surface-raised;
+    border-top: solid $accent-dark;
+}
+
+#chat-input {
+    width: 100%;
+    height: 4;
+    border: round $muted;
+}
+
+#chat-input:focus {
+    border: round $accent;
+}
+
+#chat-composer-actions {
+    width: 100%;
+    height: 3;
+}
+
+#chat-composer-hint {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#send-chat,
+#cancel-chat {
+    width: 12;
+}
+
+.chat-message {
+    width: 100%;
+    height: auto;
+    margin: 1 0;
+    padding: 0 1 1 1;
+    border-left: heavy $accent-dark;
+    background: $surface;
+}
+
+.chat-message.user {
+    margin-left: 8;
+    width: 1fr;
+    border-left: heavy #357ebd;
+    background: #0d1b29;
+}
+
+.chat-message.assistant {
+    margin-right: 4;
+}
+
+.chat-message.local-command {
+    border-left: heavy $accent;
+    background: $surface-raised;
+}
+
+.chat-message.streaming {
+    border-left: heavy $warning;
+}
+
+.chat-message.error {
+    border-left: heavy $error;
+}
+
+.chat-message-header {
+    width: 100%;
+    height: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+.chat-message.user .chat-message-header {
+    color: #66b3ff;
+}
+
+.chat-markdown {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    background: transparent;
+}
+
+.chat-message-sources {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    padding-top: 1;
+    border-top: solid $accent-dark;
+    color: $muted;
+}
+
+.chat-message-usage {
+    width: 100%;
+    height: 1;
+    margin-top: 1;
+    color: $muted;
+    text-align: right;
+}
+
+.mermaid-rendered MarkdownFence {
+    margin: 0;
+    padding: 0 1;
+    border: round $accent-dark;
+    background: $background;
+    color: $accent;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #chat-context-panel {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-toolbar {
+    height: 4;
+    padding: 0 1;
+    border: none;
+    border-bottom: solid $accent-dark;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-token-usage {
+    height: 4;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-heading {
+    height: 4;
+    padding-top: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #index-chat-kb,
+InvestigationWorkspaceScreen.compact-workspace #clear-chat {
+    height: 4;
+    margin-top: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-heading .section-description {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-body {
+    padding: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-composer {
+    height: 5;
+    padding: 0 1;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-input {
+    height: 3;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-composer-actions {
+    height: 2;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-composer-hint {
+    display: none;
+}
+
+ConfirmClearChat {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+#clear-chat-dialog {
+    width: 62;
+    height: 15;
+    padding: 1 2;
+    border: round $error;
+    background: $surface;
+}
+
+#clear-chat-title {
+    width: 100%;
+    height: 1;
+    color: $error;
+    text-align: center;
+    text-style: bold;
+}
+
+#clear-chat-investigation {
+    width: 100%;
+    height: 2;
+    color: $ink;
+    content-align: center middle;
+    text-align: center;
+    text-style: bold;
+}
+
+#clear-chat-warning {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    text-align: center;
+    color: $muted;
+}
+
+#clear-chat-actions {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+}
+
+#confirm-clear-chat,
+#cancel-clear-chat {
+    width: 17;
+}
+
+ConfirmInvestigationDelete {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+#delete-investigation-dialog {
+    width: 68;
+    max-width: 96%;
+    height: 16;
+    padding: 1 2;
+    background: $surface;
+    border: round $error;
+}
+
+#delete-investigation-title {
+    width: 100%;
+    height: 2;
+    color: $error;
+    text-align: center;
+    text-style: bold;
+}
+
+#delete-investigation-name {
+    width: 100%;
+    height: 2;
+    color: $ink;
+    text-align: center;
+    text-style: bold;
+}
+
+#delete-investigation-warning {
+    width: 100%;
+    height: 4;
+    color: $muted;
+    text-align: center;
+}
+
+#delete-investigation-actions {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+}
+
+#delete-investigation-actions Horizontal {
+    width: 42;
+    height: 3;
+}
+
+#confirm-delete-investigation {
+    width: 24;
+}
+
+#cancel-delete-investigation {
+    width: 18;
+}
