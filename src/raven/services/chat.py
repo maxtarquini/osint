@@ -12,6 +12,7 @@ from raven.agents import EvidenceLanguageDetectionAgent, EvidenceTranslationAgen
 from raven.ai import SharedAiNode
 from raven.exceptions import (
     GraphAgentError,
+    InvestigationCancelledError,
     InvestigationChatCancelledError,
     InvestigationChatError,
 )
@@ -61,19 +62,51 @@ class InvestigationChatService:
         cancelled: Cancelled | None = None,
         progress: IndexProgress | None = None,
     ) -> int:
+        return self._index_documents(investigation, documents, cancelled, progress)
+
+    def reindex_document(
+        self,
+        investigation: Investigation,
+        document: EvidenceDocument,
+        cancelled: Cancelled | None = None,
+        progress: IndexProgress | None = None,
+    ) -> int:
+        """Force one document through indexing, without pruning any other document."""
+        return self._index_documents(
+            investigation,
+            (document,),
+            cancelled,
+            progress,
+            single_document=True,
+        )
+
+    def _index_documents(
+        self,
+        investigation,
+        documents,
+        cancelled,
+        progress,
+        *,
+        single_document=False,
+    ) -> int:
         """Synchronize immutable Evidence copies into the investigation vector partition."""
         self._check_cancelled(cancelled)
+        if any(
+            document.investigation_id != investigation.investigation_id for document in documents
+        ):
+            raise InvestigationChatError("Evidence does not belong to this investigation")
         try:
             indexed = self._vectors.indexed_document_hashes(investigation.investigation_id)
             current_ids = {document.document_id for document in documents}
-            for stale_id in set(indexed) - current_ids:
+            for stale_id in () if single_document else set(indexed) - current_ids:
                 self._vectors.remove_document(investigation.investigation_id, stale_id)
 
             signature_suffix = investigation.analysis_language.value
             pending = [
                 document
                 for document in documents
-                if indexed.get(document.document_id)
+                if single_document
+                or indexed.get(document.document_id)
                 != self._index_signature(document, signature_suffix)
             ]
             total = len(pending)
@@ -101,6 +134,7 @@ class InvestigationChatService:
                             f"No extractable text found in {document.original_name}"
                         )
                     vectors = self._embed_batches(chunks, cancelled)
+                    self._check_cancelled(cancelled)
                     self._vectors.upsert_document(
                         document,
                         chunks,
@@ -110,7 +144,7 @@ class InvestigationChatService:
                             signature_suffix,
                         ),
                     )
-                except InvestigationChatCancelledError:
+                except (InvestigationChatCancelledError, InvestigationCancelledError) as error:
                     self._repository.set_evidence_ingestion_state(
                         document.document_id, EvidenceIngestionState.PENDING
                     )
@@ -121,7 +155,7 @@ class InvestigationChatService:
                         position - 1,
                         total,
                     )
-                    raise
+                    raise InvestigationChatCancelledError("RAG indexing cancelled") from error
                 except Exception:
                     self._repository.set_evidence_ingestion_state(
                         document.document_id, EvidenceIngestionState.FAILED
@@ -288,6 +322,7 @@ class InvestigationChatService:
         detected = self._language_detection.detect(
             investigation.investigation_id,
             sample,
+            cancelled=cancelled,
         )
         if detected == language.language_code:
             return chunks
@@ -299,6 +334,7 @@ class InvestigationChatService:
                     investigation.investigation_id,
                     chunk,
                     language,
+                    cancelled=cancelled,
                 )
             )
         return tuple(normalized)

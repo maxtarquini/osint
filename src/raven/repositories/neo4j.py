@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
+from dataclasses import asdict
 from typing import Any
 
 from neo4j import GraphDatabase
@@ -67,6 +69,7 @@ class Neo4jRepository:
         """Upsert the latest proposed graph while keeping Evidence provenance on every item."""
         if self._driver is None or self._database is None:
             raise GraphPersistenceError("Neo4j is not connected")
+        self._validate_snapshot(graph)
         entities = [
             {
                 "id": entity.entity_id,
@@ -78,6 +81,10 @@ class Neo4jRepository:
                     f"{scheme}={value}" for scheme, value in entity.external_identifiers
                 ],
                 "evidence_ids": list(entity.evidence_ids),
+                "support": [
+                    json.dumps(asdict(span), ensure_ascii=False) for span in entity.support
+                ],
+                "resolution_notes": list(entity.resolution_notes),
                 "rationale": entity.rationale,
                 "confidence": entity.confidence,
                 "status": entity.status.value,
@@ -91,6 +98,10 @@ class Neo4jRepository:
                 "target_id": relationship.target_entity_id,
                 "type": relationship.relationship_type,
                 "evidence_ids": list(relationship.evidence_ids),
+                "support": [
+                    json.dumps(asdict(span), ensure_ascii=False) for span in relationship.support
+                ],
+                "resolution_notes": list(relationship.resolution_notes),
                 "rationale": relationship.rationale,
                 "confidence": relationship.confidence,
                 "status": relationship.status.value,
@@ -98,55 +109,82 @@ class Neo4jRepository:
             for relationship in graph.relationships
         ]
         try:
-            self._driver.execute_query(
-                "MERGE (i:Investigation {id: $investigation_id}) "
-                "SET i.latest_run_id = $run_id, i.graph_updated_at = datetime()",
-                investigation_id=graph.investigation_id,
-                run_id=graph.run_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "MATCH (e:Entity {investigation_id: $investigation_id}) SET e.active = false",
-                investigation_id=graph.investigation_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "UNWIND $entities AS item "
-                "MERGE (e:Entity {id: item.id}) "
-                "SET e.investigation_id = $investigation_id, e.run_id = $run_id, "
-                "e.type = item.type, e.subtype = item.subtype, e.name = item.name, "
-                "e.aliases = item.aliases, e.identifiers = item.identifiers, "
-                "e.evidence_ids = item.evidence_ids, e.rationale = item.rationale, "
-                "e.confidence = item.confidence, e.status = item.status, e.active = true "
-                "WITH e MATCH (i:Investigation {id: $investigation_id}) "
-                "MERGE (i)-[:CONTAINS]->(e)",
-                entities=entities,
-                investigation_id=graph.investigation_id,
-                run_id=graph.run_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "MATCH (:Entity {investigation_id: $investigation_id})"
-                "-[r:EVIDENCE_RELATION]->(:Entity) SET r.active = false",
-                investigation_id=graph.investigation_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "UNWIND $relationships AS item "
-                "MATCH (source:Entity {id: item.source_id}) "
-                "MATCH (target:Entity {id: item.target_id}) "
-                "MERGE (source)-[r:EVIDENCE_RELATION {id: item.id}]->(target) "
-                "SET r.investigation_id = $investigation_id, r.run_id = $run_id, "
-                "r.type = item.type, r.evidence_ids = item.evidence_ids, "
-                "r.rationale = item.rationale, r.confidence = item.confidence, "
-                "r.status = item.status, r.active = true",
-                relationships=relationships,
-                investigation_id=graph.investigation_id,
-                run_id=graph.run_id,
-                database_=self._database,
-            )
+            with self._driver.session(database=self._database) as session:
+                session.execute_write(self._write_snapshot, graph, entities, relationships)
         except Exception as error:
             raise GraphPersistenceError("Unable to synchronize the graph with Neo4j") from error
+
+    @staticmethod
+    def _validate_snapshot(graph: InvestigationGraph) -> None:
+        """Reject malformed replacements before retiring the previous active graph."""
+        entity_ids = {entity.entity_id for entity in graph.entities}
+        relationship_ids = {relationship.relationship_id for relationship in graph.relationships}
+        if len(entity_ids) != len(graph.entities) or len(relationship_ids) != len(
+            graph.relationships
+        ):
+            raise GraphPersistenceError("Graph snapshot contains duplicate item identifiers")
+        if any(
+            relationship.source_entity_id not in entity_ids
+            or relationship.target_entity_id not in entity_ids
+            for relationship in graph.relationships
+        ):
+            raise GraphPersistenceError("Graph snapshot contains an unknown relationship endpoint")
+
+    @staticmethod
+    def _write_snapshot(
+        tx: Any,
+        graph: InvestigationGraph,
+        entities: list[dict[str, Any]],
+        relationships: list[dict[str, Any]],
+    ) -> None:
+        tx.run(
+            "MERGE (i:Investigation {id: $investigation_id}) "
+            "SET i.latest_run_id = $run_id, i.graph_updated_at = datetime()",
+            investigation_id=graph.investigation_id,
+            run_id=graph.run_id,
+        ).consume()
+        tx.run(
+            "MATCH (e:Entity {investigation_id: $investigation_id}) SET e.active = false",
+            investigation_id=graph.investigation_id,
+        ).consume()
+        tx.run(
+            "UNWIND $entities AS item "
+            "MERGE (e:Entity {id: item.id, investigation_id: $investigation_id}) "
+            "SET e.investigation_id = $investigation_id, e.run_id = $run_id, "
+            "e.type = item.type, e.subtype = item.subtype, e.name = item.name, "
+            "e.aliases = item.aliases, e.identifiers = item.identifiers, "
+            "e.evidence_ids = item.evidence_ids, e.support = item.support, "
+            "e.rationale = item.rationale, e.resolution_notes = item.resolution_notes, "
+            "e.confidence = item.confidence, e.status = item.status, e.active = true "
+            "WITH e MATCH (i:Investigation {id: $investigation_id}) "
+            "MERGE (i)-[:CONTAINS]->(e)",
+            entities=entities,
+            investigation_id=graph.investigation_id,
+            run_id=graph.run_id,
+        ).consume()
+        tx.run(
+            "MATCH (:Entity {investigation_id: $investigation_id})"
+            "-[r:EVIDENCE_RELATION {investigation_id: $investigation_id}]->"
+            "(:Entity {investigation_id: $investigation_id}) SET r.active = false",
+            investigation_id=graph.investigation_id,
+        ).consume()
+        tx.run(
+            "UNWIND $relationships AS item "
+            "MATCH (source:Entity {id: item.source_id, "
+            "investigation_id: $investigation_id, active: true}) "
+            "MATCH (target:Entity {id: item.target_id, "
+            "investigation_id: $investigation_id, active: true}) "
+            "MERGE (source)-[r:EVIDENCE_RELATION {id: item.id, "
+            "investigation_id: $investigation_id}]->(target) "
+            "SET r.investigation_id = $investigation_id, r.run_id = $run_id, "
+            "r.type = item.type, r.evidence_ids = item.evidence_ids, r.support = item.support, "
+            "r.rationale = item.rationale, r.resolution_notes = item.resolution_notes, "
+            "r.confidence = item.confidence, "
+            "r.status = item.status, r.active = true",
+            relationships=relationships,
+            investigation_id=graph.investigation_id,
+            run_id=graph.run_id,
+        ).consume()
 
     def delete_investigation(self, investigation_id: str) -> None:
         """Delete an investigation subgraph without touching other case partitions."""

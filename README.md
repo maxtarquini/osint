@@ -350,3 +350,26 @@ Questa fase introduce gestione, catalogazione e strumenti di lettura controllati
 Le pipeline investigative esistenti continuano a funzionare attraverso i loro servizi:
 abilitare una skill nel registro non cambia automaticamente la catalogazione dei documenti,
 la costruzione del grafo o le risposte della chat.
+
+
+## Cataloghi dei documenti e reindicizzazione singola
+
+Nella scheda **Evidence**, ogni riga offre **Apri catalogo** e **Reindicizza**.
+**Apri catalogo** consulta le schede già salvate: la sezione **Riepilogo** mostra la sintesi
+complessiva, **Pagine** permette di scorrere e filtrare classificazioni, entità, citazioni,
+date e riferimenti, mentre **Provenienza** riporta modello, dizionario e data del catalogo.
+Con `Invio` sulla pagina selezionata passi al dettaglio, con `/` al filtro e con `Esc`
+torni ai documenti. Se non esiste un catalogo, la schermata lo indica esplicitamente.
+La consultazione non richiede chiamate al modello.
+
+**Reindicizza** ricostruisce l'indice RAG del solo documento scelto, anche quando risulta già
+indicizzato. Gli altri documenti, i loro vettori e i loro stati restano invariati. Durante
+l'elaborazione puoi usare **Cancel RAG**; una richiesta AI già inviata termina alla risposta
+o al timeout, quindi l'annullamento impedisce i passi successivi. La rilevazione della lingua
+usa al massimo 512 token e 60 secondi; ogni traduzione usa al massimo 8192 token e 120 secondi,
+con ragionamento basso. I limiti inferiori configurati nel nodo mantengono la precedenza.
+
+> **Catalogo e RAG hanno scopi diversi.** Il catalogo descrive il contenuto delle pagine;
+> l'indice RAG serve a recuperare passaggi pertinenti alle domande. Reindicizzare aggiorna
+> la ricerca e conserva il catalogo esistente. Il pulsante generale **Index RAG** continua
+> invece a sincronizzare tutti i documenti dell'indagine.

@@ -20,7 +20,17 @@ STATE_LABELS = {
 
 
 class EvidenceRow(Horizontal):
-    """One accessible evidence row with an explicit delete action."""
+    """One accessible evidence row with document-scoped actions."""
+
+    class CatalogRequested(Message):
+        def __init__(self, document: EvidenceDocument) -> None:
+            self.document = document
+            super().__init__()
+
+    class ReindexRequested(Message):
+        def __init__(self, document: EvidenceDocument) -> None:
+            self.document = document
+            super().__init__()
 
     class DeleteRequested(Message):
         def __init__(self, document: EvidenceDocument) -> None:
@@ -39,12 +49,21 @@ class EvidenceRow(Horizontal):
             STATE_LABELS[self.document.ingestion_state],
             classes=f"evidence-state {self.document.ingestion_state.value}",
         )
-        yield Button("Delete", classes="delete-evidence")
+        with Horizontal(classes="evidence-document-actions"):
+            yield Button("Apri catalogo", classes="open-evidence-catalog")
+            yield Button("Reindicizza", classes="reindex-evidence")
+            yield Button("Delete", classes="delete-evidence")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.has_class("delete-evidence"):
             event.stop()
             self.post_message(self.DeleteRequested(self.document))
+        elif event.button.has_class("open-evidence-catalog"):
+            event.stop()
+            self.post_message(self.CatalogRequested(self.document))
+        elif event.button.has_class("reindex-evidence"):
+            event.stop()
+            self.post_message(self.ReindexRequested(self.document))
 
     def set_ingestion_state(self, state: EvidenceIngestionState) -> None:
         self.document = replace(self.document, ingestion_state=state)

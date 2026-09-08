@@ -656,8 +656,18 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
     width: 13;
 }
 
+#evidence-operation-line {
+    height: 2;
+}
+
+#rag-activity {
+    width: 11;
+    height: 2;
+    color: $accent;
+}
+
 #evidence-operation-status {
-    width: 100%;
+    width: 1fr;
     height: 2;
     padding-left: 2;
     content-align: left middle;
@@ -1825,3 +1835,35 @@ SkillEditor { align: center middle; background: rgba(0, 0, 0, 0.65); }
 CapabilitiesScreen > TabbedContent { height: 1fr; min-height: 0; }
 CapabilitiesScreen ContentSwitcher { height: 1fr; min-height: 0; }
 CapabilitiesScreen TabPane { height: 1fr; min-height: 0; }
+
+
+/* Per-document actions retain dev's row-based evidence layout and theme. */
+.evidence-document-actions { width: 43; height: 3; }
+.evidence-document-actions Button { height: 3; min-width: 9; margin: 0; }
+.open-evidence-catalog { width: 18; }
+.reindex-evidence { width: 16; }
+#evidence-header .evidence-action { width: 43; }
+InvestigationWorkspaceScreen.narrow-workspace .evidence-row { layout: vertical; height: 7; }
+InvestigationWorkspaceScreen.narrow-workspace .evidence-row .evidence-name { width: 1fr; height: 2; }
+InvestigationWorkspaceScreen.narrow-workspace .evidence-row .evidence-state { width: 1fr; height: 1; }
+InvestigationWorkspaceScreen.narrow-workspace .evidence-format,
+InvestigationWorkspaceScreen.narrow-workspace .evidence-pages,
+InvestigationWorkspaceScreen.narrow-workspace #evidence-header .evidence-state,
+InvestigationWorkspaceScreen.narrow-workspace #evidence-header .evidence-action { display: none; }
+InvestigationWorkspaceScreen.narrow-workspace .evidence-document-actions { width: 100%; }
+DocumentCatalogScreen { align: center middle; background: rgba(0, 0, 0, 0.65); }
+#saved-catalog-dialog { width: 96%; height: 96%; border: round $accent; background: $surface; padding: 0 1; }
+#saved-catalog-title { height: 1; color: $accent; text-style: bold; }
+#saved-catalog-status { height: 2; color: $muted; }
+#saved-catalog-dialog TabbedContent,
+#saved-catalog-dialog ContentSwitcher,
+#saved-catalog-dialog TabPane { height: 1fr; min-height: 0; }
+#saved-catalog-dialog TabPane { padding: 0; }
+#saved-catalog-dialog TextArea { height: 1fr; }
+#saved-catalog-body { height: 1fr; }
+#saved-catalog-table { width: 45%; }
+#saved-catalog-page { width: 1fr; }
+#saved-catalog-actions { height: 3; }
+#saved-catalog-actions Button { height: 3; width: 1fr; }
+DocumentCatalogScreen.narrow-catalog-reader #saved-catalog-body { layout: vertical; }
+DocumentCatalogScreen.narrow-catalog-reader #saved-catalog-table { width: 100%; height: 5; }

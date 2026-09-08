@@ -369,13 +369,18 @@ def test_neo4j_synchronizes_proposed_graph_with_evidence_provenance() -> None:
         now,
     )
     calls_before = driver.execute_query.call_count
+    session = driver.session.return_value.__enter__.return_value
+    transaction = MagicMock()
+    session.execute_write.side_effect = lambda callback, *args: callback(transaction, *args)
 
     repository.save_graph_snapshot(graph)
 
-    assert driver.execute_query.call_count == calls_before + 5
-    entity_call = driver.execute_query.call_args_list[calls_before + 2]
+    assert driver.execute_query.call_count == calls_before
+    session.execute_write.assert_called_once()
+    assert transaction.run.call_count == 5
+    entity_call = transaction.run.call_args_list[2]
     assert entity_call.kwargs["entities"][0]["evidence_ids"] == ["evidence"]
-    relationship_call = driver.execute_query.call_args_list[calls_before + 4]
+    relationship_call = transaction.run.call_args_list[4]
     assert relationship_call.kwargs["relationships"][0]["type"] == "WORKS_FOR"
 
 

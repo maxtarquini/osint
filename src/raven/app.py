@@ -121,6 +121,14 @@ class InvestigationChatLifecycle(Protocol):
         progress: Callable[[RagIndexProgress], None] | None = None,
     ) -> int: ...
 
+    def reindex_document(
+        self,
+        investigation: Investigation,
+        document: EvidenceDocument,
+        cancelled: Callable[[], bool] | None = None,
+        progress: Callable[[RagIndexProgress], None] | None = None,
+    ) -> int: ...
+
     def stream_answer(
         self,
         investigation: Investigation,
@@ -452,6 +460,21 @@ class RavenApp(App[None]):
         return self.investigation_chat.index_knowledge_base(
             investigation, documents, cancelled, progress
         )
+
+    def reindex_evidence_document(self, investigation, document, cancelled=None, progress=None):
+        if self.investigation_chat is None:
+            raise InvestigationPersistenceError("Investigation chat is not available")
+        return self.investigation_chat.reindex_document(
+            investigation, document, cancelled, progress
+        )
+
+    def load_evidence_catalog(self, investigation, document):
+        if document.investigation_id != investigation.investigation_id:
+            raise InvestigationValidationError("Evidence does not belong to this investigation")
+        repository = getattr(self.infrastructure, "mongo_repository", None)
+        if repository is None:
+            raise InvestigationPersistenceError("Catalog storage is not available")
+        return repository.load_catalog(investigation.investigation_id, document.document_id)
 
     def stream_investigation_chat(
         self,

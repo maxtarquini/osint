@@ -137,6 +137,30 @@ class KnowledgeBaseStore:
             raise InvestigationCancelledError("Evidence analysis cancelled")
         return self._normalize_text(text)
 
+    def extract_pages(
+        self,
+        document: EvidenceDocument,
+        cancelled: Callable[[], bool] | None = None,
+    ) -> tuple[str, ...]:
+        """Preserve PDF page positions, including blank pages; other formats are one text unit."""
+        path = self._document_path(document)
+        if path.suffix.lower() != ".pdf":
+            text = self.extract_text(document, cancelled)
+            return (text,) if text else ()
+        pages: list[str] = []
+        try:
+            for page in PdfReader(path).pages:
+                if cancelled is not None and cancelled():
+                    raise InvestigationCancelledError("Evidence analysis cancelled")
+                pages.append(self._normalize_text(page.extract_text() or ""))
+        except InvestigationCancelledError:
+            raise
+        except Exception as error:
+            raise InvestigationPersistenceError(
+                f"Unable to extract text from evidence: {document.original_name}"
+            ) from error
+        return tuple(pages)
+
     def stage_delete(self, document: EvidenceDocument) -> Path:
         source = self._document_path(document)
         if not source.is_file():

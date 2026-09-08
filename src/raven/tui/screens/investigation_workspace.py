@@ -21,6 +21,7 @@ from textual.widgets import (
     Footer,
     Input,
     Label,
+    LoadingIndicator,
     Select,
     Static,
     TabbedContent,
@@ -52,7 +53,9 @@ from raven.models import (
     RagIndexProgress,
     TokenUsage,
 )
+from raven.models.graph import EvidenceSpan
 from raven.tui.actions import ChatCommand, ChatCommandError, parse_chat_command
+from raven.tui.screens.document_catalog import DocumentCatalogScreen
 from raven.tui.screens.file_picker import (
     ConfirmEvidenceDelete,
     EvidenceFilePicker,
@@ -176,6 +179,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self._active_response: StreamingAssistantView | None = None
         self._chat_sources: tuple[str, ...] = ()
         self._rag_indexing = False
+        self._rag_target = None
         self._chat_input_tokens = 0
         self._chat_output_tokens = 0
         self._chat_total_tokens = 0
@@ -272,7 +276,9 @@ class InvestigationWorkspaceScreen(Screen[None]):
                     yield Button("Cancel RAG", id="cancel-rag-index", classes="hidden")
                     yield Button("Add file", id="add-evidence", variant="primary")
                     yield Button("Cancel", id="cancel-evidence-upload", classes="hidden")
-                yield Static("● Ready", id="evidence-operation-status", classes="ready")
+                with Horizontal(id="evidence-operation-line"):
+                    yield LoadingIndicator(id="rag-activity", classes="hidden")
+                    yield Static("● Ready", id="evidence-operation-status", classes="ready")
                 with Horizontal(id="evidence-header"):
                     yield Static("File", classes="evidence-name")
                     yield Static("Format", classes="evidence-format")
@@ -366,7 +372,8 @@ class InvestigationWorkspaceScreen(Screen[None]):
                         )
                         yield Static(
                             "PROVENANCE\nAI output is Evidence-grounded and PROPOSED. "
-                            "It is not a verified fact.",
+                            "A quote found in the original source does not verify the claim. "
+                            "Older graphs may contain document references only.",
                             id="graph-provenance-hint",
                         )
             with TabPane("Chat", id="workspace-chat-tab"):
@@ -585,6 +592,13 @@ class InvestigationWorkspaceScreen(Screen[None]):
             self.query_one("#graph-selection-detail", Static).update(
                 "SELECTED ITEM\nClick a node or edge, or focus the graph and use J/K."
             )
+        self.query_one("#graph-details-panel", VerticalScroll).scroll_home(animate=False)
+
+    def on_evidence_row_catalog_requested(self, event: EvidenceRow.CatalogRequested) -> None:
+        self.app.push_screen(DocumentCatalogScreen(self.investigation, event.document))
+
+    def on_evidence_row_reindex_requested(self, event: EvidenceRow.ReindexRequested) -> None:
+        self._start_chat_index(document=event.document)
 
     def on_evidence_row_delete_requested(self, event: EvidenceRow.DeleteRequested) -> None:
         if self._busy or self._rag_indexing:
@@ -801,7 +815,9 @@ class InvestigationWorkspaceScreen(Screen[None]):
             "ready",
         )
 
-    def _start_chat_index(self, *, silent: bool = False) -> None:
+    def _start_chat_index(
+        self, *, silent: bool = False, document: EvidenceDocument | None = None
+    ) -> None:
         if self._chat_busy or self._busy:
             return
         if not self._raven_app.settings.with_environment().ai.embedding_model:
@@ -824,11 +840,12 @@ class InvestigationWorkspaceScreen(Screen[None]):
             return
         self._chat_busy = True
         self._rag_indexing = True
+        self._rag_target = document.document_id if document else None
         self._chat_cancel.clear()
         self._set_chat_controls_disabled(True)
         self._set_rag_controls_disabled(True)
         self._set_rag_status("● Preparing investigation RAG index...", "running")
-        self._index_chat_kb(silent)
+        self._index_chat_kb(silent, document)
 
     def _cancel_rag_index(self) -> None:
         if not self._rag_indexing:
@@ -837,14 +854,22 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self._set_rag_status("● Cancelling after the active indexing step...", "running")
 
     @work(thread=True, exclusive=True, group="chat-operation", exit_on_error=False)
-    def _index_chat_kb(self, silent: bool) -> None:
+    def _index_chat_kb(self, silent: bool, document: EvidenceDocument | None = None) -> None:
         try:
-            count = self._raven_app.index_investigation_knowledge_base(
-                self.investigation,
-                tuple(self.documents),
-                self._chat_cancel.is_set,
-                self._chat_index_progress,
-            )
+            if document is None:
+                count = self._raven_app.index_investigation_knowledge_base(
+                    self.investigation,
+                    tuple(self.documents),
+                    self._chat_cancel.is_set,
+                    self._chat_index_progress,
+                )
+            else:
+                count = self._raven_app.reindex_evidence_document(
+                    self.investigation,
+                    document,
+                    self._chat_cancel.is_set,
+                    self._chat_index_progress,
+                )
         except InvestigationChatCancelledError:
             self.app.call_from_thread(self._chat_cancelled)
         except (InvestigationChatError, InvestigationError) as error:
@@ -892,10 +917,13 @@ class InvestigationWorkspaceScreen(Screen[None]):
             return
         self.documents = [
             replace(document, ingestion_state=EvidenceIngestionState.READY)
+            if self._rag_target is None or document.document_id == self._rag_target
+            else document
             for document in self.documents
         ]
         for row in self.query(EvidenceRow):
-            row.set_ingestion_state(EvidenceIngestionState.READY)
+            if self._rag_target is None or row.document.document_id == self._rag_target:
+                row.set_ingestion_state(EvidenceIngestionState.READY)
         self._finish_chat_operation(f"● KB indexed · {count} document(s)", "success")
         self._finish_rag_operation(
             f"● RAG index ready · {count} document(s)",
@@ -1031,6 +1059,8 @@ class InvestigationWorkspaceScreen(Screen[None]):
             self._finish_rag_operation("● RAG indexing failed", "error")
         status = self.query_one("#chat-operation-status", Static)
         status.tooltip = detail
+        if rag_indexing:
+            self.query_one("#evidence-operation-status", Static).tooltip = detail
         if not silent:
             self.notify(detail, title="Investigation chat failed", severity="error")
 
@@ -1041,15 +1071,18 @@ class InvestigationWorkspaceScreen(Screen[None]):
 
     def _finish_rag_operation(self, label: str, state: str) -> None:
         self._rag_indexing = False
+        self._rag_target = None
         self._set_rag_controls_disabled(False)
         self._set_operation_status(label, state)
 
     def _set_rag_controls_disabled(self, disabled: bool) -> None:
+        self.query_one("#rag-activity", LoadingIndicator).set_class(not disabled, "hidden")
         self.query_one("#index-evidence-rag", Button).disabled = disabled
         self.query_one("#add-evidence", Button).disabled = disabled
         self.query_one("#cancel-rag-index", Button).set_class(not disabled, "hidden")
         for row in self.query(EvidenceRow):
             row.query_one(".delete-evidence", Button).disabled = disabled
+            row.query_one(".reindex-evidence", Button).disabled = disabled
 
     def _set_rag_status(self, label: str, state: str) -> None:
         self._set_operation_status(label, state)
@@ -1429,6 +1462,13 @@ class InvestigationWorkspaceScreen(Screen[None]):
             + identifiers
             + "\n\nEVIDENCE\n"
             + f"{len(entity.evidence_ids)} supporting document(s)"
+            + "\n\nFONTI / CITAZIONI\n"
+            + self._support_detail(entity.support)
+            + (
+                "\n\nNOTE DI IDENTITÀ\n" + "\n".join(entity.resolution_notes)
+                if entity.resolution_notes
+                else ""
+            )
             + "\n\nRATIONALE\n"
             + rationale
         )
@@ -1452,6 +1492,20 @@ class InvestigationWorkspaceScreen(Screen[None]):
             (item.rationale.strip() for item in relationships if item.rationale.strip()),
             "No rationale supplied",
         )
+        support = "\n\n".join(
+            (
+                f"{item.relationship_type} · {item.status.value.upper()}\n"
+                if len(relationships) > 1
+                else ""
+            )
+            + self._support_detail(item.support)
+            + (
+                "\nNOTE SULLA RELAZIONE\n" + "\n".join(item.resolution_notes)
+                if item.resolution_notes
+                else ""
+            )
+            for item in relationships
+        )
         return (
             "SELECTED RELATIONSHIP\n"
             + source
@@ -1463,8 +1517,38 @@ class InvestigationWorkspaceScreen(Screen[None]):
             + f"{first.status.value.upper()} · {confidence:.0%}"
             + "\n\nEVIDENCE\n"
             + f"{len(evidence_ids)} supporting document(s)"
+            + "\n\nFONTI / CITAZIONI\n"
+            + support
             + "\n\nRATIONALE\n"
             + rationale
+        )
+
+    def _support_detail(self, support: tuple[EvidenceSpan, ...]) -> str:
+        if not support:
+            return (
+                "Nessuna citazione puntuale salvata. I grafi precedenti possono avere solo "
+                "riferimenti al documento: rigenera l'analisi per verificare pagine e citazioni."
+            )
+        documents = {item.document_id: item.original_name for item in self.documents}
+        excerpts = []
+        for span in dict.fromkeys(support):
+            source = documents.get(
+                span.evidence_id, f"Documento non presente nell'indagine · {span.evidence_id}"
+            )
+            position = (
+                f"Pagina {span.page_number}"
+                if span.page_number is not None
+                else "Pagina non disponibile · posizione non verificata"
+            )
+            verification = (
+                "Citazione verificata nel testo originale"
+                if span.verified_original
+                else "Citazione non verificata nel testo originale"
+            )
+            excerpts.append(f"{source}\n{position}\n{verification}\n“{span.quote}”")
+        return "\n\n".join(excerpts) + (
+            "\n\nLa verifica della citazione conferma la presenza nel testo, "
+            "non la verità dell'affermazione."
         )
 
     def _finish_graph_operation(self, label: str, state: str) -> None:

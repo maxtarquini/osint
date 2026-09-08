@@ -46,6 +46,16 @@ class GraphItemStatus(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class EvidenceSpan:
+    """Quoted support checked against an original source page, not a factual verdict."""
+
+    evidence_id: str
+    quote: str
+    page_number: int | None = None
+    verified_original: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class GraphEntity:
     entity_id: str
     entity_type: str
@@ -57,6 +67,8 @@ class GraphEntity:
     rationale: str = ""
     confidence: float = 0.0
     status: GraphItemStatus = GraphItemStatus.PROPOSED
+    support: tuple[EvidenceSpan, ...] = ()
+    resolution_notes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +81,8 @@ class GraphRelationship:
     rationale: str = ""
     confidence: float = 0.0
     status: GraphItemStatus = GraphItemStatus.PROPOSED
+    support: tuple[EvidenceSpan, ...] = ()
+    resolution_notes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,7 +111,7 @@ class GraphAnalysisRun:
     updated_at: datetime
     completed_at: datetime | None = None
     last_error: str | None = None
-    prompt_version: str = "raven-hudiny-r2.11-vocabulary"
+    prompt_version: str = "raven-grounded-dev-v1"
     dictionary_domain: str = "GENERAL_OSINT"
     dictionary_hash: str = ""
     dictionary_versions: tuple[str, ...] = ()

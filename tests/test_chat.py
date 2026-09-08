@@ -93,7 +93,9 @@ class FakeAiNode:
     def embed(self, texts: list[str]):
         return tuple((0.1, 0.2, 0.3) for _ in texts)
 
-    def chat(self, system_message: str, user_message: str, *, json_mode: bool = False):
+    def chat(
+        self, system_message: str, user_message: str, *, json_mode: bool = False, **request_options
+    ):
         if "Language Detection" in system_message:
             return "en"
         return user_message.split("Evidence:\n", 1)[-1]
@@ -295,7 +297,9 @@ def test_reference_language_is_part_of_index_signature_and_translates_chunks() -
     vectors = FakeVectors()
     ai = FakeAiNode()
 
-    def translated_chat(system_message: str, user_message: str, *, json_mode: bool = False):
+    def translated_chat(
+        system_message: str, user_message: str, *, json_mode: bool = False, **request_options
+    ):
         if "Language Detection" in system_message:
             return "it"
         return "Translated Evidence"

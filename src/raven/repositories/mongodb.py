@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import asdict
 from datetime import UTC, datetime
 from typing import Any
 
@@ -27,6 +28,8 @@ from raven.models import (
     InvestigationStatus,
     TokenUsage,
 )
+from raven.models.graph import EvidenceSpan
+from raven.repositories.catalog import CatalogReader
 
 MONGO_SCHEMA_VERSION = 6
 BASE_COLLECTIONS = (
@@ -42,7 +45,7 @@ BASE_COLLECTIONS = (
 )
 
 
-class MongoRepository:
+class MongoRepository(CatalogReader):
     """Own the MongoDB client and prepare collections required by Raven."""
 
     def __init__(self, client_factory: Callable[..., Any] = MongoClient) -> None:
@@ -534,6 +537,8 @@ class MongoRepository:
             "rationale": entity.rationale,
             "confidence": entity.confidence,
             "status": entity.status.value,
+            "support": [asdict(span) for span in entity.support],
+            "resolution_notes": list(entity.resolution_notes),
         }
 
     @staticmethod
@@ -547,6 +552,8 @@ class MongoRepository:
             "rationale": relationship.rationale,
             "confidence": relationship.confidence,
             "status": relationship.status.value,
+            "support": [asdict(span) for span in relationship.support],
+            "resolution_notes": list(relationship.resolution_notes),
         }
 
     @staticmethod
@@ -565,6 +572,8 @@ class MongoRepository:
             rationale=str(document.get("rationale", "")),
             confidence=float(document.get("confidence", 0.0)),
             status=GraphItemStatus(document.get("status", GraphItemStatus.PROPOSED.value)),
+            support=tuple(EvidenceSpan(**span) for span in document.get("support") or []),
+            resolution_notes=tuple(str(note) for note in document.get("resolution_notes") or []),
         )
 
     @staticmethod
@@ -578,6 +587,8 @@ class MongoRepository:
             rationale=str(document.get("rationale", "")),
             confidence=float(document.get("confidence", 0.0)),
             status=GraphItemStatus(document.get("status", GraphItemStatus.PROPOSED.value)),
+            support=tuple(EvidenceSpan(**span) for span in document.get("support") or []),
+            resolution_notes=tuple(str(note) for note in document.get("resolution_notes") or []),
         )
 
     @staticmethod

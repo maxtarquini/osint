@@ -18,6 +18,7 @@ from raven.exceptions import (
     GraphAnalysisValidationError,
     GraphPersistenceError,
     InvestigationCancelledError,
+    InvestigationChatCancelledError,
 )
 from raven.graph import (
     EvidenceGraphExtractor,
@@ -119,6 +120,8 @@ class GraphAnalysisService:
     ) -> GraphAnalysisResult:
         if not documents:
             raise GraphAnalysisValidationError("Add at least one Evidence document before analysis")
+        if any(doc.investigation_id != investigation.investigation_id for doc in documents):
+            raise GraphAnalysisValidationError("Evidence does not belong to this investigation")
         try:
             vocabulary = self._extractor.resolve_vocabulary(investigation.analysis_domain)
         except ConfigurationError as error:
@@ -153,8 +156,9 @@ class GraphAnalysisService:
                 EvidenceIngestionState.PROCESSING,
             )
             try:
-                text = self._knowledge_bases.extract_text(document, cancelled)
-                if not text:
+                pages = self._knowledge_bases.extract_pages(document, cancelled)
+                text = "\n\n".join(pages)
+                if not text.strip():
                     raise GraphAnalysisValidationError(
                         f"No extractable text in {document.original_name}"
                     )
@@ -166,6 +170,8 @@ class GraphAnalysisService:
                     preparation_mode,
                     investigation.analysis_domain,
                     vocabulary,
+                    pages=pages,
+                    cancelled=cancelled,
                 )
                 existing_entities, _ = consolidate_graph(entity_groups, relationship_groups)
                 entities, relationships = self._extractor.resolve_against(
@@ -174,7 +180,11 @@ class GraphAnalysisService:
                     relationships,
                     existing_entities,
                 )
-            except (GraphAnalysisCancelledError, InvestigationCancelledError) as error:
+            except (
+                GraphAnalysisCancelledError,
+                InvestigationCancelledError,
+                InvestigationChatCancelledError,
+            ) as error:
                 self._cancel(run, completed, failed)
                 raise GraphAnalysisCancelledError("Graph analysis cancelled") from error
             except Exception as error:
@@ -242,11 +252,22 @@ class GraphAnalysisService:
         )
         self._repository.save_graph_snapshot(graph)
 
-        warning: str | None = None
+        warnings = []
+        unsupported = sum(
+            not item.support or not all(span.verified_original for span in item.support)
+            for item in (*entities, *relationships)
+        )
+        if unsupported:
+            warnings.append(
+                f"{unsupported} graph item(s) have missing or unverified source citations"
+            )
+        if "deterministic-fallback" in model_names:
+            warnings.append("Semantic extraction failed; only deterministic observables retained")
+        warning: str | None = "; ".join(warnings) or None
         try:
             self._graph_store.save_graph_snapshot(graph)
         except GraphPersistenceError as error:
-            warning = str(error)
+            warning = "; ".join((*warnings, str(error)))
             logger.warning(
                 "Neo4j graph synchronization failed. investigation_id=%s run_id=%s",
                 investigation.investigation_id,

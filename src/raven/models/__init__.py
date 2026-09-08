@@ -11,6 +11,7 @@ from raven.models.chat import (
 )
 from raven.models.graph import (
     EvidencePreparationMode,
+    EvidenceSpan,
     GraphAnalysisJob,
     GraphAnalysisProgress,
     GraphAnalysisResult,
@@ -45,6 +46,7 @@ __all__ = [
     "EvidenceDocument",
     "EvidenceIngestionState",
     "EvidencePreparationMode",
+    "EvidenceSpan",
     "GraphAnalysisProgress",
     "GraphAnalysisJob",
     "GraphAnalysisResult",
