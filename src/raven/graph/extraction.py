@@ -166,16 +166,19 @@ class EvidenceGraphExtractor:
         entities: tuple[GraphEntity, ...],
         relationships: tuple[GraphRelationship, ...],
         existing_entities: tuple[GraphEntity, ...],
+        *,
+        cancelled=None,
     ) -> tuple[tuple[GraphEntity, ...], tuple[GraphRelationship, ...]]:
         """Resolve corroborated identities without turning names into identity keys."""
-        if not existing_entities:
-            return entities, relationships
+        known = {entity.entity_id: entity for entity in existing_entities}
         remapped: dict[str, str] = {}
         resolved: list[GraphEntity] = []
         for mention in entities:
+            if cancelled and cancelled():
+                raise GraphAnalysisCancelledError("Graph analysis cancelled")
             same_type = tuple(
                 candidate
-                for candidate in existing_entities
+                for candidate in known.values()
                 if candidate.entity_type == mention.entity_type
                 and not identifiers_conflict(mention, candidate)
             )
@@ -187,10 +190,13 @@ class EvidenceGraphExtractor:
                     mention = _resolution_note(
                         mention, "REVIEW: More than ten plausible identities; kept separate"
                     )
-                elif sum(
-                    bool(_hard_identifiers(mention).intersection(_hard_identifiers(candidate)))
-                    for candidate in ambiguous
-                ) > 1:
+                elif (
+                    sum(
+                        bool(_hard_identifiers(mention).intersection(_hard_identifiers(candidate)))
+                        for candidate in ambiguous
+                    )
+                    > 1
+                ):
                     mention = _resolution_note(
                         mention, "REVIEW: Hard identifier matches multiple identities"
                     )
@@ -206,6 +212,7 @@ class EvidenceGraphExtractor:
                             investigation_id,
                             mention,
                             ambiguous,
+                            cancelled=cancelled,
                         )
                     except GraphAgentError:
                         logger.warning(
@@ -247,7 +254,7 @@ class EvidenceGraphExtractor:
                     candidate.entity_type == mention.entity_type
                     and identifiers_conflict(mention, candidate)
                     and _names_similar(mention, candidate)
-                    for candidate in existing_entities
+                    for candidate in known.values()
                 ):
                     mention = _resolution_note(
                         mention, "KEEP_SEPARATE: Incompatible hard identifiers"
@@ -255,10 +262,12 @@ class EvidenceGraphExtractor:
             if target is None:
                 resolved.append(mention)
                 remapped[mention.entity_id] = mention.entity_id
+                known[mention.entity_id] = mention
             else:
                 linked = _merge_entity(target, mention)
                 resolved.append(linked)
                 remapped[mention.entity_id] = target.entity_id
+                known[target.entity_id] = linked
         grounded_relationships = tuple(
             replace(
                 relationship,
@@ -307,7 +316,8 @@ def deterministic_entities(
             value = re.sub(r"[),.;:!?]+$", "", match.group()).strip()
             if not value:
                 continue
-            normalized = value.casefold()
+            # URL paths may be case-sensitive; preserve them in deterministic identity keys.
+            normalized = value if entity_type == "URL" else value.casefold()
             key = (entity_type, normalized)
             existing = candidates.get(key)
             if existing is not None:
@@ -478,7 +488,13 @@ def _identifiers(entity: GraphEntity) -> set[tuple[str, str]]:
             continue
         # URL paths and usernames may be case-sensitive. A missed match is safer
         # than silently identifying two different resources.
-        if scheme not in {"url", "username", "account_id", "wallet_address"}:
+        if scheme not in {
+            "url",
+            "username",
+            "account_id",
+            "wallet_address",
+            "cryptocurrency_address",
+        }:
             value = value.casefold()
         identifiers.add((scheme, value))
     return identifiers

@@ -88,17 +88,17 @@ evidence removes the Raven-managed copy and metadata but never modifies the orig
 The opened investigation workspace includes a `Graph` tab. `Analyze Evidence` runs a persistent,
 Evidence-grounded pipeline derived from Hudiny's Link Intelligence flow:
 
-1. extract and normalize text from PDF, DOC/DOCX, or Markdown;
-2. extract deterministic observables such as email addresses, URLs, domains, IPs, and hashes;
-3. prepare the text with one of three strategies: operational compression (default), full text,
-   or lossless translation followed by overlapping word chunks;
-4. resolve only the investigation's selected Hudiny-compatible dictionary domain and its declared
-   parents, then run dictionary-bounded entity extraction, relationship extraction, and
-   incremental entity resolution on the shared AI node;
-5. consolidate duplicates while retaining Evidence IDs, rationale, confidence, model, and run ID;
-6. persist the run and latest graph snapshot in MongoDB and synchronize active nodes and edges to
-   Neo4j;
-7. render directed edges and isolated entities in a terminal-native graph view.
+1. read original pages, validate saved catalog hints against the page and dictionary, and reuse
+   successful page extractions whose content and analysis profile are unchanged;
+2. analyze every remaining page, prioritizing catalog uses such as relationships and chronology;
+   retain deterministic observables and quote the original even when analysis text is prepared;
+3. extract dictionary-bounded entities and attributed claims with explicit polarity, modality,
+   qualifications, source quotations and dates;
+4. resolve corroborated identities, compare matching propositions across documents, and build
+   proposed edges from affirmative claims, keeping denials separately accessible;
+5. persist page coverage, raw extraction caches, claims and comparisons in MongoDB; synchronize
+   the graph and claims to Neo4j in one Neo4j transaction;
+6. render the graph and expose **Affermazioni / copertura** for inspection.
 
 The graph view uses `netext`'s native Textual widget with a deterministic left-to-right
 Sugiyama layout. It supports mouse selection, arrow-key panning, `J/K` entity navigation,
@@ -373,3 +373,80 @@ con ragionamento basso. I limiti inferiori configurati nel nodo mantengono la pr
 > l'indice RAG serve a recuperare passaggi pertinenti alle domande. Reindicizzare aggiorna
 > la ricerca e conserva il catalogo esistente. Il pulsante generale **Index RAG** continua
 > invece a sincronizzare tutti i documenti dell'indagine.
+
+## Provenienza e identità nel grafo
+
+La generazione del grafo conserva la numerazione originale delle pagine PDF, comprese le pagine
+vuote. L'analisi lavora per pagina, con segmenti sovrapposti per quelle lunghe; traduzioni o sintesi sono accompagnate
+dal testo originale da cui prelevare le citazioni. Nei formati senza paginazione stabile il testo
+è rappresentato come un'unica unità, senza attribuire numeri di pagina fisici.
+
+Selezionando un nodo o un arco, il dettaglio mostra documento, pagina, citazione e risultato del
+controllo sul testo originale. Una citazione inesistente, ambigua o attribuita alla pagina sbagliata
+resta non verificata; le lacune compaiono anche negli avvisi dell'elaborazione. I grafi precedenti
+rimangono leggibili, ma richiedono una nuova analisi per ottenere citazioni puntuali.
+
+> **Citazione verificata e fatto verificato sono distinti.** Il controllo conferma la presenza
+> del brano nella fonte, ammettendo differenze negli spazi. Non dimostra che l'affermazione sia vera
+> o che la relazione la interpreti correttamente: i risultati dell'agente restano proposte.
+
+Un nome o alias uguale non causa più una fusione automatica. Raven unisce identificatori forti
+compatibili e univoci; conserva invece separati gli omonimi senza prove sufficienti e segnala
+gli identificatori incompatibili. Queste note sono visibili nei dettagli. Un identificatore
+discordante richiede un riesame, anche quando potrebbe dipendere da un rinnovo o da un errore
+della fonte. Le pagine con soli nomi possono quindi produrre più candidati da verificare.
+
+La sostituzione della proiezione Neo4j avviene in un'unica transazione: se una scrittura fallisce,
+il precedente grafo Neo4j resta disponibile. Il salvataggio MongoDB e quello Neo4j sono operazioni
+distinte; un problema di sincronizzazione Neo4j viene segnalato nell'esito dell'analisi.
+
+## Cataloghi, affermazioni e aggiornamenti del grafo
+
+In **Graph**, avvia **Analyze Evidence**, quindi apri **Affermazioni / copertura**. La scheda
+**Affermazioni** permette di cercare un soggetto, una citazione o una fonte. Selezionando una
+riga trovi la proposizione, la sua eventuale negazione, l'attribuzione e i confronti con altre
+fonti. **Copertura** mostra ogni pagina, l'esito dell'analisi, lo stato del catalogo e gli errori;
+da qui puoi aprire il catalogo del documento. `Invio` porta al dettaglio, `/` al filtro ed `Esc`
+torna al grafo. I grafi precedenti rimangono consultabili e richiedono una nuova analisi per
+popolare queste informazioni.
+
+Il catalogo suggerisce candidati e priorità, dopo il controllo di indagine, documento, lingua,
+dizionario e impronta del testo della pagina. Non esclude pagine: anche quelle senza scheda,
+con catalogo obsoleto o catalogazione fallita vengono lette. Le sintesi dei cataloghi non
+diventano prove e non vengono usate come testo da citare.
+
+> **Tempo del fatto e tempo dell'affermazione.** Una fonte pubblicata il 4 marzo può descrivere
+> una collaborazione dal 21 febbraio al 2 marzo. Raven conserva separatamente il periodo a cui
+> si riferisce il fatto e la data in cui la fonte lo afferma. Una cessazione successiva non
+> annulla automaticamente la collaborazione passata. Date prive di giorno o mese mantengono
+> la precisione originaria; le date sconosciute rimangono tali.
+
+Le affermazioni conservano polarità, modalità dichiarativa o dubitativa, attribuzione e
+qualificatori come importo, valuta o riferimento a un evento. Una smentita viene salvata come
+affermazione negativa e non genera una relazione positiva. I confronti richiedono citazioni
+verificate e proposizioni con lo stesso predicato e gli stessi qualificatori. Raven segnala
+accordo, opposizione o differenza temporale; quando gli estremi hanno soltanto nomi coincidenti,
+il confronto resta candidato e richiede verifica dell'identità. Identificatori incompatibili
+impediscono anche questo abbinamento.
+
+> **Due documenti non equivalgono a due fonti indipendenti.** Possono ripetere la stessa notizia.
+> Il confronto non decide quale affermazione sia vera, non trasforma la confidenza del modello
+> in attendibilità della fonte e non considera automaticamente più corretta la fonte più recente.
+
+Ripetendo **Analyze Evidence**, Raven riutilizza le estrazioni riuscite della precedente
+istantanea. La chiave comprende pagina, testo, dizionario, lingua, preparazione, modello,
+profilo di generazione, versioni dei contratti e suggerimenti del catalogo effettivamente usati.
+Pagine cambiate, parziali o fallite vengono rielaborate. L'assenza del modello è indicata come
+estrazione dei soli osservabili e non viene memorizzata come analisi semantica completa.
+La riconciliazione e i confronti vengono ricostruiti dalle estrazioni delle fonti presenti:
+rimuovere un documento elimina i suoi contributi dalla nuova istantanea. La cache conserva
+le estrazioni prima delle fusioni, evitando di trascinare decisioni basate su fonti rimosse.
+
+Se tutto il tentativo fallisce, il grafo precedente resta disponibile. Il record del tentativo
+conserva gli esiti e i codici diagnostici per pagina; l'errore dell'elaborazione riporta le prime
+pagine coinvolte. Le pagine riuscite di un risultato parziale rimangono consultabili.
+
+Questa fase non decide automaticamente rettifiche o ritrattazioni. Predicati o qualificatori
+formulati diversamente possono richiedere un confronto manuale; i riferimenti che dipendono da
+più pagine richiedono riesame delle fonti. L'esecuzione delle skill configurabili e le future
+orchestrazioni restano distinte da questo flusso di analisi.

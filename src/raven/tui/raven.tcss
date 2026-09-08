@@ -1319,6 +1319,111 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     height: 3;
 }
 
+#open-graph-claims {
+    width: 29;
+    min-width: 29;
+    height: 3;
+    padding: 0;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #graph-zoom-label {
+    width: 4;
+}
+
+GraphClaimsScreen {
+    align: center middle;
+    background: $background 70%;
+}
+
+#graph-claims-dialog {
+    width: 96%;
+    height: 96%;
+    border: round $accent;
+    padding: 0 1;
+    background: $surface;
+}
+
+#graph-claims-title {
+    height: 1;
+    text-style: bold;
+    color: $accent;
+}
+
+#graph-claims-summary {
+    height: 2;
+    color: $muted;
+}
+
+#graph-claims-tabs {
+    height: 1fr;
+}
+
+#graph-claims-tabs ContentSwitcher,
+#graph-claims-tabs TabPane {
+    height: 1fr;
+    padding: 0;
+}
+
+#graph-claims-tabs Tab {
+    width: 1fr;
+}
+
+#graph-claims-search,
+#graph-coverage-search {
+    height: 3;
+    margin: 0;
+}
+
+.claims-reader-body {
+    width: 100%;
+    height: 1fr;
+}
+
+#graph-claims-table,
+#graph-coverage-table {
+    width: 45%;
+    height: 100%;
+}
+
+#graph-claim-detail,
+#graph-coverage-detail {
+    width: 1fr;
+    height: 100%;
+    margin-left: 1;
+}
+
+#graph-claims-actions {
+    height: 3;
+    align-horizontal: right;
+}
+
+#claim-open-catalog {
+    width: 23;
+}
+
+#close-graph-claims {
+    width: 12;
+    min-width: 12;
+}
+
+GraphClaimsScreen.narrow-claims-reader .claims-reader-body {
+    layout: vertical;
+}
+
+GraphClaimsScreen.narrow-claims-reader #graph-claims-table,
+GraphClaimsScreen.narrow-claims-reader #graph-coverage-table {
+    width: 100%;
+    height: 5;
+}
+
+GraphClaimsScreen.narrow-claims-reader #graph-claim-detail,
+GraphClaimsScreen.narrow-claims-reader #graph-coverage-detail {
+    width: 100%;
+    height: 1fr;
+    min-height: 3;
+    margin-left: 0;
+}
+
 #graph-canvas {
     width: 100%;
     height: 1fr;

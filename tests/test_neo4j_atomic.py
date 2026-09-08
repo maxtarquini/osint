@@ -14,8 +14,13 @@ from raven.repositories.neo4j import Neo4jRepository
 
 
 class TransactionResult:
-    def __init__(self, fail: bool) -> None:
+    def __init__(self, fail: bool, written: int = 0) -> None:
         self.fail = fail
+        self.written = written
+
+    def single(self, *, strict: bool) -> dict[str, int]:
+        assert strict
+        return {"written": self.written}
 
     def consume(self) -> None:
         if self.fail:
@@ -35,6 +40,7 @@ class SnapshotTransaction:
         investigation_id = parameters["investigation_id"]
         if query.startswith("MERGE (i:Investigation"):
             self.state["investigations"][investigation_id] = parameters["run_id"]
+            self.state["coverage"][investigation_id] = parameters["page_coverage"]
         elif "SET e.active = false" in query:
             for entity in self.state["entities"].values():
                 if entity["investigation_id"] == investigation_id:
@@ -47,6 +53,31 @@ class SnapshotTransaction:
                     raise RuntimeError("Entity unique constraint prevents cross-case ID reuse")
                 self.state["entities"][entity["id"]] = {
                     **entity,
+                    "investigation_id": investigation_id,
+                    "active": True,
+                }
+        elif "SET c.active = false" in query:
+            for claim in self.state["claims"].values():
+                if claim["investigation_id"] == investigation_id:
+                    claim["active"] = False
+        elif "r:HAS_SUBJECT|HAS_OBJECT|CLAIM_COMPARISON" in query:
+            for link in self.state["claim_links"].values():
+                if link["investigation_id"] == investigation_id:
+                    link["active"] = False
+        elif "UNWIND $claims" in query:
+            assert query.count("investigation_id: $investigation_id, active: true") == 2
+            assert "EVIDENCE_RELATION" not in query
+            for claim in parameters["claims"]:
+                self.state["claims"][(investigation_id, claim["claim_id"])] = {
+                    **claim,
+                    "investigation_id": investigation_id,
+                    "active": True,
+                }
+        elif "UNWIND $claim_links" in query:
+            assert query.count("investigation_id: $investigation_id, active: true") == 2
+            for link in parameters["claim_links"]:
+                self.state["claim_links"][(investigation_id, link["link_id"])] = {
+                    **link,
                     "investigation_id": investigation_id,
                     "active": True,
                 }
@@ -65,7 +96,8 @@ class SnapshotTransaction:
                 }
         else:
             raise AssertionError(f"Unexpected query: {query}")
-        return TransactionResult(len(self.calls) == self.fail_at)
+        written = len(parameters.get("claims", parameters.get("claim_links", [])))
+        return TransactionResult(len(self.calls) == self.fail_at, written)
 
 
 class SnapshotSession:
@@ -98,6 +130,15 @@ class SnapshotDriver:
                 "old-relation": {"investigation_id": "case-a", "active": True},
                 "other-relation": {"investigation_id": "case-b", "active": True},
             },
+            "claims": {
+                ("case-a", "old-claim"): {"investigation_id": "case-a", "active": True},
+                ("case-b", "other-claim"): {"investigation_id": "case-b", "active": True},
+            },
+            "claim_links": {
+                ("case-a", "old-link"): {"investigation_id": "case-a", "active": True},
+                ("case-b", "other-link"): {"investigation_id": "case-b", "active": True},
+            },
+            "coverage": {},
         }
         self.fail_at = fail_at
         self.transactions: list[SnapshotTransaction] = []
@@ -150,7 +191,7 @@ def snapshot(*, empty: bool = False, person_id: str = "new-person") -> Investiga
     )
 
 
-@pytest.mark.parametrize("fail_at", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("fail_at", range(1, 10))
 def test_snapshot_deferred_write_failure_rolls_back_entire_replacement(fail_at: int) -> None:
     driver = SnapshotDriver(fail_at)
     before = deepcopy(driver.state)
@@ -171,7 +212,7 @@ def test_snapshot_commit_preserves_other_cases_and_serializes_citation_coordinat
     repository(driver).save_graph_snapshot(snapshot())
 
     assert driver.write_count == 1
-    assert len(driver.transactions[0].calls) == 5
+    assert len(driver.transactions[0].calls) == 9
     assert driver.state["investigations"] == {"case-a": "new-run", "case-b": "other-run"}
     assert driver.state["entities"]["other-person"] == before["entities"]["other-person"]
     assert (
@@ -203,6 +244,10 @@ def test_empty_snapshot_retires_only_selected_case() -> None:
     assert driver.state["relationships"]["old-relation"]["active"] is False
     assert driver.state["entities"]["other-person"]["active"] is True
     assert driver.state["relationships"]["other-relation"]["active"] is True
+    assert driver.state["claims"][("case-a", "old-claim")]["active"] is False
+    assert driver.state["claims"][("case-b", "other-claim")]["active"] is True
+    assert driver.state["claim_links"][("case-a", "old-link")]["active"] is False
+    assert driver.state["claim_links"][("case-b", "other-link")]["active"] is True
 
 
 def test_foreign_entity_id_cannot_reassign_another_cases_node() -> None:

@@ -10,18 +10,21 @@ from raven.models.chat import (
     TokenUsage,
 )
 from raven.models.graph import (
+    ClaimLink,
     EvidencePreparationMode,
     EvidenceSpan,
     GraphAnalysisJob,
     GraphAnalysisProgress,
     GraphAnalysisResult,
     GraphAnalysisRun,
+    GraphClaim,
     GraphEntity,
     GraphItemStatus,
     GraphJobStatus,
     GraphRelationship,
     GraphRunStatus,
     InvestigationGraph,
+    PageGraphAnalysis,
 )
 from raven.models.infrastructure import ConnectionState, ServiceName, ServiceStatus
 from raven.models.investigation import (
@@ -36,6 +39,9 @@ from raven.models.investigation import (
 )
 
 __all__ = [
+    "ClaimLink",
+    "GraphClaim",
+    "PageGraphAnalysis",
     "AnalysisLanguage",
     "ChatEventKind",
     "ChatMessage",

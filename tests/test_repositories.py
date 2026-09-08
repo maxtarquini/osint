@@ -207,7 +207,7 @@ def test_qdrant_bootstrap_creates_cosine_collection_when_missing() -> None:
     create = client.create_collection.call_args.kwargs
     assert create["collection_name"] == "case_vectors"
     assert create["vectors_config"].size == 384
-    assert client.create_payload_index.call_count == 3
+    assert client.create_payload_index.call_count == 4
     repository.close()
     client.close.assert_called_once()
 
@@ -371,13 +371,14 @@ def test_neo4j_synchronizes_proposed_graph_with_evidence_provenance() -> None:
     calls_before = driver.execute_query.call_count
     session = driver.session.return_value.__enter__.return_value
     transaction = MagicMock()
+    transaction.run.return_value.single.return_value = {"written": 0}
     session.execute_write.side_effect = lambda callback, *args: callback(transaction, *args)
 
     repository.save_graph_snapshot(graph)
 
     assert driver.execute_query.call_count == calls_before
     session.execute_write.assert_called_once()
-    assert transaction.run.call_count == 5
+    assert transaction.run.call_count == 9
     entity_call = transaction.run.call_args_list[2]
     assert entity_call.kwargs["entities"][0]["evidence_ids"] == ["evidence"]
     relationship_call = transaction.run.call_args_list[4]
@@ -393,7 +394,7 @@ def test_neo4j_deletes_only_selected_investigation_subgraph() -> None:
     repository.delete_investigation("investigation-id")
 
     calls = driver.execute_query.call_args_list[calls_before:]
-    assert len(calls) == 2
+    assert len(calls) == 3
     assert all(call.kwargs["investigation_id"] == "investigation-id" for call in calls)
     assert all("DETACH DELETE" in call.args[0] for call in calls)
 

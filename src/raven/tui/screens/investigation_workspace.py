@@ -61,6 +61,7 @@ from raven.tui.screens.file_picker import (
     EvidenceFilePicker,
     MarkdownExportPicker,
 )
+from raven.tui.screens.graph_claims import GraphClaimsScreen
 from raven.tui.widgets import (
     ChatMessageView,
     EvidenceRow,
@@ -69,6 +70,7 @@ from raven.tui.widgets import (
     StreamingAssistantView,
     TopNavigation,
 )
+from raven.tui.widgets.claim_details import ClaimDetails
 
 if TYPE_CHECKING:
     from raven.app import RavenApp
@@ -332,6 +334,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
                                     "Arrows pan · J/K select · +/- zoom",
                                     id="graph-navigation-hint",
                                 )
+                                yield Button("Affermazioni / copertura", id="open-graph-claims")
                                 yield Static("FIT", id="graph-zoom-label")
                                 yield Button("Fit", id="fit-graph", classes="graph-view-button")
                                 yield Button("−", id="zoom-out-graph", classes="graph-view-button")
@@ -442,9 +445,8 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self.set_class(height <= 26, "compact-workspace")
         self.set_class(width < 100, "narrow-workspace")
         if self.graph is not None:
-            self.query_one("#graph-statistics", Static).update(
-                self._graph_statistics_label(self.graph, width)
-            )
+            for statistics in self.query("#graph-statistics"):
+                statistics.update(self._graph_statistics_label(self.graph, width))
 
     def action_add_evidence(self) -> None:
         self._open_file_picker()
@@ -495,6 +497,10 @@ class InvestigationWorkspaceScreen(Screen[None]):
         elif event.button.id == "cancel-graph-analysis":
             self._raven_app.cancel_graph_analysis(self.investigation.investigation_id)
             self._sync_graph_analysis_job()
+        elif event.button.id == "open-graph-claims":
+            self.app.push_screen(
+                GraphClaimsScreen(self.investigation, self.graph, tuple(self.documents))
+            )
         elif event.button.id == "fit-graph":
             self.query_one("#graph-canvas", GraphCanvas).fit()
         elif event.button.id == "zoom-out-graph":
@@ -1519,8 +1525,27 @@ class InvestigationWorkspaceScreen(Screen[None]):
             + f"{len(evidence_ids)} supporting document(s)"
             + "\n\nFONTI / CITAZIONI\n"
             + support
+            + "\n\nAFFERMAZIONI E CONFRONTI\n"
+            + self._relationship_claim_details(relationships)
             + "\n\nRATIONALE\n"
             + rationale
+        )
+
+    def _relationship_claim_details(self, relationships: tuple[GraphRelationship, ...]) -> str:
+        claim_ids = tuple(
+            dict.fromkeys(claim_id for item in relationships for claim_id in item.claim_ids)
+        )
+        if not claim_ids or self.graph is None:
+            return (
+                "Nessuna affermazione strutturata collegata; "
+                "i grafi precedenti non la registravano."
+            )
+        details = ClaimDetails(self.graph, tuple(self.documents))
+        return "\n\n".join(
+            details.claim_text(details.claims[claim_id])
+            if claim_id in details.claims
+            else f"Affermazione collegata non disponibile: {claim_id}"
+            for claim_id in claim_ids
         )
 
     def _support_detail(self, support: tuple[EvidenceSpan, ...]) -> str:
@@ -1529,17 +1554,22 @@ class InvestigationWorkspaceScreen(Screen[None]):
                 "Nessuna citazione puntuale salvata. I grafi precedenti possono avere solo "
                 "riferimenti al documento: rigenera l'analisi per verificare pagine e citazioni."
             )
-        documents = {item.document_id: item.original_name for item in self.documents}
+        documents = {item.document_id: item for item in self.documents}
         excerpts = []
         for span in dict.fromkeys(support):
-            source = documents.get(
-                span.evidence_id, f"Documento non presente nell'indagine · {span.evidence_id}"
+            document = documents.get(span.evidence_id)
+            source = (
+                document.original_name
+                if document
+                else f"Documento non presente nell'indagine · {span.evidence_id}"
             )
             position = (
                 f"Pagina {span.page_number}"
-                if span.page_number is not None
+                if type(span.page_number) is int and span.page_number > 0
                 else "Pagina non disponibile · posizione non verificata"
             )
+            if document and document.file_format.upper() != "PDF" and span.page_number == 1:
+                position = "Unità di testo 1 · formato senza paginazione stabile"
             verification = (
                 "Citazione verificata nel testo originale"
                 if span.verified_original

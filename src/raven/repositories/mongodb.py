@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from typing import Any
 
@@ -28,7 +28,7 @@ from raven.models import (
     InvestigationStatus,
     TokenUsage,
 )
-from raven.models.graph import EvidenceSpan
+from raven.models.graph import ClaimLink, EvidenceSpan, GraphClaim, PageGraphAnalysis
 from raven.repositories.catalog import CatalogReader
 
 MONGO_SCHEMA_VERSION = 6
@@ -391,6 +391,9 @@ class MongoRepository(CatalogReader):
                 self._graph_relationship_document(relationship)
                 for relationship in graph.relationships
             ],
+            "claims": [self._graph_claim_document(claim) for claim in graph.claims],
+            "claim_links": [asdict(link) for link in graph.claim_links],
+            "pages": [self._page_graph_document(page) for page in graph.pages],
         }
         try:
             self._database["graph_checkpoints"].replace_one(
@@ -428,6 +431,13 @@ class MongoRepository(CatalogReader):
                 self._graph_relationship_from_document(item) for item in document["relationships"]
             ),
             generated_at=document["generated_at"],
+            claims=tuple(
+                self._graph_claim_from_document(item) for item in document.get("claims") or []
+            ),
+            claim_links=tuple(ClaimLink(**item) for item in document.get("claim_links") or []),
+            pages=tuple(
+                self._page_graph_from_document(item) for item in document.get("pages") or []
+            ),
         )
 
     def save_chat_message(self, message: ChatMessage) -> None:
@@ -522,6 +532,12 @@ class MongoRepository(CatalogReader):
             "dictionary_domain": run.dictionary_domain,
             "dictionary_hash": run.dictionary_hash,
             "dictionary_versions": list(run.dictionary_versions),
+            # Attempt diagnostics must survive failure without exposing source payloads or
+            # replacing the last published graph. Raw caches belong only in checkpoints.
+            "page_outcomes": [
+                MongoRepository._page_graph_document(replace(page, entities=(), claims=()))
+                for page in run.page_outcomes
+            ],
         }
 
     @staticmethod
@@ -533,6 +549,7 @@ class MongoRepository(CatalogReader):
             "canonical_name": entity.canonical_name,
             "aliases": list(entity.aliases),
             "external_identifiers": dict(entity.external_identifiers),
+            "external_identifiers_pairs": [list(pair) for pair in entity.external_identifiers],
             "evidence_ids": list(entity.evidence_ids),
             "rationale": entity.rationale,
             "confidence": entity.confidence,
@@ -554,6 +571,7 @@ class MongoRepository(CatalogReader):
             "status": relationship.status.value,
             "support": [asdict(span) for span in relationship.support],
             "resolution_notes": list(relationship.resolution_notes),
+            "claim_ids": list(relationship.claim_ids),
         }
 
     @staticmethod
@@ -566,7 +584,9 @@ class MongoRepository(CatalogReader):
             aliases=tuple(str(value) for value in document.get("aliases", [])),
             external_identifiers=tuple(
                 (str(key), str(value))
-                for key, value in document.get("external_identifiers", {}).items()
+                for key, value in document.get(
+                    "external_identifiers_pairs", document.get("external_identifiers", {}).items()
+                )
             ),
             evidence_ids=tuple(str(value) for value in document.get("evidence_ids", [])),
             rationale=str(document.get("rationale", "")),
@@ -574,6 +594,67 @@ class MongoRepository(CatalogReader):
             status=GraphItemStatus(document.get("status", GraphItemStatus.PROPOSED.value)),
             support=tuple(EvidenceSpan(**span) for span in document.get("support") or []),
             resolution_notes=tuple(str(note) for note in document.get("resolution_notes") or []),
+        )
+
+    @staticmethod
+    def _graph_claim_document(claim: GraphClaim) -> dict[str, Any]:
+        result = asdict(claim)
+        result["status"] = claim.status.value
+        result["qualifiers"] = [list(pair) for pair in claim.qualifiers]
+        result["support"] = [asdict(span) for span in claim.support]
+        result["resolution_notes"] = list(claim.resolution_notes)
+        return result
+
+    @staticmethod
+    def _graph_claim_from_document(document: dict[str, Any]) -> GraphClaim:
+        return GraphClaim(
+            claim_id=str(document["claim_id"]),
+            subject_entity_id=str(document["subject_entity_id"]),
+            object_entity_id=str(document["object_entity_id"]),
+            predicate=str(document["predicate"]),
+            polarity=str(document.get("polarity", "affirmed")),
+            modality=str(document.get("modality", "asserted")),
+            valid_from=document.get("valid_from"),
+            valid_until=document.get("valid_until"),
+            asserted_at=document.get("asserted_at"),
+            attribution=str(document.get("attribution", "")),
+            qualifiers=tuple(
+                (str(key), str(value)) for key, value in document.get("qualifiers", [])
+            ),
+            support=tuple(EvidenceSpan(**span) for span in document.get("support") or []),
+            confidence=float(document.get("confidence", 0.0)),
+            status=GraphItemStatus(document.get("status", GraphItemStatus.PROPOSED.value)),
+            resolution_notes=tuple(str(note) for note in document.get("resolution_notes") or []),
+        )
+
+    @classmethod
+    def _page_graph_document(cls, page: PageGraphAnalysis) -> dict[str, Any]:
+        result = asdict(page)
+        result["catalog_uses"] = list(page.catalog_uses)
+        result["entities"] = [cls._graph_entity_document(entity) for entity in page.entities]
+        result["claims"] = [cls._graph_claim_document(claim) for claim in page.claims]
+        return result
+
+    @classmethod
+    def _page_graph_from_document(cls, document: dict[str, Any]) -> PageGraphAnalysis:
+        return PageGraphAnalysis(
+            evidence_id=str(document["evidence_id"]),
+            page_number=int(document["page_number"]),
+            text_hash=str(document["text_hash"]),
+            signature=str(document["signature"]),
+            state=str(document["state"]),
+            analyzed_at=document["analyzed_at"],
+            catalog_state=str(document.get("catalog_state", "missing")),
+            catalog_signature=str(document.get("catalog_signature", "")),
+            catalog_uses=tuple(str(value) for value in document.get("catalog_uses") or []),
+            entities=tuple(
+                cls._graph_entity_from_document(item) for item in document.get("entities") or []
+            ),
+            claims=tuple(
+                cls._graph_claim_from_document(item) for item in document.get("claims") or []
+            ),
+            model_name=str(document.get("model_name", "")),
+            error=str(document.get("error", "")),
         )
 
     @staticmethod
@@ -589,6 +670,7 @@ class MongoRepository(CatalogReader):
             status=GraphItemStatus(document.get("status", GraphItemStatus.PROPOSED.value)),
             support=tuple(EvidenceSpan(**span) for span in document.get("support") or []),
             resolution_notes=tuple(str(note) for note in document.get("resolution_notes") or []),
+            claim_ids=tuple(str(value) for value in document.get("claim_ids") or []),
         )
 
     @staticmethod

@@ -11,7 +11,12 @@ from uuid import uuid4
 import pytest
 
 from raven.ai import SharedAiNode
-from raven.exceptions import GraphAgentError, GraphAnalysisCancelledError, GraphPersistenceError
+from raven.exceptions import (
+    GraphAgentError,
+    GraphAnalysisCancelledError,
+    GraphAnalysisError,
+    GraphPersistenceError,
+)
 from raven.graph import EvidenceGraphExtractor, word_chunks
 from raven.models import (
     AnalysisLanguage,
@@ -69,7 +74,7 @@ class ScriptedNode:
     available = True
     settings = SimpleNamespace(model="scripted-model")
 
-    def chat(self, system: str, user: str, *, json_mode: bool = False) -> str:
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **request_options) -> str:
         if "named-entity" in system:
             return """{"entities":[
                 {"type":"PERSON","canonical_name":"Mario Rossi","aliases":[],
@@ -90,7 +95,7 @@ class FailingNode:
     available = True
     settings = SimpleNamespace(model="failing-model")
 
-    def chat(self, system: str, user: str, *, json_mode: bool = False) -> str:
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **request_options) -> str:
         raise GraphAgentError("model unavailable")
 
 
@@ -101,7 +106,7 @@ class VocabularyAwareNode:
     def __init__(self) -> None:
         self.entity_prompt = ""
 
-    def chat(self, system: str, user: str, *, json_mode: bool = False) -> str:
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **request_options) -> str:
         if "named-entity" in system:
             self.entity_prompt = user
             return """{"entities":[
@@ -176,7 +181,8 @@ def test_persistent_analysis_uses_deterministic_fallback_and_syncs_neo4j(
         EvidencePreparationMode.COMPRESS,
     )
 
-    assert result.run.status.value == "completed"
+    assert result.run.status.value == "completed_with_warnings"
+    assert "AI unavailable, observables only" in result.run.last_error
     assert result.run.model_name == "deterministic"
     assert result.run.dictionary_domain == "GENERAL_OSINT"
     assert result.run.dictionary_versions == ("CORE@2.0.0", "GENERAL_OSINT@1.0.0")
@@ -226,7 +232,7 @@ def test_entity_extraction_prompt_and_output_are_dictionary_bounded() -> None:
     assert '"vocabulary_versions":["CORE@2.0.0","GENERAL_OSINT@1.0.0"]' in (node.entity_prompt)
 
 
-def test_graph_service_uses_the_configured_dictionary_without_overlapping_domains(
+def test_graph_service_rejects_entities_outside_the_configured_dictionary(
     tmp_path: Path,
 ) -> None:
     dictionary_root = tmp_path / "dictionaries"
@@ -279,15 +285,13 @@ def test_graph_service_uses_the_configured_dictionary_without_overlapping_domain
         dictionary_root,
     )
 
-    result = service.analyze(
-        investigation(investigation_id),
-        (document,),
-        EvidencePreparationMode.FULL_TEXT,
-    )
-
-    assert [entity.canonical_name for entity in result.graph.entities] == ["Mario Rossi"]
-    assert result.graph.relationships == ()
-    assert result.run.dictionary_versions == ("CORE@1.0.0", "GENERAL_OSINT@1.0.0")
+    with pytest.raises(GraphAnalysisError, match="invalid_entity_classification"):
+        service.analyze(
+            investigation(investigation_id), (document,), EvidencePreparationMode.FULL_TEXT
+        )
+    assert repository.graph is None
+    assert repository.runs[-1].dictionary_versions == ("CORE@1.0.0", "GENERAL_OSINT@1.0.0")
+    assert repository.runs[-1].page_outcomes[0].state == "failed"
 
 
 def test_graph_service_uses_the_domain_selected_for_the_investigation(tmp_path: Path) -> None:
@@ -297,7 +301,16 @@ def test_graph_service_uses_the_domain_selected_for_the_investigation(tmp_path: 
     knowledge_bases = KnowledgeBaseStore(tmp_path / "knowledge-bases")
     document = knowledge_bases.add(investigation_id, source)
     repository = GraphRepository()
-    node = VocabularyAwareNode()
+
+    class ValidVocabularyNode(VocabularyAwareNode):
+        def chat(self, system, user, **options):
+            output = super().chat(system, user, **options)
+            if "named-entity" in system:
+                payload = json.loads(output)
+                return json.dumps({"entities": payload["entities"][:1]})
+            return output
+
+    node = ValidVocabularyNode()
     service = GraphAnalysisService(
         repository,
         GraphStore(),

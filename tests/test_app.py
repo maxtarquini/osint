@@ -1002,7 +1002,10 @@ async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_pat
         assert app.screen.query_one("#graph-toolbar").outer_size.height >= 5
         await pilot.click("#analyze-evidence")
         await app.workers.wait_for_complete()
-        await pilot.pause()
+        for _ in range(20):
+            await pilot.pause(0.05)
+            if app.screen.graph is not None:
+                break
 
         canvas = app.screen.query_one("#graph-canvas", GraphCanvas)
         rendered = canvas.plain_summary()
@@ -1115,7 +1118,10 @@ async def test_graph_analysis_continues_after_leaving_and_reopening_case(tmp_pat
         completed = app.graph_analysis_job(investigation.investigation_id)
         assert completed is not None
         assert completed.status is GraphJobStatus.COMPLETED
-        await pilot.pause(0.2)
+        for _ in range(20):
+            await pilot.pause(0.05)
+            if app.screen.graph is not None:
+                break
         assert app.screen.graph is not None
         assert "Completed" in app.screen.query_one("#graph-analysis-status").render().plain
 

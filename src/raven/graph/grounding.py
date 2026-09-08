@@ -2,10 +2,10 @@
 
 from dataclasses import replace
 
-from raven.models import GraphEntity, GraphRelationship
+from raven.models import GraphClaim, GraphEntity, GraphRelationship
 
 
-def ground_items[GraphItem: (GraphEntity, GraphRelationship)](
+def ground_items[GraphItem: (GraphEntity, GraphRelationship, GraphClaim)](
     items: tuple[GraphItem, ...], evidence_id: str, pages: tuple[str, ...]
 ) -> tuple[GraphItem, ...]:
     normalized = tuple(" ".join(page.split()) for page in pages)

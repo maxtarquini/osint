@@ -202,6 +202,7 @@ class RavenApp(App[None]):
                     self.infrastructure.qdrant_repository,
                     self.infrastructure.ai_node,
                     knowledge_bases,
+                    self.infrastructure.neo4j_repository,
                 )
         else:
             self.investigations = None

@@ -57,6 +57,12 @@ class QdrantRepository:
                     field_schema=PayloadSchemaType.KEYWORD,
                     wait=True,
                 )
+            candidate.create_payload_index(
+                collection_name=settings.collection,
+                field_name="page_number",
+                field_schema=PayloadSchemaType.INTEGER,
+                wait=True,
+            )
         except Exception:
             candidate.close()
             raise
@@ -115,6 +121,8 @@ class QdrantRepository:
         vectors: tuple[tuple[float, ...], ...],
         *,
         index_signature: str | None = None,
+        page_numbers: tuple[int, ...] | None = None,
+        source_texts: tuple[str, ...] | None = None,
     ) -> None:
         """Replace the deterministic chunk points for one Evidence document."""
         client, settings = self._ready()
@@ -122,7 +130,16 @@ class QdrantRepository:
             raise ValueError("Every Evidence chunk must have one embedding")
         if any(len(vector) != settings.vector_size for vector in vectors):
             raise ValueError("Embedding size differs from the configured Qdrant vector size")
-        self.remove_document(document.investigation_id, document.document_id)
+        if page_numbers is not None and (
+            len(page_numbers) != len(chunks)
+            or any(type(page) is not int or page < 1 for page in page_numbers)
+        ):
+            raise ValueError("Every Evidence chunk needs a positive original page number")
+        if source_texts is not None and (
+            len(source_texts) != len(chunks)
+            or any(not isinstance(text, str) for text in source_texts)
+        ):
+            raise ValueError("Every Evidence chunk needs one original source text")
         points = [
             PointStruct(
                 id=str(
@@ -141,12 +158,15 @@ class QdrantRepository:
                     "chunk_index": index,
                     "text": chunk,
                     "page_count": document.page_count,
+                    "page_number": page_numbers[index] if page_numbers is not None else None,
+                    "original_text": source_texts[index] if source_texts is not None else None,
                 },
             )
             for index, (chunk, vector) in enumerate(zip(chunks, vectors, strict=True))
         ]
-        if points:
-            with self._lock:
+        with self._lock:
+            self.remove_document(document.investigation_id, document.document_id)
+            if points:
                 client.upsert(collection_name=settings.collection, points=points, wait=True)
 
     def remove_document(self, investigation_id: str, document_id: str) -> None:
@@ -189,6 +209,7 @@ class QdrantRepository:
         client, settings = self._ready()
         if len(vector) != settings.vector_size:
             raise ValueError("Query embedding size differs from Qdrant vector size")
+        limit = max(1, min(int(limit), 200))
         with self._lock:
             response = client.query_points(
                 collection_name=settings.collection,
@@ -201,21 +222,107 @@ class QdrantRepository:
         chunks: list[RetrievedEvidenceChunk] = []
         for point in response.points:
             payload = point.payload or {}
-            chunks.append(
-                RetrievedEvidenceChunk(
-                    document_id=str(payload.get("document_id", "")),
-                    document_name=str(payload.get("document_name", "Evidence")),
-                    chunk_index=int(payload.get("chunk_index", 0)),
-                    text=str(payload.get("text", "")),
-                    score=float(point.score),
-                    page_count=(
-                        int(payload["page_count"])
-                        if payload.get("page_count") is not None
-                        else None
-                    ),
-                )
+            if payload.get("investigation_id") not in (None, investigation_id):
+                continue
+            chunk = self._retrieved_chunk(payload, float(point.score))
+            if chunk is not None:
+                chunks.append(chunk)
+        return tuple(chunks[:limit])
+
+    def fetch_pages(
+        self,
+        investigation_id: str,
+        pages: tuple[tuple[str, int], ...],
+        *,
+        limit: int = 12,
+    ) -> tuple[RetrievedEvidenceChunk, ...]:
+        """Recall specified source pages independently of their vector similarity."""
+        client, settings = self._ready()
+        limit = max(1, min(int(limit), 200))
+        if any(
+            not isinstance(document_id, str) or not document_id or type(page) is not int or page < 1
+            for document_id, page in pages
+        ):
+            raise ValueError("Page retrieval requires document IDs and positive page numbers")
+        requested = tuple(dict.fromkeys(pages))[:200]
+        if not requested:
+            return ()
+        query_filter = Filter(
+            must=[
+                FieldCondition(key="investigation_id", match=MatchValue(value=investigation_id)),
+                Filter(
+                    should=[
+                        Filter(
+                            must=[
+                                FieldCondition(
+                                    key="document_id", match=MatchValue(value=document_id)
+                                ),
+                                FieldCondition(key="page_number", match=MatchValue(value=page)),
+                            ]
+                        )
+                        for document_id, page in requested
+                    ]
+                ),
+            ]
+        )
+        with self._lock:
+            points, _ = client.scroll(
+                collection_name=settings.collection,
+                scroll_filter=query_filter,
+                limit=limit,
+                with_payload=True,
+                with_vectors=False,
             )
-        return tuple(chunks)
+        chunks = []
+        for point in points:
+            payload = point.payload or {}
+            if payload.get("investigation_id") not in (None, investigation_id):
+                continue
+            if (payload.get("document_id"), payload.get("page_number")) not in requested:
+                continue
+            chunk = self._retrieved_chunk(payload, 0.0)
+            if chunk is not None:
+                chunks.append(chunk)
+        return tuple(sorted(chunks[:limit], key=lambda row: (row.document_id, row.chunk_index)))
+
+    @staticmethod
+    def _retrieved_chunk(payload: dict[str, Any], score: float) -> RetrievedEvidenceChunk | None:
+        """Keep legacy metadata optional and discard malformed payloads safely."""
+        document_id = payload.get("document_id")
+        if not isinstance(document_id, str) or not document_id:
+            return None
+        page_number = payload.get("page_number")
+        if page_number is not None and (type(page_number) is not int or page_number < 1):
+            return None
+        try:
+            return RetrievedEvidenceChunk(
+                document_id=document_id,
+                document_name=str(payload.get("document_name", "Evidence")),
+                chunk_index=int(payload.get("chunk_index", 0)),
+                text=str(payload.get("text", "")),
+                score=score,
+                page_count=(
+                    int(payload["page_count"]) if payload.get("page_count") is not None else None
+                ),
+                page_number=page_number,
+                original_text=(
+                    payload["original_text"]
+                    if isinstance(payload.get("original_text"), str)
+                    else None
+                ),
+                index_signature=(
+                    str(payload["index_signature"])
+                    if payload.get("index_signature") is not None
+                    else None
+                ),
+                investigation_id=(
+                    str(payload["investigation_id"])
+                    if payload.get("investigation_id") is not None
+                    else None
+                ),
+            )
+        except (TypeError, ValueError):
+            return None
 
     def _ready(self) -> tuple[Any, QdrantSettings]:
         if self._client is None or self._settings is None:

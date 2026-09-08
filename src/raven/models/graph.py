@@ -83,6 +83,59 @@ class GraphRelationship:
     status: GraphItemStatus = GraphItemStatus.PROPOSED
     support: tuple[EvidenceSpan, ...] = ()
     resolution_notes: tuple[str, ...] = ()
+    claim_ids: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class GraphClaim:
+    """A source's assertion, including denials; never an automatic factual verdict."""
+
+    claim_id: str
+    subject_entity_id: str
+    object_entity_id: str
+    predicate: str
+    polarity: str = "affirmed"
+    modality: str = "asserted"
+    valid_from: str | None = None
+    valid_until: str | None = None
+    asserted_at: str | None = None
+    attribution: str = ""
+    qualifiers: tuple[tuple[str, str], ...] = ()
+    support: tuple[EvidenceSpan, ...] = ()
+    confidence: float = 0.0
+    status: GraphItemStatus = GraphItemStatus.PROPOSED
+    resolution_notes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class ClaimLink:
+    """Reviewable comparison, not an adjudication of which source is true."""
+
+    link_id: str
+    source_claim_id: str
+    target_claim_id: str
+    kind: str
+    rationale: str
+    requires_identity_review: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class PageGraphAnalysis:
+    """Coverage and reusable extraction before any cross-page identity resolution."""
+
+    evidence_id: str
+    page_number: int
+    text_hash: str
+    signature: str
+    state: str
+    analyzed_at: datetime
+    catalog_state: str = "missing"
+    catalog_signature: str = ""
+    catalog_uses: tuple[str, ...] = ()
+    entities: tuple[GraphEntity, ...] = ()
+    claims: tuple[GraphClaim, ...] = ()
+    model_name: str = ""
+    error: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +145,9 @@ class InvestigationGraph:
     entities: tuple[GraphEntity, ...]
     relationships: tuple[GraphRelationship, ...]
     generated_at: datetime
+    claims: tuple[GraphClaim, ...] = ()
+    claim_links: tuple[ClaimLink, ...] = ()
+    pages: tuple[PageGraphAnalysis, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,10 +167,11 @@ class GraphAnalysisRun:
     updated_at: datetime
     completed_at: datetime | None = None
     last_error: str | None = None
-    prompt_version: str = "raven-grounded-dev-v1"
+    prompt_version: str = "raven-catalog-claims-v2"
     dictionary_domain: str = "GENERAL_OSINT"
     dictionary_hash: str = ""
     dictionary_versions: tuple[str, ...] = ()
+    page_outcomes: tuple[PageGraphAnalysis, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

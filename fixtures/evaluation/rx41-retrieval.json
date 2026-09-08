@@ -1,0 +1,2297 @@
+{
+  "schema_version": 1,
+  "seed": "RX41-20260908",
+  "synthetic": true,
+  "description": "Dati interamente inventati per test software; non descrivono eventi o persone reali. Gold manuale, non prodotto da LLM. Stress test deliberato: entita pertinenti dopo le prime 100.",
+  "case_id": "rx41-case",
+  "documents": [
+    {
+      "id": "dossier",
+      "case": "rx41-case",
+      "active": true,
+      "pages": [
+        {
+          "number": 1,
+          "text": "Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata."
+        },
+        {
+          "number": 2,
+          "text": "Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata."
+        },
+        {
+          "number": 3,
+          "text": "Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte."
+        },
+        {
+          "number": 4,
+          "text": "Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31."
+        },
+        {
+          "number": 5,
+          "text": "Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante."
+        },
+        {
+          "number": 6,
+          "text": "Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro."
+        }
+      ]
+    },
+    {
+      "id": "connessioni",
+      "case": "rx41-case",
+      "active": true,
+      "pages": [
+        {
+          "number": 1,
+          "text": "Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240."
+        },
+        {
+          "number": 2,
+          "text": "Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240."
+        },
+        {
+          "number": 3,
+          "text": "Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2."
+        },
+        {
+          "number": 4,
+          "text": "Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026."
+        },
+        {
+          "number": 5,
+          "text": "Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma."
+        },
+        {
+          "number": 6,
+          "text": "Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026."
+        }
+      ]
+    },
+    {
+      "id": "rettifiche",
+      "case": "rx41-case",
+      "active": true,
+      "pages": [
+        {
+          "number": 1,
+          "text": "La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente."
+        },
+        {
+          "number": 2,
+          "text": "La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026."
+        },
+        {
+          "number": 3,
+          "text": "La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante."
+        },
+        {
+          "number": 4,
+          "text": "Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1."
+        },
+        {
+          "number": 5,
+          "text": "Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025."
+        }
+      ]
+    },
+    {
+      "id": "distrattori",
+      "case": "rx41-case",
+      "active": true,
+      "pages": [
+        {
+          "number": 1,
+          "text": "L archivio fittizio 000 rinvia al fascicolo tecnico 020 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 2,
+          "text": "L archivio fittizio 001 rinvia al fascicolo tecnico 021 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 3,
+          "text": "L archivio fittizio 002 rinvia al fascicolo tecnico 022 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 4,
+          "text": "L archivio fittizio 003 rinvia al fascicolo tecnico 023 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 5,
+          "text": "L archivio fittizio 004 rinvia al fascicolo tecnico 024 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 6,
+          "text": "L archivio fittizio 005 rinvia al fascicolo tecnico 025 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 7,
+          "text": "L archivio fittizio 006 rinvia al fascicolo tecnico 026 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 8,
+          "text": "L archivio fittizio 007 rinvia al fascicolo tecnico 027 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 9,
+          "text": "L archivio fittizio 008 rinvia al fascicolo tecnico 028 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 10,
+          "text": "L archivio fittizio 009 rinvia al fascicolo tecnico 029 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 11,
+          "text": "L archivio fittizio 010 rinvia al fascicolo tecnico 030 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        },
+        {
+          "number": 12,
+          "text": "L archivio fittizio 011 rinvia al fascicolo tecnico 031 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+        }
+      ]
+    },
+    {
+      "id": "deleted",
+      "case": "rx41-case",
+      "active": false,
+      "pages": [
+        {
+          "number": 1,
+          "text": "Documento rimosso: Rete Obsoleta dichiara il controllo su Fondazione Aurora. Codice ricerca DEL999."
+        }
+      ]
+    },
+    {
+      "id": "foreign",
+      "case": "foreign-case",
+      "active": false,
+      "pages": [
+        {
+          "number": 1,
+          "text": "Altra investigazione: Gruppo Xenon77 dichiara controllo su Fondazione Aurora. Codice ricerca XENON77."
+        }
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "id": "noise-000",
+      "name": "Archivio fittizio 000",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-000"
+      }
+    },
+    {
+      "id": "noise-001",
+      "name": "Archivio fittizio 001",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-001"
+      }
+    },
+    {
+      "id": "noise-002",
+      "name": "Archivio fittizio 002",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-002"
+      }
+    },
+    {
+      "id": "noise-003",
+      "name": "Archivio fittizio 003",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-003"
+      }
+    },
+    {
+      "id": "noise-004",
+      "name": "Archivio fittizio 004",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-004"
+      }
+    },
+    {
+      "id": "noise-005",
+      "name": "Archivio fittizio 005",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-005"
+      }
+    },
+    {
+      "id": "noise-006",
+      "name": "Archivio fittizio 006",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-006"
+      }
+    },
+    {
+      "id": "noise-007",
+      "name": "Archivio fittizio 007",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-007"
+      }
+    },
+    {
+      "id": "noise-008",
+      "name": "Archivio fittizio 008",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-008"
+      }
+    },
+    {
+      "id": "noise-009",
+      "name": "Archivio fittizio 009",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-009"
+      }
+    },
+    {
+      "id": "noise-010",
+      "name": "Archivio fittizio 010",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-010"
+      }
+    },
+    {
+      "id": "noise-011",
+      "name": "Archivio fittizio 011",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-011"
+      }
+    },
+    {
+      "id": "noise-012",
+      "name": "Archivio fittizio 012",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-012"
+      }
+    },
+    {
+      "id": "noise-013",
+      "name": "Archivio fittizio 013",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-013"
+      }
+    },
+    {
+      "id": "noise-014",
+      "name": "Archivio fittizio 014",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-014"
+      }
+    },
+    {
+      "id": "noise-015",
+      "name": "Archivio fittizio 015",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-015"
+      }
+    },
+    {
+      "id": "noise-016",
+      "name": "Archivio fittizio 016",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-016"
+      }
+    },
+    {
+      "id": "noise-017",
+      "name": "Archivio fittizio 017",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-017"
+      }
+    },
+    {
+      "id": "noise-018",
+      "name": "Archivio fittizio 018",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-018"
+      }
+    },
+    {
+      "id": "noise-019",
+      "name": "Archivio fittizio 019",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-019"
+      }
+    },
+    {
+      "id": "noise-020",
+      "name": "Archivio fittizio 020",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-020"
+      }
+    },
+    {
+      "id": "noise-021",
+      "name": "Archivio fittizio 021",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-021"
+      }
+    },
+    {
+      "id": "noise-022",
+      "name": "Archivio fittizio 022",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-022"
+      }
+    },
+    {
+      "id": "noise-023",
+      "name": "Archivio fittizio 023",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-023"
+      }
+    },
+    {
+      "id": "noise-024",
+      "name": "Archivio fittizio 024",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-024"
+      }
+    },
+    {
+      "id": "noise-025",
+      "name": "Archivio fittizio 025",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-025"
+      }
+    },
+    {
+      "id": "noise-026",
+      "name": "Archivio fittizio 026",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-026"
+      }
+    },
+    {
+      "id": "noise-027",
+      "name": "Archivio fittizio 027",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-027"
+      }
+    },
+    {
+      "id": "noise-028",
+      "name": "Archivio fittizio 028",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-028"
+      }
+    },
+    {
+      "id": "noise-029",
+      "name": "Archivio fittizio 029",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-029"
+      }
+    },
+    {
+      "id": "noise-030",
+      "name": "Archivio fittizio 030",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-030"
+      }
+    },
+    {
+      "id": "noise-031",
+      "name": "Archivio fittizio 031",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-031"
+      }
+    },
+    {
+      "id": "noise-032",
+      "name": "Archivio fittizio 032",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-032"
+      }
+    },
+    {
+      "id": "noise-033",
+      "name": "Archivio fittizio 033",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-033"
+      }
+    },
+    {
+      "id": "noise-034",
+      "name": "Archivio fittizio 034",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-034"
+      }
+    },
+    {
+      "id": "noise-035",
+      "name": "Archivio fittizio 035",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-035"
+      }
+    },
+    {
+      "id": "noise-036",
+      "name": "Archivio fittizio 036",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-036"
+      }
+    },
+    {
+      "id": "noise-037",
+      "name": "Archivio fittizio 037",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-037"
+      }
+    },
+    {
+      "id": "noise-038",
+      "name": "Archivio fittizio 038",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-038"
+      }
+    },
+    {
+      "id": "noise-039",
+      "name": "Archivio fittizio 039",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-039"
+      }
+    },
+    {
+      "id": "noise-040",
+      "name": "Archivio fittizio 040",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-040"
+      }
+    },
+    {
+      "id": "noise-041",
+      "name": "Archivio fittizio 041",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-041"
+      }
+    },
+    {
+      "id": "noise-042",
+      "name": "Archivio fittizio 042",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-042"
+      }
+    },
+    {
+      "id": "noise-043",
+      "name": "Archivio fittizio 043",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-043"
+      }
+    },
+    {
+      "id": "noise-044",
+      "name": "Archivio fittizio 044",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-044"
+      }
+    },
+    {
+      "id": "noise-045",
+      "name": "Archivio fittizio 045",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-045"
+      }
+    },
+    {
+      "id": "noise-046",
+      "name": "Archivio fittizio 046",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-046"
+      }
+    },
+    {
+      "id": "noise-047",
+      "name": "Archivio fittizio 047",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-047"
+      }
+    },
+    {
+      "id": "noise-048",
+      "name": "Archivio fittizio 048",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-048"
+      }
+    },
+    {
+      "id": "noise-049",
+      "name": "Archivio fittizio 049",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-049"
+      }
+    },
+    {
+      "id": "noise-050",
+      "name": "Archivio fittizio 050",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-050"
+      }
+    },
+    {
+      "id": "noise-051",
+      "name": "Archivio fittizio 051",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-051"
+      }
+    },
+    {
+      "id": "noise-052",
+      "name": "Archivio fittizio 052",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-052"
+      }
+    },
+    {
+      "id": "noise-053",
+      "name": "Archivio fittizio 053",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-053"
+      }
+    },
+    {
+      "id": "noise-054",
+      "name": "Archivio fittizio 054",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-054"
+      }
+    },
+    {
+      "id": "noise-055",
+      "name": "Archivio fittizio 055",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-055"
+      }
+    },
+    {
+      "id": "noise-056",
+      "name": "Archivio fittizio 056",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-056"
+      }
+    },
+    {
+      "id": "noise-057",
+      "name": "Archivio fittizio 057",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-057"
+      }
+    },
+    {
+      "id": "noise-058",
+      "name": "Archivio fittizio 058",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-058"
+      }
+    },
+    {
+      "id": "noise-059",
+      "name": "Archivio fittizio 059",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-059"
+      }
+    },
+    {
+      "id": "noise-060",
+      "name": "Archivio fittizio 060",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-060"
+      }
+    },
+    {
+      "id": "noise-061",
+      "name": "Archivio fittizio 061",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-061"
+      }
+    },
+    {
+      "id": "noise-062",
+      "name": "Archivio fittizio 062",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-062"
+      }
+    },
+    {
+      "id": "noise-063",
+      "name": "Archivio fittizio 063",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-063"
+      }
+    },
+    {
+      "id": "noise-064",
+      "name": "Archivio fittizio 064",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-064"
+      }
+    },
+    {
+      "id": "noise-065",
+      "name": "Archivio fittizio 065",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-065"
+      }
+    },
+    {
+      "id": "noise-066",
+      "name": "Archivio fittizio 066",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-066"
+      }
+    },
+    {
+      "id": "noise-067",
+      "name": "Archivio fittizio 067",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-067"
+      }
+    },
+    {
+      "id": "noise-068",
+      "name": "Archivio fittizio 068",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-068"
+      }
+    },
+    {
+      "id": "noise-069",
+      "name": "Archivio fittizio 069",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-069"
+      }
+    },
+    {
+      "id": "noise-070",
+      "name": "Archivio fittizio 070",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-070"
+      }
+    },
+    {
+      "id": "noise-071",
+      "name": "Archivio fittizio 071",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-071"
+      }
+    },
+    {
+      "id": "noise-072",
+      "name": "Archivio fittizio 072",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-072"
+      }
+    },
+    {
+      "id": "noise-073",
+      "name": "Archivio fittizio 073",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-073"
+      }
+    },
+    {
+      "id": "noise-074",
+      "name": "Archivio fittizio 074",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-074"
+      }
+    },
+    {
+      "id": "noise-075",
+      "name": "Archivio fittizio 075",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-075"
+      }
+    },
+    {
+      "id": "noise-076",
+      "name": "Archivio fittizio 076",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-076"
+      }
+    },
+    {
+      "id": "noise-077",
+      "name": "Archivio fittizio 077",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-077"
+      }
+    },
+    {
+      "id": "noise-078",
+      "name": "Archivio fittizio 078",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-078"
+      }
+    },
+    {
+      "id": "noise-079",
+      "name": "Archivio fittizio 079",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-079"
+      }
+    },
+    {
+      "id": "noise-080",
+      "name": "Archivio fittizio 080",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-080"
+      }
+    },
+    {
+      "id": "noise-081",
+      "name": "Archivio fittizio 081",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-081"
+      }
+    },
+    {
+      "id": "noise-082",
+      "name": "Archivio fittizio 082",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-082"
+      }
+    },
+    {
+      "id": "noise-083",
+      "name": "Archivio fittizio 083",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-083"
+      }
+    },
+    {
+      "id": "noise-084",
+      "name": "Archivio fittizio 084",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-084"
+      }
+    },
+    {
+      "id": "noise-085",
+      "name": "Archivio fittizio 085",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-085"
+      }
+    },
+    {
+      "id": "noise-086",
+      "name": "Archivio fittizio 086",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-086"
+      }
+    },
+    {
+      "id": "noise-087",
+      "name": "Archivio fittizio 087",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-087"
+      }
+    },
+    {
+      "id": "noise-088",
+      "name": "Archivio fittizio 088",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-088"
+      }
+    },
+    {
+      "id": "noise-089",
+      "name": "Archivio fittizio 089",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-089"
+      }
+    },
+    {
+      "id": "noise-090",
+      "name": "Archivio fittizio 090",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-090"
+      }
+    },
+    {
+      "id": "noise-091",
+      "name": "Archivio fittizio 091",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-091"
+      }
+    },
+    {
+      "id": "noise-092",
+      "name": "Archivio fittizio 092",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-092"
+      }
+    },
+    {
+      "id": "noise-093",
+      "name": "Archivio fittizio 093",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-093"
+      }
+    },
+    {
+      "id": "noise-094",
+      "name": "Archivio fittizio 094",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-094"
+      }
+    },
+    {
+      "id": "noise-095",
+      "name": "Archivio fittizio 095",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-095"
+      }
+    },
+    {
+      "id": "noise-096",
+      "name": "Archivio fittizio 096",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-096"
+      }
+    },
+    {
+      "id": "noise-097",
+      "name": "Archivio fittizio 097",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-097"
+      }
+    },
+    {
+      "id": "noise-098",
+      "name": "Archivio fittizio 098",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-098"
+      }
+    },
+    {
+      "id": "noise-099",
+      "name": "Archivio fittizio 099",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-099"
+      }
+    },
+    {
+      "id": "noise-100",
+      "name": "Archivio fittizio 100",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-100"
+      }
+    },
+    {
+      "id": "noise-101",
+      "name": "Archivio fittizio 101",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-101"
+      }
+    },
+    {
+      "id": "noise-102",
+      "name": "Archivio fittizio 102",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-102"
+      }
+    },
+    {
+      "id": "noise-103",
+      "name": "Archivio fittizio 103",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-103"
+      }
+    },
+    {
+      "id": "noise-104",
+      "name": "Archivio fittizio 104",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-104"
+      }
+    },
+    {
+      "id": "noise-105",
+      "name": "Archivio fittizio 105",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-105"
+      }
+    },
+    {
+      "id": "noise-106",
+      "name": "Archivio fittizio 106",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-106"
+      }
+    },
+    {
+      "id": "noise-107",
+      "name": "Archivio fittizio 107",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-107"
+      }
+    },
+    {
+      "id": "noise-108",
+      "name": "Archivio fittizio 108",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-108"
+      }
+    },
+    {
+      "id": "noise-109",
+      "name": "Archivio fittizio 109",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-109"
+      }
+    },
+    {
+      "id": "noise-110",
+      "name": "Archivio fittizio 110",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-110"
+      }
+    },
+    {
+      "id": "noise-111",
+      "name": "Archivio fittizio 111",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-111"
+      }
+    },
+    {
+      "id": "noise-112",
+      "name": "Archivio fittizio 112",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-112"
+      }
+    },
+    {
+      "id": "noise-113",
+      "name": "Archivio fittizio 113",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-113"
+      }
+    },
+    {
+      "id": "noise-114",
+      "name": "Archivio fittizio 114",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-114"
+      }
+    },
+    {
+      "id": "noise-115",
+      "name": "Archivio fittizio 115",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-115"
+      }
+    },
+    {
+      "id": "noise-116",
+      "name": "Archivio fittizio 116",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-116"
+      }
+    },
+    {
+      "id": "noise-117",
+      "name": "Archivio fittizio 117",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-117"
+      }
+    },
+    {
+      "id": "noise-118",
+      "name": "Archivio fittizio 118",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-118"
+      }
+    },
+    {
+      "id": "noise-119",
+      "name": "Archivio fittizio 119",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-119"
+      }
+    },
+    {
+      "id": "noise-120",
+      "name": "Archivio fittizio 120",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-120"
+      }
+    },
+    {
+      "id": "noise-121",
+      "name": "Archivio fittizio 121",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-121"
+      }
+    },
+    {
+      "id": "noise-122",
+      "name": "Archivio fittizio 122",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-122"
+      }
+    },
+    {
+      "id": "noise-123",
+      "name": "Archivio fittizio 123",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-123"
+      }
+    },
+    {
+      "id": "noise-124",
+      "name": "Archivio fittizio 124",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-124"
+      }
+    },
+    {
+      "id": "noise-125",
+      "name": "Archivio fittizio 125",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-125"
+      }
+    },
+    {
+      "id": "noise-126",
+      "name": "Archivio fittizio 126",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-126"
+      }
+    },
+    {
+      "id": "noise-127",
+      "name": "Archivio fittizio 127",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-127"
+      }
+    },
+    {
+      "id": "noise-128",
+      "name": "Archivio fittizio 128",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-128"
+      }
+    },
+    {
+      "id": "noise-129",
+      "name": "Archivio fittizio 129",
+      "type": "ORGANIZATION",
+      "aliases": [],
+      "identifiers": {
+        "registration_number": "NOISE-129"
+      }
+    },
+    {
+      "id": "aurora",
+      "name": "Fondazione Aurora",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-ORG-01"
+      },
+      "aliases": []
+    },
+    {
+      "id": "passaggio",
+      "name": "Rete Passaggio",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-ORG-02"
+      },
+      "aliases": []
+    },
+    {
+      "id": "fronte",
+      "name": "Fronte Levante",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-ORG-03"
+      },
+      "aliases": []
+    },
+    {
+      "id": "cerchio",
+      "name": "Cerchio Grigio",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-ORG-04"
+      },
+      "aliases": []
+    },
+    {
+      "id": "canale",
+      "name": "Canale Prisma",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-ORG-05"
+      },
+      "aliases": []
+    },
+    {
+      "id": "laboratorio",
+      "name": "Laboratorio Prisma",
+      "type": "FACILITY",
+      "identifiers": {
+        "registry": "RX-LAB-01"
+      },
+      "aliases": []
+    },
+    {
+      "id": "mario-a",
+      "name": "Mario Rossi",
+      "type": "PERSON",
+      "identifiers": {
+        "passport": "AA1"
+      },
+      "aliases": []
+    },
+    {
+      "id": "mario-b",
+      "name": "Mario Rossi",
+      "type": "PERSON",
+      "identifiers": {
+        "passport": "BB2"
+      },
+      "aliases": []
+    },
+    {
+      "id": "falco",
+      "name": "Aldo Serra",
+      "type": "PERSON",
+      "identifiers": {
+        "passport": "CC3"
+      },
+      "aliases": [
+        "Falco"
+      ]
+    },
+    {
+      "id": "attacco",
+      "name": "Evento Faro",
+      "type": "EVENT",
+      "identifiers": {
+        "event_id": "RX-EVENT-10"
+      },
+      "aliases": []
+    },
+    {
+      "id": "zefiro",
+      "name": "Deposito Zefiro",
+      "type": "FACILITY",
+      "identifiers": {
+        "registry": "RX-LOC-126"
+      },
+      "aliases": []
+    },
+    {
+      "id": "nodo",
+      "name": "Nodo Argine",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-ORG-06"
+      },
+      "aliases": []
+    },
+    {
+      "id": "rimosso",
+      "name": "Rete Obsoleta",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-DEL"
+      },
+      "aliases": []
+    },
+    {
+      "id": "estero",
+      "name": "Gruppo Xenon77",
+      "type": "ORGANIZATION",
+      "identifiers": {
+        "registration_number": "RX-FOREIGN"
+      },
+      "aliases": []
+    }
+  ],
+  "claims": [
+    {
+      "id": "c01",
+      "subject": "aurora",
+      "object": "passaggio",
+      "predicate": "FUNDS",
+      "polarity": "affirmed",
+      "modality": "alleged",
+      "doc": "dossier",
+      "page": 1,
+      "quote": "Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica dossier, pagina 1"
+    },
+    {
+      "id": "c02",
+      "subject": "aurora",
+      "object": "passaggio",
+      "predicate": "FUNDS",
+      "polarity": "denied",
+      "modality": "asserted",
+      "doc": "rettifiche",
+      "page": 1,
+      "quote": "La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica rettifiche, pagina 1"
+    },
+    {
+      "id": "c03",
+      "subject": "aurora",
+      "object": "passaggio",
+      "predicate": "TRANSFERS_TO",
+      "polarity": "affirmed",
+      "modality": "alleged",
+      "doc": "connessioni",
+      "page": 1,
+      "quote": "Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.",
+      "qualifiers": {
+        "amount": "240",
+        "currency": "EUR",
+        "event_reference": "TX240"
+      },
+      "valid_from": "2026-02-21",
+      "valid_until": "2026-02-21",
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica connessioni, pagina 1"
+    },
+    {
+      "id": "c04",
+      "subject": "aurora",
+      "object": "passaggio",
+      "predicate": "TRANSFERS_TO",
+      "polarity": "denied",
+      "modality": "asserted",
+      "doc": "rettifiche",
+      "page": 2,
+      "quote": "La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.",
+      "qualifiers": {
+        "amount": "240",
+        "currency": "EUR",
+        "event_reference": "TX240"
+      },
+      "valid_from": "2026-02-21",
+      "valid_until": "2026-02-21",
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica rettifiche, pagina 2"
+    },
+    {
+      "id": "c05",
+      "subject": "aurora",
+      "object": "passaggio",
+      "predicate": "TRANSFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "connessioni",
+      "page": 2,
+      "quote": "Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.",
+      "qualifiers": {
+        "amount": "240",
+        "currency": "USD",
+        "event_reference": "TXUSD"
+      },
+      "valid_from": "2026-02-22",
+      "valid_until": "2026-02-22",
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica connessioni, pagina 2"
+    },
+    {
+      "id": "c06",
+      "subject": "fronte",
+      "object": "attacco",
+      "predicate": "ASSOCIATED_WITH",
+      "polarity": "affirmed",
+      "modality": "alleged",
+      "doc": "dossier",
+      "page": 2,
+      "quote": "Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.",
+      "qualifiers": {
+        "event_reference": "RX-EVENT-10"
+      },
+      "valid_from": "2026-02-10",
+      "valid_until": "2026-02-10",
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica dossier, pagina 2"
+    },
+    {
+      "id": "c07",
+      "subject": "fronte",
+      "object": "attacco",
+      "predicate": "ASSOCIATED_WITH",
+      "polarity": "affirmed",
+      "modality": "uncertain",
+      "doc": "rettifiche",
+      "page": 3,
+      "quote": "La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.",
+      "qualifiers": {
+        "event_reference": "RX-EVENT-10"
+      },
+      "valid_from": "2026-02-11",
+      "valid_until": "2026-02-11",
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica rettifiche, pagina 3"
+    },
+    {
+      "id": "c08",
+      "subject": "mario-a",
+      "object": "canale",
+      "predicate": "WORKS_FOR",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "connessioni",
+      "page": 3,
+      "quote": "Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.",
+      "qualifiers": {
+        "role": "editor"
+      },
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica connessioni, pagina 3"
+    },
+    {
+      "id": "c09",
+      "subject": "mario-b",
+      "object": "canale",
+      "predicate": "WORKS_FOR",
+      "polarity": "denied",
+      "modality": "asserted",
+      "doc": "rettifiche",
+      "page": 4,
+      "quote": "Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.",
+      "qualifiers": {
+        "role": "editor"
+      },
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica rettifiche, pagina 4"
+    },
+    {
+      "id": "c10",
+      "subject": "canale",
+      "object": "laboratorio",
+      "predicate": "USES",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "dossier",
+      "page": 3,
+      "quote": "Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.",
+      "qualifiers": {
+        "purpose": "recording"
+      },
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica dossier, pagina 3"
+    },
+    {
+      "id": "c11",
+      "subject": "canale",
+      "object": "fronte",
+      "predicate": "COLLABORATES_WITH",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "dossier",
+      "page": 4,
+      "quote": "Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.",
+      "qualifiers": {},
+      "valid_from": "2025-01-01",
+      "valid_until": "2025-12-31",
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica dossier, pagina 4"
+    },
+    {
+      "id": "c12",
+      "subject": "canale",
+      "object": "fronte",
+      "predicate": "COLLABORATES_WITH",
+      "polarity": "denied",
+      "modality": "asserted",
+      "doc": "rettifiche",
+      "page": 5,
+      "quote": "Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.",
+      "qualifiers": {},
+      "valid_from": "2026-01-01",
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica rettifiche, pagina 5"
+    },
+    {
+      "id": "c13",
+      "subject": "falco",
+      "object": "zefiro",
+      "predicate": "VISITED",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "connessioni",
+      "page": 4,
+      "quote": "Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.",
+      "qualifiers": {},
+      "valid_from": "2026-02-18",
+      "valid_until": "2026-02-18",
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica connessioni, pagina 4"
+    },
+    {
+      "id": "c14",
+      "subject": "nodo",
+      "object": "zefiro",
+      "predicate": "USES",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "connessioni",
+      "page": 5,
+      "quote": "Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.",
+      "qualifiers": {
+        "purpose": "public_meetings"
+      },
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica connessioni, pagina 5"
+    },
+    {
+      "id": "c15",
+      "subject": "cerchio",
+      "object": "fronte",
+      "predicate": "AFFILIATED_WITH",
+      "polarity": "denied",
+      "modality": "uncertain",
+      "doc": "dossier",
+      "page": 5,
+      "quote": "Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica dossier, pagina 5"
+    },
+    {
+      "id": "c16",
+      "subject": "nodo",
+      "object": "aurora",
+      "predicate": "MEETS",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "connessioni",
+      "page": 6,
+      "quote": "Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.",
+      "qualifiers": {},
+      "valid_from": "2026-02-20",
+      "valid_until": "2026-02-20",
+      "asserted_at": "2026-03-04",
+      "attribution": "Fonte sintetica connessioni, pagina 6"
+    },
+    {
+      "id": "c17",
+      "subject": "passaggio",
+      "object": "canale",
+      "predicate": "SUPPORTS",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "dossier",
+      "page": 6,
+      "quote": "Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.",
+      "qualifiers": {
+        "support_kind": "logistics"
+      },
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica dossier, pagina 6"
+    },
+    {
+      "id": "noise-c00",
+      "subject": "noise-000",
+      "object": "noise-020",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 1,
+      "quote": "L archivio fittizio 000 rinvia al fascicolo tecnico 020 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 1"
+    },
+    {
+      "id": "noise-c01",
+      "subject": "noise-001",
+      "object": "noise-021",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 2,
+      "quote": "L archivio fittizio 001 rinvia al fascicolo tecnico 021 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 2"
+    },
+    {
+      "id": "noise-c02",
+      "subject": "noise-002",
+      "object": "noise-022",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 3,
+      "quote": "L archivio fittizio 002 rinvia al fascicolo tecnico 022 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 3"
+    },
+    {
+      "id": "noise-c03",
+      "subject": "noise-003",
+      "object": "noise-023",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 4,
+      "quote": "L archivio fittizio 003 rinvia al fascicolo tecnico 023 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 4"
+    },
+    {
+      "id": "noise-c04",
+      "subject": "noise-004",
+      "object": "noise-024",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 5,
+      "quote": "L archivio fittizio 004 rinvia al fascicolo tecnico 024 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 5"
+    },
+    {
+      "id": "noise-c05",
+      "subject": "noise-005",
+      "object": "noise-025",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 6,
+      "quote": "L archivio fittizio 005 rinvia al fascicolo tecnico 025 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 6"
+    },
+    {
+      "id": "noise-c06",
+      "subject": "noise-006",
+      "object": "noise-026",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 7,
+      "quote": "L archivio fittizio 006 rinvia al fascicolo tecnico 026 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 7"
+    },
+    {
+      "id": "noise-c07",
+      "subject": "noise-007",
+      "object": "noise-027",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 8,
+      "quote": "L archivio fittizio 007 rinvia al fascicolo tecnico 027 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 8"
+    },
+    {
+      "id": "noise-c08",
+      "subject": "noise-008",
+      "object": "noise-028",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 9,
+      "quote": "L archivio fittizio 008 rinvia al fascicolo tecnico 028 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 9"
+    },
+    {
+      "id": "noise-c09",
+      "subject": "noise-009",
+      "object": "noise-029",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 10,
+      "quote": "L archivio fittizio 009 rinvia al fascicolo tecnico 029 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 10"
+    },
+    {
+      "id": "noise-c10",
+      "subject": "noise-010",
+      "object": "noise-030",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 11,
+      "quote": "L archivio fittizio 010 rinvia al fascicolo tecnico 030 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 11"
+    },
+    {
+      "id": "noise-c11",
+      "subject": "noise-011",
+      "object": "noise-031",
+      "predicate": "REFERS_TO",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "distrattori",
+      "page": 12,
+      "quote": "L archivio fittizio 011 rinvia al fascicolo tecnico 031 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica distrattori, pagina 12"
+    },
+    {
+      "id": "deleted-claim",
+      "subject": "rimosso",
+      "object": "aurora",
+      "predicate": "CONTROLS",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "deleted",
+      "page": 1,
+      "quote": "Documento rimosso: Rete Obsoleta dichiara il controllo su Fondazione Aurora. Codice ricerca DEL999.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica deleted, pagina 1"
+    },
+    {
+      "id": "foreign-claim",
+      "subject": "estero",
+      "object": "aurora",
+      "predicate": "CONTROLS",
+      "polarity": "affirmed",
+      "modality": "asserted",
+      "doc": "foreign",
+      "page": 1,
+      "quote": "Altra investigazione: Gruppo Xenon77 dichiara controllo su Fondazione Aurora. Codice ricerca XENON77.",
+      "qualifiers": {},
+      "valid_from": null,
+      "valid_until": null,
+      "asserted_at": "2026-03-05",
+      "attribution": "Fonte sintetica foreign, pagina 1"
+    }
+  ],
+  "queries": [
+    {
+      "id": "q01",
+      "question": "Quali fonti sostengono e quali negano che Fondazione Aurora finanzi Rete Passaggio?",
+      "category": "denial",
+      "gold_claim_ids": [
+        "c01",
+        "c02"
+      ],
+      "gold_pages": [
+        "dossier:1",
+        "rettifiche:1"
+      ],
+      "gold_denial_ids": [
+        "c02"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q02",
+      "question": "Il trasferimento TX240 di 240 EUR da Aurora a Passaggio e confermato o smentito?",
+      "category": "amount_denial",
+      "gold_claim_ids": [
+        "c03",
+        "c04"
+      ],
+      "gold_pages": [
+        "connessioni:1",
+        "rettifiche:2"
+      ],
+      "gold_denial_ids": [
+        "c04"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q03",
+      "question": "I 240 USD TXUSD sono lo stesso trasferimento dei 240 EUR TX240?",
+      "category": "currency",
+      "gold_claim_ids": [
+        "c03",
+        "c04",
+        "c05"
+      ],
+      "gold_pages": [
+        "connessioni:1",
+        "connessioni:2",
+        "rettifiche:2"
+      ],
+      "gold_denial_ids": [
+        "c04"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q04",
+      "question": "Qual e la data di Evento Faro: 10 o 11 febbraio 2026?",
+      "category": "date_correction",
+      "gold_claim_ids": [
+        "c06",
+        "c07"
+      ],
+      "gold_pages": [
+        "dossier:2",
+        "rettifiche:3"
+      ],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q05",
+      "question": "Mario Rossi AA1 e Mario Rossi BB2 lavorano entrambi per Canale Prisma?",
+      "category": "homonyms",
+      "gold_claim_ids": [
+        "c08",
+        "c09"
+      ],
+      "gold_pages": [
+        "connessioni:3",
+        "rettifiche:4"
+      ],
+      "gold_denial_ids": [
+        "c09"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q06",
+      "question": "Canale Prisma e Laboratorio Prisma sono la stessa entita?",
+      "category": "entity_types",
+      "gold_claim_ids": [
+        "c10"
+      ],
+      "gold_pages": [
+        "dossier:3"
+      ],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q07",
+      "question": "Canale Prisma collaborava con Fronte Levante nel 2025 e nel 2026?",
+      "category": "temporal_change",
+      "gold_claim_ids": [
+        "c11",
+        "c12"
+      ],
+      "gold_pages": [
+        "dossier:4",
+        "rettifiche:5"
+      ],
+      "gold_denial_ids": [
+        "c12"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q08",
+      "question": "Dove e stato Falco, alias di Aldo Serra?",
+      "category": "alias",
+      "gold_claim_ids": [
+        "c13"
+      ],
+      "gold_pages": [
+        "connessioni:4"
+      ],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q09",
+      "question": "Chi utilizza Deposito Zefiro e chi lo ha visitato?",
+      "category": "beyond_first_100",
+      "gold_claim_ids": [
+        "c13",
+        "c14"
+      ],
+      "gold_pages": [
+        "connessioni:4",
+        "connessioni:5"
+      ],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q10",
+      "question": "Quale pagina documenta il supporto logistico di Rete Passaggio a Canale Prisma?",
+      "category": "page_citation",
+      "gold_claim_ids": [
+        "c17"
+      ],
+      "gold_pages": [
+        "dossier:6"
+      ],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q11",
+      "question": "Cerchio Grigio risulta affiliato a Fronte Levante?",
+      "category": "negative_affiliation",
+      "gold_claim_ids": [
+        "c15"
+      ],
+      "gold_pages": [
+        "dossier:5"
+      ],
+      "gold_denial_ids": [
+        "c15"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q12",
+      "question": "La pubblicazione del comunicato di Nodo Argine coincide con la data dell incontro con Aurora?",
+      "category": "assertion_vs_event_date",
+      "gold_claim_ids": [
+        "c16"
+      ],
+      "gold_pages": [
+        "connessioni:6"
+      ],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q13",
+      "question": "Quali prove attive ci sono per DEL999 e Rete Obsoleta?",
+      "category": "deleted_document",
+      "gold_claim_ids": [],
+      "gold_pages": [],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q14",
+      "question": "Quali prove di questa investigazione riguardano XENON77?",
+      "category": "foreign_case",
+      "gold_claim_ids": [],
+      "gold_pages": [],
+      "gold_denial_ids": [],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q15",
+      "question": "Quali reti collegano Fondazione Aurora, Rete Passaggio e Canale Prisma, incluse smentite e rapporti storici?",
+      "category": "community_broad",
+      "gold_claim_ids": [
+        "c01",
+        "c02",
+        "c03",
+        "c04",
+        "c11",
+        "c12",
+        "c17"
+      ],
+      "gold_pages": [
+        "connessioni:1",
+        "dossier:1",
+        "dossier:4",
+        "dossier:6",
+        "rettifiche:1",
+        "rettifiche:2",
+        "rettifiche:5"
+      ],
+      "gold_denial_ids": [
+        "c02",
+        "c04",
+        "c12"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    },
+    {
+      "id": "q16",
+      "question": "Riporta soltanto il trasferimento TX240 di 240 EUR e la sua smentita, con pagine.",
+      "category": "local_scope",
+      "gold_claim_ids": [
+        "c03",
+        "c04"
+      ],
+      "gold_pages": [
+        "connessioni:1",
+        "rettifiche:2"
+      ],
+      "gold_denial_ids": [
+        "c04"
+      ],
+      "forbidden_document_ids": [
+        "deleted",
+        "foreign"
+      ]
+    }
+  ]
+}

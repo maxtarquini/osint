@@ -60,7 +60,16 @@ class FakeVectors:
     def indexed_document_hashes(self, investigation_id: str) -> dict[str, str]:
         return dict(self.manifest)
 
-    def upsert_document(self, document, chunks, vectors, *, index_signature=None) -> None:
+    def upsert_document(
+        self,
+        document,
+        chunks,
+        vectors,
+        *,
+        index_signature=None,
+        page_numbers=None,
+        source_texts=None,
+    ) -> None:
         assert len(chunks) == len(vectors)
         self.upserts.append((document, chunks))
         self.manifest[document.document_id] = index_signature or document.sha256
@@ -116,6 +125,9 @@ class FakeAiNode:
 
 
 class FakeKnowledgeBase:
+    def extract_pages(self, document, cancelled=None):
+        return (self.extract_text(document, cancelled),)
+
     def extract_text(self, document, cancelled=None):
         return "First paragraph about Acme.\n\nSecond paragraph about Beta."
 
@@ -310,4 +322,4 @@ def test_reference_language_is_part_of_index_signature_and_translates_chunks() -
     service.index_knowledge_base(investigation, (document,))
 
     assert vectors.upserts[0][1] == ("Translated Evidence",)
-    assert vectors.manifest[document.document_id] == f"{document.sha256}:english"
+    assert vectors.manifest[document.document_id] == f"{document.sha256}:english:pages-v2"

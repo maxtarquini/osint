@@ -26,6 +26,8 @@ from raven.graph import (
     ResolvedVocabulary,
     consolidate_graph,
 )
+from raven.graph.claims import compare_claims, project_claims
+from raven.graph.pages import PageGraphAnalyzer, plan_pages
 from raven.models import (
     EvidenceDocument,
     EvidenceIngestionState,
@@ -33,9 +35,12 @@ from raven.models import (
     GraphAnalysisProgress,
     GraphAnalysisResult,
     GraphAnalysisRun,
+    GraphClaim,
+    GraphRelationship,
     GraphRunStatus,
     Investigation,
     InvestigationGraph,
+    PageGraphAnalysis,
 )
 from raven.repositories.knowledge_base import KnowledgeBaseStore
 
@@ -130,8 +135,16 @@ class GraphAnalysisService:
             ) from error
         run = self._new_run(investigation, documents, preparation_mode, vocabulary)
         self._repository.save_graph_run(run)
+        previous = self.latest(investigation.investigation_id)
+        previous_pages = (
+            {(page.evidence_id, page.page_number): page for page in previous.pages}
+            if previous is not None and previous.investigation_id == investigation.investigation_id
+            else {}
+        )
+        page_analyzer = PageGraphAnalyzer(self._extractor)
+        page_results: list[PageGraphAnalysis] = []
         entity_groups: list[tuple] = []
-        relationship_groups: list[tuple] = []
+        claim_groups: list[tuple[GraphClaim, ...]] = []
         model_names: list[str] = []
         evidence_states: list[tuple[str, EvidenceIngestionState]] = []
         completed = 0
@@ -155,37 +168,107 @@ class GraphAnalysisService:
                 document.document_id,
                 EvidenceIngestionState.PROCESSING,
             )
+            document_pages = []
+            source_loaded = False
             try:
                 pages = self._knowledge_bases.extract_pages(document, cancelled)
-                text = "\n\n".join(pages)
-                if not text.strip():
+                source_loaded = True
+                if not any(page.strip() for page in pages):
+                    document_pages = [
+                        PageGraphAnalysis(
+                            document.document_id,
+                            number,
+                            "",
+                            "",
+                            "failed",
+                            datetime.now(UTC),
+                            error="no_extractable_text",
+                        )
+                        for number in range(1, (len(pages) or document.page_count or 1) + 1)
+                    ]
                     raise GraphAnalysisValidationError(
                         f"No extractable text in {document.original_name}"
                     )
-                entities, relationships, model_name = self._extractor.extract(
-                    investigation.investigation_id,
+                catalog, catalog_error = None, False
+                loader = getattr(self._repository, "load_catalog", None)
+                if callable(loader):
+                    try:
+                        catalog = loader(investigation.investigation_id, document.document_id)
+                    except Exception:
+                        catalog_error = True
+                plans = plan_pages(
+                    investigation,
                     document.document_id,
-                    text,
-                    investigation.analysis_language,
-                    preparation_mode,
-                    investigation.analysis_domain,
+                    pages,
+                    catalog,
                     vocabulary,
-                    pages=pages,
+                    self._ai_node,
+                    preparation_mode,
+                    catalog_error=catalog_error,
+                )
+                for page_index, plan in enumerate(plans, 1):
+                    self._notify(
+                        progress,
+                        GraphRunStatus.EXTRACTING,
+                        index - 1,
+                        len(documents),
+                        f"{document.original_name} · page {plan.number}/{len(pages)} "
+                        f"({page_index}/{len(plans)}) · catalog: {plan.catalog_state}",
+                    )
+                    page_result = page_analyzer.analyze(
+                        investigation,
+                        document.document_id,
+                        pages,
+                        plan,
+                        vocabulary,
+                        preparation_mode,
+                        previous_pages.get((document.document_id, plan.number)),
+                        cancelled,
+                    )
+                    document_pages.append(page_result)
+                document_pages.sort(key=lambda page: page.page_number)
+                # Resolve from the raw page cache every time; deleted or changed sources cannot
+                # leave behind a previous merge or an old contradiction decision.
+                raw_entities = tuple(entity for page in document_pages for entity in page.entities)
+                raw_claims = tuple(claim for page in document_pages for claim in page.claims)
+                proxies = tuple(
+                    GraphRelationship(
+                        claim.claim_id,
+                        claim.subject_entity_id,
+                        claim.object_entity_id,
+                        claim.predicate,
+                    )
+                    for claim in raw_claims
+                )
+                existing_entities, _ = consolidate_graph(entity_groups, ())
+                entities, resolved_proxies = self._extractor.resolve_against(
+                    investigation.investigation_id,
+                    raw_entities,
+                    proxies,
+                    existing_entities,
                     cancelled=cancelled,
                 )
-                existing_entities, _ = consolidate_graph(entity_groups, relationship_groups)
-                entities, relationships = self._extractor.resolve_against(
-                    investigation.investigation_id,
-                    entities,
-                    relationships,
-                    existing_entities,
+                claims = tuple(
+                    replace(
+                        claim,
+                        subject_entity_id=proxy.source_entity_id,
+                        object_entity_id=proxy.target_entity_id,
+                    )
+                    for claim, proxy in zip(raw_claims, resolved_proxies, strict=True)
                 )
             except (
                 GraphAnalysisCancelledError,
                 InvestigationCancelledError,
                 InvestigationChatCancelledError,
             ) as error:
-                self._cancel(run, completed, failed)
+                self._repository.set_evidence_ingestion_state(
+                    document.document_id, EvidenceIngestionState.PENDING
+                )
+                self._cancel(
+                    replace(run, page_outcomes=tuple((*page_results, *document_pages))),
+                    completed,
+                    failed,
+                )
                 raise GraphAnalysisCancelledError("Graph analysis cancelled") from error
             except Exception as error:
                 failed += 1
@@ -201,31 +284,64 @@ class GraphAnalysisService:
                     EvidenceIngestionState.FAILED,
                 )
                 evidence_states.append((document.document_id, EvidenceIngestionState.FAILED))
+                # An unreadable source has known missing pages, or one logical unit when its
+                # size is unknown. Never reuse the old document's output after a read failure.
+                if document_pages:
+                    document_pages = [
+                        replace(
+                            page,
+                            state="partial" if page.entities else "failed",
+                            error=page.error or "identity_resolution_failed",
+                        )
+                        for page in document_pages
+                    ]
+                    page_results.extend(document_pages)
+                else:
+                    page_results.extend(
+                        PageGraphAnalysis(
+                            document.document_id,
+                            number,
+                            "",
+                            "",
+                            "failed",
+                            datetime.now(UTC),
+                            error="page_analysis_failed" if source_loaded else "source_read_failed",
+                        )
+                        for number in range(1, (document.page_count or 1) + 1)
+                    )
             else:
-                completed += 1
+                page_results.extend(document_pages)
+                incomplete = any(page.state in ("partial", "failed") for page in document_pages)
+                failed += int(incomplete)
+                completed += int(not incomplete)
                 entity_groups.append(entities)
-                relationship_groups.append(relationships)
-                model_names.append(model_name)
+                claim_groups.append(claims)
+                model_names.extend(page.model_name for page in document_pages if page.model_name)
+                state = (
+                    EvidenceIngestionState.FAILED if incomplete else EvidenceIngestionState.READY
+                )
                 self._repository.set_evidence_ingestion_state(
                     document.document_id,
-                    EvidenceIngestionState.READY,
+                    state,
                 )
-                evidence_states.append((document.document_id, EvidenceIngestionState.READY))
+                evidence_states.append((document.document_id, state))
             run = replace(
                 run,
                 status=GraphRunStatus.EXTRACTING,
                 evidence_completed=completed,
                 evidence_failed=failed,
+                page_outcomes=tuple(page_results),
                 updated_at=datetime.now(UTC),
             )
             self._repository.save_graph_run(run)
 
-        if completed == 0:
+        if completed == 0 and not any(entity_groups):
             failed_run = replace(
                 run,
                 status=GraphRunStatus.FAILED,
                 evidence_failed=failed,
-                last_error="No Evidence document produced an analyzable result",
+                last_error="No Evidence document produced an analyzable result. "
+                + self._page_errors(page_results),
                 updated_at=datetime.now(UTC),
                 completed_at=datetime.now(UTC),
             )
@@ -241,7 +357,14 @@ class GraphAnalysisService:
         )
         run = replace(run, status=GraphRunStatus.CONSOLIDATING, updated_at=datetime.now(UTC))
         self._repository.save_graph_run(run)
-        entities, relationships = consolidate_graph(entity_groups, relationship_groups)
+        entities, _ = consolidate_graph(entity_groups, ())
+        claims = tuple(claim for group in claim_groups for claim in group)
+        try:
+            claim_links = compare_claims(claims, entities, cancelled=cancelled)
+            relationships = project_claims(claims, cancelled=cancelled)
+        except GraphAnalysisCancelledError:
+            self._cancel(run, completed, failed)
+            raise
         now = datetime.now(UTC)
         graph = InvestigationGraph(
             investigation_id=investigation.investigation_id,
@@ -249,13 +372,19 @@ class GraphAnalysisService:
             entities=entities,
             relationships=relationships,
             generated_at=now,
+            claims=claims,
+            claim_links=claim_links,
+            pages=tuple(page_results),
         )
+        if cancelled is not None and cancelled():
+            self._cancel(run, completed, failed)
+            raise GraphAnalysisCancelledError("Graph analysis cancelled")
         self._repository.save_graph_snapshot(graph)
 
         warnings = []
         unsupported = sum(
             not item.support or not all(span.verified_original for span in item.support)
-            for item in (*entities, *relationships)
+            for item in (*entities, *claims)
         )
         if unsupported:
             warnings.append(
@@ -263,6 +392,15 @@ class GraphAnalysisService:
             )
         if "deterministic-fallback" in model_names:
             warnings.append("Semantic extraction failed; only deterministic observables retained")
+        incomplete_pages = sum(page.state in ("partial", "failed") for page in page_results)
+        if incomplete_pages:
+            warnings.append(
+                f"{incomplete_pages} page(s) require retry; open Claims / coverage for details"
+            )
+            warnings.append(self._page_errors(page_results))
+        observables_only = sum(page.state == "observables_only" for page in page_results)
+        if observables_only:
+            warnings.append(f"{observables_only} page(s): AI unavailable, observables only")
         warning: str | None = "; ".join(warnings) or None
         try:
             self._graph_store.save_graph_snapshot(graph)
@@ -296,13 +434,23 @@ class GraphAnalysisService:
             status,
             completed,
             len(documents),
-            f"Graph ready: {len(entities)} entities, {len(relationships)} relationships",
+            f"Graph ready: {len(entities)} entities, {len(claims)} claims, "
+            f"{len(claim_links)} comparisons · "
+            f"{sum(page.state == 'reused' for page in page_results)} pages reused",
         )
         return GraphAnalysisResult(
             run=run,
             graph=graph,
             evidence_states=tuple(evidence_states),
         )
+
+    @staticmethod
+    def _page_errors(pages: list[PageGraphAnalysis]) -> str:
+        failed = [page for page in pages if page.error]
+        detail = "; ".join(
+            f"{page.evidence_id[:8]} p{page.page_number}: {page.error}" for page in failed[:12]
+        )
+        return detail + (f"; {len(failed) - 12} more page errors" if len(failed) > 12 else "")
 
     def _new_run(
         self,

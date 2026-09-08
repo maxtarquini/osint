@@ -53,6 +53,10 @@ class RetrievedEvidenceChunk:
     text: str
     score: float
     page_count: int | None = None
+    page_number: int | None = None
+    original_text: str | None = None
+    index_signature: str | None = None
+    investigation_id: str | None = None
 
 
 class ChatEventKind(StrEnum):
