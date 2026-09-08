@@ -3,9 +3,11 @@
   "code": "CORPORATE_OWNERSHIP",
   "name": "Corporate ownership",
   "description": "Companies, beneficial ownership, governance, products, contracts and commercial activity.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "selectable_domain": true,
   "extends": ["CORE"],
+  "page_categories": ["OWNERSHIP_STRUCTURE", "CORPORATE_GOVERNANCE", "COMMERCIAL_AGREEMENTS"],
+  "page_uses": ["OWNERSHIP_TRACING", "CONTROL_ANALYSIS"],
   "entity_types": [
     {"code":"CORP_COMPANY","base_type":"ORGANIZATION","label":"Company","description":"A named incorporated or commercially operating company."},
     {"code":"CORP_SUBSIDIARY","base_type":"ORGANIZATION","label":"Subsidiary","description":"A company explicitly described as controlled by a parent organization."},

@@ -1,6 +1,11 @@
-"""Evidence-to-Graph pipeline factories and deterministic graph operations."""
+"""Evidence-to-Graph pipeline factories and graph consolidation operations."""
 
-from raven.graph.extraction import EvidenceGraphExtractor, consolidate_graph, word_chunks
+from raven.graph.extraction import (
+    EvidenceGraphExtractor,
+    consolidate_graph,
+    page_groups,
+    word_chunks,
+)
 from raven.graph.vocabulary import (
     DEFAULT_DOMAIN_CODE,
     NamedEntityVocabularyCatalog,
@@ -17,5 +22,6 @@ __all__ = [
     "VocabularyDefinition",
     "VocabularyEntityType",
     "consolidate_graph",
+    "page_groups",
     "word_chunks",
 ]

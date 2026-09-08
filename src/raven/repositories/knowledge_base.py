@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import mimetypes
 import re
@@ -34,12 +35,15 @@ class KnowledgeBaseStore:
     """Copy and remove individual documents in per-investigation directories."""
 
     def __init__(self, root: Path | None = None) -> None:
+        self._legacy_roots: list[Path] = []
         self.root = (root or user_data_path("raven", appauthor=False) / "knowledge_bases").resolve()
 
     def configure_root(self, root: Path) -> None:
         """Switch future Evidence operations to a validated, writable directory."""
         resolved = root.expanduser().resolve()
         self._ensure_directory(resolved)
+        if resolved != self.root:
+            self._legacy_roots.append(self.root)
         self.root = resolved
 
     def investigation_directory(self, investigation_id: str, *, create: bool = False) -> Path:
@@ -91,18 +95,35 @@ class KnowledgeBaseStore:
             investigation_id=investigation_id,
             original_name=source.name,
             storage_key=f"{investigation_id}/{stored_name}",
+            storage_root=str(directory.parent),
             media_type=self._media_type(source),
             file_format=self._format(source),
             size_bytes=source.stat().st_size,
             sha256=digest,
             page_count=page_count,
             page_count_estimated=estimated,
-            ingestion_state=EvidenceIngestionState.PENDING,
+            ingestion_state=EvidenceIngestionState.READY,
             created_at=datetime.now(UTC),
         )
 
     def discard_document(self, document: EvidenceDocument) -> None:
         self._document_path(document).unlink(missing_ok=True)
+        self.ocr_cache_path(document).unlink(missing_ok=True)
+
+    def document_path(self, document: EvidenceDocument) -> Path:
+        """Expose the validated immutable copy to application-owned local processors."""
+        return self._document_path(document)
+
+    def ocr_cache_path(self, document: EvidenceDocument) -> Path:
+        directory = self._document_path(document).parent
+        return directory / ".cache" / "ocr" / f"{document.sha256}.json"
+
+    def ocr_fingerprint(self, document: EvidenceDocument) -> str:
+        cache = self.ocr_cache_path(document)
+        return hashlib.sha256(cache.read_bytes()).hexdigest() if cache.is_file() else "none"
+
+    def remove_ocr_cache(self, document: EvidenceDocument) -> None:
+        self.ocr_cache_path(document).unlink(missing_ok=True)
 
     def extract_text(
         self,
@@ -116,7 +137,7 @@ class KnowledgeBaseStore:
             if suffix in {".md", ".markdown"}:
                 text = path.read_text(encoding="utf-8", errors="replace")
             elif suffix == ".pdf":
-                text = self._pdf_text(path, cancelled)
+                text = "\n\n".join(self.extract_pages(document, cancelled))
             elif suffix == ".docx":
                 text = self._docx_text(path)
             elif suffix == ".doc":
@@ -136,6 +157,46 @@ class KnowledgeBaseStore:
         if cancelled is not None and cancelled():
             raise InvestigationCancelledError("Evidence analysis cancelled")
         return self._normalize_text(text)
+
+    def extract_pages(
+        self,
+        document: EvidenceDocument,
+        cancelled: Callable[[], bool] | None = None,
+    ) -> tuple[str, ...]:
+        """Extract page-aware text where the source format exposes stable pages."""
+        path = self._document_path(document)
+        if path.suffix.lower() != ".pdf":
+            text = self.extract_text(document, cancelled)
+            return (text,) if text else ()
+        pages: list[str] = []
+        try:
+            for page in PdfReader(path).pages:
+                if cancelled is not None and cancelled():
+                    raise InvestigationCancelledError("Evidence analysis cancelled")
+                pages.append(self._normalize_text(page.extract_text() or ""))
+        except InvestigationCancelledError:
+            raise
+        except Exception as error:
+            raise InvestigationPersistenceError(
+                f"Unable to extract text from evidence: {document.original_name}"
+            ) from error
+        cached = self._cached_ocr_pages(document)
+        if cached:
+            pages = [
+                page or (cached[index] if index < len(cached) else "")
+                for index, page in enumerate(pages)
+            ]
+        return tuple(pages)
+
+    def _cached_ocr_pages(self, document: EvidenceDocument) -> tuple[str, ...]:
+        path = self.ocr_cache_path(document)
+        if not path.is_file():
+            return ()
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            return tuple(str(page) for page in payload.get("pages", []))
+        except (OSError, TypeError, json.JSONDecodeError):
+            return ()
 
     def stage_delete(self, document: EvidenceDocument) -> Path:
         source = self._document_path(document)
@@ -267,15 +328,6 @@ class KnowledgeBaseStore:
             return max(1, math.ceil(words / 500)), True
 
     @staticmethod
-    def _pdf_text(path: Path, cancelled: Callable[[], bool] | None) -> str:
-        pages: list[str] = []
-        for page in PdfReader(path).pages:
-            if cancelled is not None and cancelled():
-                raise InvestigationCancelledError("Evidence analysis cancelled")
-            pages.append(page.extract_text() or "")
-        return "\n\n".join(pages)
-
-    @staticmethod
     def _docx_text(path: Path) -> str:
         with ZipFile(path) as archive:
             document = ElementTree.fromstring(archive.read("word/document.xml"))
@@ -325,8 +377,19 @@ class KnowledgeBaseStore:
         key = PurePosixPath(document.storage_key)
         if key.is_absolute() or len(key.parts) != 2 or key.parts[0] != document.investigation_id:
             raise InvestigationPersistenceError("Invalid evidence storage key")
-        path = self.root.joinpath(*key.parts)
-        if path.parent != self.root / document.investigation_id:
+        root = (
+            Path(document.storage_root).expanduser().resolve()
+            if document.storage_root
+            else self.root
+        )
+        if document.storage_root is None:
+            for previous in reversed(self._legacy_roots):
+                if previous.joinpath(*key.parts).is_file():
+                    root = previous
+                    break
+        directory = root / document.investigation_id
+        path = directory / key.name
+        if key.name in {".", ".."} or path.resolve().parent != directory.resolve():
             raise InvestigationPersistenceError("Invalid evidence storage path")
         return path
 

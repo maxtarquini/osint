@@ -274,7 +274,9 @@ def test_update_changes_reference_language_and_dictionary_and_invalidates_analys
     assert updated.name == "Updated Raven"
     assert updated.analysis_language is AnalysisLanguage.ITALIAN
     assert updated.analysis_domain == "MARITIME_INTELLIGENCE"
-    assert updated.evidence_documents[0].ingestion_state is EvidenceIngestionState.PENDING
+    assert updated.evidence_documents[0].ingestion_state is EvidenceIngestionState.READY
+    assert updated.evidence_documents[0].rag_state is EvidenceIngestionState.PENDING
+    assert updated.evidence_documents[0].graph_state is EvidenceIngestionState.PENDING
     assert repository.graph_cleared
 
 

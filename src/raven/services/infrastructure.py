@@ -13,7 +13,7 @@ from raven.exceptions import (
     InfrastructureAuthenticationError,
     InfrastructureConfigurationError,
 )
-from raven.models import ServiceName, ServiceStatus
+from raven.models import ConnectionState, ServiceName, ServiceStatus
 from raven.repositories import MongoRepository, Neo4jRepository, QdrantRepository
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,23 @@ class InfrastructureService:
         """Probe draft AI settings without activating or persisting them."""
         try:
             with self._locks[ServiceName.AI]:
-                self.ai_node.probe(settings)
+                embedding_dimension = self.ai_node.probe(settings)
+            expected_dimension = self._settings.qdrant.vector_size
+            if embedding_dimension is not None and embedding_dimension != expected_dimension:
+                detail = (
+                    f"Embedding model returns {embedding_dimension} dimensions; "
+                    f"Qdrant expects {expected_dimension}"
+                )
+                logger.warning(
+                    "AI node embedding dimension mismatch. actual=%d expected=%d",
+                    embedding_dimension,
+                    expected_dimension,
+                )
+                return ServiceStatus(
+                    ServiceName.AI,
+                    ConnectionState.CONFIGURATION_REQUIRED,
+                    detail,
+                )
         except InfrastructureAuthenticationError as error:
             logger.warning("AI node test needs authentication. error_type=%s", type(error).__name__)
             return ServiceStatus.authentication_required(ServiceName.AI)
@@ -97,8 +113,13 @@ class InfrastructureService:
         except Exception as error:
             logger.warning("AI node test failed. error_type=%s", type(error).__name__)
             return ServiceStatus.unavailable(ServiceName.AI)
-        logger.info("AI node test succeeded")
-        return ServiceStatus.connected(ServiceName.AI)
+        detail = (
+            f"Inference and embedding ready · {embedding_dimension} dimensions"
+            if embedding_dimension is not None
+            else "Inference ready · embedding model not configured"
+        )
+        logger.info("AI node test succeeded. embedding_dimension=%s", embedding_dimension)
+        return ServiceStatus(ServiceName.AI, ConnectionState.CONNECTED, detail)
 
     @property
     def ai_node(self) -> SharedAiNode:

@@ -3,8 +3,8 @@
 ## Source analysis
 
 The Raven implementation was mapped from the local Hudiny Link Intelligence implementation,
-especially its investigation workflow, Evidence graph guide, extraction pipeline, deterministic
-observable extractor, word chunker, agent prompts, consolidation component, run lifecycle, MongoDB
+especially its investigation workflow, Evidence graph guide, extraction pipeline, word chunker,
+agent prompts, consolidation component, run lifecycle, MongoDB
 artifacts, and Neo4j synchronization boundary.
 
 The behavioral sequence retained in Raven is:
@@ -13,11 +13,9 @@ The behavioral sequence retained in Raven is:
 Evidence files
   -> immutable Raven copy
   -> normalized text extraction
-  -> deterministic observables
-  -> language-aware preparation
-       |-- operational compression (default)
-       |-- full text + translation only when needed
-       `-- translation + overlapping chunks
+  -> language normalization when required by the investigation
+  -> optional operational compression (default on)
+  -> optional overlapping chunks (default off; composable with compression)
   -> entity extraction agent
   -> relationship extraction agent (bounded to extracted entities)
   -> incremental entity resolution
@@ -41,6 +39,9 @@ Direct model execution lives under `src/raven/agents`, outside Textual handlers.
 All structured agent output is parsed defensively. Markdown fences and reasoning prefixes are
 removed, unsupported entity or relationship types are discarded, confidence is clamped to
 `0.0..1.0`, and Evidence IDs are supplied by the application rather than trusted from model output.
+Raven intentionally does not merge regex-derived observables into the graph: dotted paragraph and
+section numbers are ambiguous and previously produced false `IP_ADDRESS` nodes. Observable types
+are therefore emitted only when the language model validates them in Evidence context.
 
 ## Named-entity dictionaries
 
@@ -68,14 +69,15 @@ bundled defaults.
 ## Language and preparation
 
 The investigation stores one default `analysis_language`. `Original` is the default and preserves
-the language of every Evidence. A graph run freezes that value together with its preparation mode.
+the language of every Evidence. A graph run freezes that value together with Hudiny's independent
+`compress_evidence` and `chunk_evidence` flags.
 
-- `Compress Evidence`: Hudiny-compatible default; compression can also translate operational prose
-  to the investigation language.
-- `Full text`: uses original text, or detects and losslessly translates it when the investigation
-  has a target language.
-- `Translate + overlapping chunks`: applies the same language rule and then splits at 1,000 words
-  with a 100-word overlap before per-chunk extraction and deterministic consolidation.
+- Translation is automatic when the investigation has a target language and the source language
+  differs. It is not a mutually exclusive preparation option.
+- `Compress Evidence` invokes language-aware operational compression and is enabled by default.
+- `Chunk with overlap` splits the prepared text at 1,000 words with a 100-word overlap.
+- Compression and chunking may be enabled together; disabling compression retains full translated
+  text, while disabling both analyzes the complete normalized Evidence as one segment.
 
 ## Persistence and provenance
 

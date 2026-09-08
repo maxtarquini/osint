@@ -7,6 +7,9 @@ from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Button, Static
 
+from raven.config import UiLanguage
+from raven.tui.i18n import tr
+
 
 class TopNavigation(Horizontal):
     """Compact keyboard-friendly menu shared by top-level screens."""
@@ -23,11 +26,14 @@ class TopNavigation(Horizontal):
         self.active = active
 
     def compose(self) -> ComposeResult:
+        settings = getattr(self.app, "settings", None)
+        language = getattr(settings, "interface_language", UiLanguage.ENGLISH)
         yield Static("RAVEN", id="navigation-brand")
         for target, label in (
-            ("home", "Home"),
-            ("investigations", "Investigations"),
-            ("configuration", "Configuration"),
+            ("home", tr(language, "home", "Home")),
+            ("investigations", tr(language, "investigations", "Investigations")),
+            ("jobs", tr(language, "jobs", "Jobs")),
+            ("configuration", tr(language, "configuration", "Configuration")),
         ):
             button = Button(label, id=f"nav-{target}", classes="navigation-item")
             if target == self.active:

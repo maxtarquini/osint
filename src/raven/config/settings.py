@@ -131,7 +131,7 @@ class QdrantSettings:
 
     url: str = "http://localhost:6333"
     collection: str = "raven_documents"
-    vector_size: int = 1536
+    vector_size: int = 1024
     api_key: str | None = field(default=None, repr=False, compare=False)
 
     def validated(self) -> QdrantSettings:
@@ -191,6 +191,13 @@ class AiThinkingLevel(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+
+class UiLanguage(StrEnum):
+    """Supported Raven interface languages."""
+
+    ENGLISH = "en"
+    ITALIAN = "it"
 
 
 AI_PROVIDER_DEFAULT_URLS = {
@@ -286,8 +293,12 @@ class RavenSettings:
     qdrant: QdrantSettings = field(default_factory=QdrantSettings)
     neo4j: Neo4jSettings = field(default_factory=Neo4jSettings)
     ai: AiNodeSettings = field(default_factory=AiNodeSettings)
+    interface_language: UiLanguage = UiLanguage.ENGLISH
+    interface_density: str = "comfortable"
 
     def validated(self) -> RavenSettings:
+        if self.interface_density not in {"comfortable", "compact"}:
+            raise ConfigurationError("Invalid interface density")
         return RavenSettings(
             storage=self.storage.validated(),
             dictionaries=self.dictionaries.validated(),
@@ -295,6 +306,8 @@ class RavenSettings:
             qdrant=self.qdrant.validated(),
             neo4j=self.neo4j.validated(),
             ai=self.ai.validated(),
+            interface_language=UiLanguage(self.interface_language),
+            interface_density=self.interface_density,
         )
 
     def with_environment(self, environ: dict[str, str] | None = None) -> RavenSettings:
@@ -362,6 +375,10 @@ class RavenSettings:
                     )
                 ),
             ).validated(),
+            interface_language=UiLanguage(
+                env.get("RAVEN_UI_LANGUAGE", self.interface_language.value)
+            ),
+            interface_density=self.interface_density,
         )
 
     def to_public_dict(self) -> dict[str, dict[str, Any]]:
@@ -394,6 +411,10 @@ class RavenSettings:
                 "embedding_model": self.ai.embedding_model,
                 "embedding_timeout_seconds": self.ai.embedding_timeout_seconds,
             },
+            "interface": {
+                "language": self.interface_language.value,
+                "density": self.interface_density,
+            },
         }
 
     @classmethod
@@ -406,6 +427,7 @@ class RavenSettings:
             qdrant = data.get("qdrant", {})
             neo4j = data.get("neo4j", {})
             ai = data.get("ai", {})
+            interface = data.get("interface", {})
             ai_provider = AiProvider(ai.get("provider", defaults.ai.provider.value))
             ai_base_url = str(ai.get("base_url", defaults.ai.base_url))
             settings = cls(
@@ -451,6 +473,10 @@ class RavenSettings:
                         )
                     ),
                 ),
+                interface_language=UiLanguage(
+                    interface.get("language", defaults.interface_language.value)
+                ),
+                interface_density=str(interface.get("density", "comfortable")),
             )
         except (AttributeError, TypeError, ValueError) as error:
             raise ConfigurationError("Configuration file has an invalid structure") from error

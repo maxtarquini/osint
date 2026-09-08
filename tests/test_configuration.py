@@ -18,6 +18,7 @@ from raven.config import (
     MongoSettings,
     Neo4jSettings,
     RavenSettings,
+    UiLanguage,
 )
 from raven.exceptions import ConfigurationError
 
@@ -201,6 +202,18 @@ def test_invalid_vector_size_is_rejected() -> None:
         RavenSettings.from_dict(data)
 
 
+def test_qdrant_uses_1024_dimensions_by_default() -> None:
+    assert RavenSettings().qdrant.vector_size == 1024
+
+
 def test_invalid_ai_provider_environment_value_is_rejected_safely() -> None:
     with pytest.raises(ConfigurationError, match="AI provider"):
         RavenSettings().with_environment({"RAVEN_AI_PROVIDER": "unknown"})
+
+
+def test_interface_language_round_trips_through_public_configuration() -> None:
+    settings = RavenSettings(interface_language=UiLanguage.ITALIAN)
+
+    restored = RavenSettings.from_dict(settings.to_public_dict())
+
+    assert restored.interface_language is UiLanguage.ITALIAN

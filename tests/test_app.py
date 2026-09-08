@@ -9,7 +9,7 @@ from pathlib import Path
 from threading import Event
 
 import pytest
-from textual.widgets import Select, TabbedContent, TextArea
+from textual.widgets import Checkbox, Select, TabbedContent, TextArea
 
 from raven.app import RavenApp
 from raven.config import (
@@ -22,10 +22,16 @@ from raven.config import (
     InMemoryCredentialStore,
     Neo4jSettings,
     RavenSettings,
+    UiLanguage,
 )
-from raven.exceptions import InvestigationChatError, InvestigationPersistenceError
+from raven.exceptions import (
+    InvestigationCancelledError,
+    InvestigationChatError,
+    InvestigationPersistenceError,
+)
 from raven.models import (
     AnalysisLanguage,
+    BackgroundJob,
     ChatEventKind,
     ChatMessage,
     ChatStreamEvent,
@@ -44,6 +50,8 @@ from raven.models import (
     InvestigationDraft,
     InvestigationGraph,
     InvestigationStatus,
+    JobKind,
+    JobStatus,
     RagIndexProgress,
     ServiceName,
     ServiceStatus,
@@ -67,7 +75,15 @@ from raven.tui.screens.investigation_workspace import (
     ConfirmInvestigationDelete,
     InvestigationWorkspaceScreen,
 )
-from raven.tui.widgets import GraphCanvas, LocalCommandView
+from raven.tui.screens.jobs import JobsScreen
+from raven.tui.widgets import (
+    ChatInput,
+    EvidenceTable,
+    GraphCanvas,
+    GraphItemsTable,
+    InvestigationTable,
+    LocalCommandView,
+)
 from raven.tui.widgets.logo import COMPACT_LOGO, WIDE_LOGO, RavenLogo
 from raven.tui.widgets.service_status import ServiceStatusIndicator
 
@@ -138,7 +154,7 @@ class FakeInvestigations:
             sha256="0" * 64,
             page_count=2,
             page_count_estimated=False,
-            ingestion_state=EvidenceIngestionState.PENDING,
+            ingestion_state=EvidenceIngestionState.READY,
             created_at=datetime.now(UTC),
         )
         self.documents.append(evidence)
@@ -356,6 +372,20 @@ async def test_app_opens_home_with_top_menu_and_service_leds(tmp_path: Path) -> 
         assert all(indicator.status.state is ConnectionState.CHECKING for indicator in indicators)
 
 
+async def test_italian_interface_translates_primary_navigation(tmp_path: Path) -> None:
+    app = make_app(tmp_path, infrastructure=FakeInfrastructure())
+    app.settings = replace(app.settings, interface_language=UiLanguage.ITALIAN)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        await pilot.pause()
+
+        assert app.screen.query_one("#nav-investigations").label.plain == "Investigazioni"
+        assert app.screen.query_one("#nav-jobs").label.plain == "Processi"
+        assert app.screen.query_one("#new-investigation").label.plain == (
+            "Avvia una nuova investigazione"
+        )
+
+
 async def test_first_home_mount_initializes_all_services(tmp_path: Path) -> None:
     infrastructure = FakeInfrastructure()
     app = make_app(tmp_path, infrastructure=infrastructure, auto_connect=True)
@@ -437,6 +467,26 @@ async def test_top_menu_opens_configuration_and_saves_public_values(tmp_path: Pa
         assert app.configuration_store.load() == app.settings
         assert app.configuration_store.load().neo4j.password == "session-secret"
         assert "session-secret" not in (tmp_path / "config.json").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("terminal_height", [24, 30])
+async def test_configuration_action_buttons_are_not_clipped(
+    tmp_path: Path,
+    terminal_height: int,
+) -> None:
+    app = make_app(tmp_path)
+
+    async with app.run_test(size=(120, terminal_height)) as pilot:
+        await pilot.click("#nav-configuration")
+        await pilot.pause()
+
+        actions = app.screen.query_one("#configuration-actions")
+        footer = app.screen.query_one("Footer")
+        for selector in ("#test-ai-node", "#save-configuration", "#cancel-configuration"):
+            button = app.screen.query_one(selector)
+            assert button.region.y >= actions.content_region.y
+            assert button.region.bottom <= actions.content_region.bottom
+            assert button.region.bottom <= footer.region.y
 
 
 async def test_dictionary_folder_can_be_selected_from_configuration(tmp_path: Path) -> None:
@@ -557,7 +607,20 @@ async def test_investigations_menu_opens_catalog(tmp_path: Path) -> None:
 
         assert isinstance(app.screen, InvestigationCatalogScreen)
         assert app.screen.query_one("#nav-investigations").has_class("active")
-        assert len(app.screen.query(".investigation-row")) == 1
+        assert app.screen.query_one(InvestigationTable).row_count == 1
+
+
+async def test_jobs_menu_opens_persistent_monitor(tmp_path: Path) -> None:
+    app = make_app(tmp_path, infrastructure=FakeInfrastructure())
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        await pilot.click("#nav-jobs")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+        assert isinstance(app.screen, JobsScreen)
+        assert app.screen.query_one("#nav-jobs").has_class("active")
+        assert app.screen.query_one("#jobs-table").row_count == 0
 
 
 async def test_ai_node_button_probes_draft_without_saving_it(tmp_path: Path) -> None:
@@ -627,18 +690,18 @@ async def test_catalog_searches_sorts_and_opens_selected_investigation(tmp_path:
 
         app.screen.query_one("#catalog-sort").value = "name"
         await pilot.pause()
-        assert [
-            row.query_one(".catalog-name").render().plain
-            for row in app.screen.query(".investigation-row")
-        ] == ["Alpha Case", "Zulu Case"]
+        table = app.screen.query_one(InvestigationTable)
+        assert [table.get_row_at(index)[0] for index in range(table.row_count)] == [
+            "Alpha Case",
+            "Zulu Case",
+        ]
 
         app.screen.query_one("#catalog-search").value = "alpha"
         await pilot.pause()
-        rows = list(app.screen.query(".investigation-row"))
-        assert len(rows) == 1
-        assert rows[0].query_one(".catalog-name").render().plain == "Alpha Case"
+        assert table.row_count == 1
+        assert table.get_row_at(0)[0] == "Alpha Case"
 
-        await pilot.click(".open-investigation")
+        await pilot.click("#open-selected-investigation")
         await pilot.pause()
         assert isinstance(app.screen, InvestigationWorkspaceScreen)
         assert app.screen.investigation.name == "Alpha Case"
@@ -657,11 +720,25 @@ async def test_catalog_toolbar_controls_are_fully_visible(tmp_path: Path) -> Non
         toolbar = app.screen.query_one("#catalog-toolbar")
         assert toolbar.content_size.height >= 3
         assert app.screen.query_one("#catalog-search").placeholder == "Search investigations"
-        assert app.screen.query_one("#catalog-sort", Select).value == "updated"
+        sorting = app.screen.query_one("#catalog-sort", Select)
+        assert sorting.value == "updated"
+        current = sorting.query_one("SelectCurrent")
+        assert current.region.y >= toolbar.content_region.y
+        assert current.region.bottom <= toolbar.content_region.bottom
+        assert sorting.query_one("#label").render().plain == "Last updated"
         assert app.screen.query_one("#refresh-investigations").label.plain == "Refresh"
         assert app.screen.query_one("#new-investigation-catalog").label.plain == (
             "New investigation"
         )
+
+        sorting.focus()
+        await pilot.press("enter")
+        await pilot.pause()
+        overlay = sorting.query_one("SelectOverlay")
+        assert sorting.expanded
+        assert overlay.display
+        assert overlay.region.y >= sorting.region.bottom
+        assert overlay.region.height >= 4
 
 
 async def test_catalog_deletes_complete_investigation_after_confirmation(tmp_path: Path) -> None:
@@ -683,12 +760,11 @@ async def test_catalog_deletes_complete_investigation_after_confirmation(tmp_pat
         await app.workers.wait_for_complete()
         await pilot.pause()
 
-        row = app.screen.query_one(".investigation-row")
-        assert row.query_one(".open-investigation").label.plain == "Open"
-        delete_button = row.query_one(".delete-investigation-catalog")
-        assert delete_button.label.plain == "Delete"
-        assert delete_button.region.right <= row.region.right
-        await pilot.click(".delete-investigation-catalog")
+        table = app.screen.query_one(InvestigationTable)
+        delete_button = app.screen.query_one("#delete-selected-investigation")
+        assert delete_button.label.plain == "Delete selected"
+        assert delete_button.region.right <= table.region.right
+        await pilot.click("#delete-selected-investigation")
         await pilot.pause()
 
         assert isinstance(app.screen, ConfirmInvestigationDelete)
@@ -703,7 +779,7 @@ async def test_catalog_deletes_complete_investigation_after_confirmation(tmp_pat
         assert investigations.investigations == []
         assert chat.removed_investigations == [investigation.investigation_id]
         assert graph.removed_investigations == [investigation.investigation_id]
-        assert len(app.screen.query(".investigation-row")) == 0
+        assert app.screen.query_one(InvestigationTable).row_count == 0
 
 
 def test_investigation_delete_keeps_primary_case_when_rag_cleanup_fails(tmp_path: Path) -> None:
@@ -902,25 +978,26 @@ async def test_workspace_file_picker_adds_and_deletes_evidence(tmp_path: Path) -
         await pilot.pause()
 
         assert isinstance(app.screen, InvestigationWorkspaceScreen)
-        assert app.screen.query_one("#evidence-section-header").outer_size.height >= 6
+        assert app.screen.query_one("#evidence-section-header").outer_size.height >= 4
         assert len(app.screen.documents) == 1
-        row = app.screen.query_one("#evidence-document-id")
-        assert row.query_one(".evidence-format").render().plain == "PDF"
-        assert row.query_one(".evidence-pages").render().plain == "2"
-        assert row.query_one(".evidence-state").render().plain == "Pending"
+        document = app.screen.documents[0]
+        table = app.screen.query_one(EvidenceTable)
+        row = table.get_row(document.document_id)
+        assert row[1:] == ["Not cataloged", "PDF", "2", "Ready", "Pending", "Pending"]
 
         await pilot.click("#index-evidence-rag")
         await app.workers.wait_for_complete()
         await pilot.pause()
 
-        assert chat.indexed_documents == [row.document.document_id]
-        assert row.query_one(".evidence-state").render().plain == "Indexed"
+        assert chat.indexed_documents == [document.document_id]
+        assert table.get_cell(document.document_id, "rag") == "Ready"
         assert (
-            "RAG index ready" in app.screen.query_one("#evidence-operation-status").render().plain
+            "RAG verified in Qdrant"
+            in app.screen.query_one("#evidence-operation-status").render().plain
         )
         assert app.screen.query_one("#cancel-rag-index").has_class("hidden")
 
-        await pilot.click(".delete-evidence")
+        table.action_delete()
         await pilot.pause()
         assert isinstance(app.screen, ConfirmEvidenceDelete)
         assert app.screen.query_one("#delete-evidence-name").render().plain == "report.pdf"
@@ -930,7 +1007,106 @@ async def test_workspace_file_picker_adds_and_deletes_evidence(tmp_path: Path) -
 
         assert isinstance(app.screen, InvestigationWorkspaceScreen)
         assert app.screen.documents == []
-        assert len(app.screen.query("#evidence-empty")) == 1
+        assert app.screen.query_one(EvidenceTable).row_count == 0
+
+
+@pytest.mark.parametrize("outcome", ["success", "error", "cancelled"])
+async def test_add_file_remains_available_during_rag_and_recovers_after_upload(
+    tmp_path: Path, monkeypatch, outcome: str
+) -> None:
+    investigations = FakeInvestigations()
+    investigation = investigations.create(InvestigationDraft(name="Add again", questions=("Who?",)))
+    app = make_app(tmp_path, investigations=investigations)
+    started, release = Event(), Event()
+    original_add = app.add_evidence
+
+    def add_document(investigation_id, path, cancelled):
+        started.set()
+        assert release.wait(5)
+        if cancelled():
+            raise InvestigationCancelledError("Cancelled")
+        if outcome == "error":
+            raise InvestigationPersistenceError("Test upload failure")
+        return original_add(investigation_id, path, cancelled)
+
+    monkeypatch.setattr(app, "add_evidence", add_document)
+    now = datetime.now(UTC)
+    job = BackgroundJob(
+        "rag-job",
+        investigation.investigation_id,
+        JobKind.RAG,
+        JobStatus.RUNNING,
+        "prepare",
+        0,
+        1,
+        "Preparing documents for RAG indexing",
+        now,
+        now,
+    )
+    monkeypatch.setattr(app, "rag_index_job", lambda _: job)
+    selected = tmp_path / "second.pdf"
+    selected.write_bytes(b"pdf")
+
+    async with app.run_test(size=(120, 32)) as pilot:
+        app.open_investigation(investigation)
+        await pilot.pause()
+        workspace = app.screen
+        workspace._sync_rag_index_job()
+        assert not workspace.query_one("#add-evidence").disabled
+        assert not workspace.query_one(EvidenceTable).disabled
+        assert workspace.query_one("#index-evidence-rag").disabled
+        # Opening and dismissing the picker must not consume the Add action.
+        await pilot.click("#add-evidence")
+        assert isinstance(app.screen, EvidenceFilePicker)
+        await pilot.press("escape")
+        await pilot.click("#add-evidence")
+        assert isinstance(app.screen, EvidenceFilePicker)
+        app.screen._select_file(selected)
+        try:
+            await pilot.click("#confirm-evidence-file")
+            await pilot.pause()
+            assert started.is_set()
+            upload_status = workspace.query_one("#evidence-operation-status").render().plain
+            workspace._sync_rag_index_job()
+            assert workspace.query_one("#add-evidence").disabled
+            assert workspace.query_one("#index-evidence-rag").disabled
+            assert workspace.query_one("#evidence-operation-status").render().plain == upload_status
+            # A background cancellation/completion also must leave upload controls alone.
+            workspace._show_rag_index_progress(
+                RagIndexProgress(
+                    "document-id",
+                    selected.name,
+                    EvidenceIngestionState.READY,
+                    1,
+                    1,
+                    "Verified chunks",
+                    2,
+                )
+            )
+            job = replace(
+                job, status=JobStatus.COMPLETED if outcome == "success" else JobStatus.CANCELLED
+            )
+            workspace._sync_rag_index_job()
+            assert workspace.query_one("#add-evidence").disabled
+            assert workspace.query_one("#evidence-operation-status").render().plain == upload_status
+            if outcome == "cancelled":
+                await pilot.click("#cancel-evidence-upload")
+        finally:
+            release.set()
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        assert not workspace.query_one("#add-evidence").disabled
+        assert not workspace.query_one(EvidenceTable).disabled
+        assert workspace.query_one("#cancel-evidence-upload").has_class("hidden")
+        assert len(workspace.documents) == (1 if outcome == "success" else 0)
+        if outcome == "success":
+            assert workspace.documents[0].rag_state is EvidenceIngestionState.READY
+        # The next automatic indexing job must leave another addition possible.
+        job = replace(job, job_id="next-rag-job", status=JobStatus.QUEUED)
+        workspace._sync_rag_index_job()
+        await pilot.click("#add-evidence")
+        assert isinstance(app.screen, EvidenceFilePicker)
+        await pilot.press("escape")
 
 
 async def test_evidence_header_action_bar_is_not_clipped(tmp_path: Path) -> None:
@@ -945,32 +1121,171 @@ async def test_evidence_header_action_bar_is_not_clipped(tmp_path: Path) -> None
         await pilot.pause()
 
         header = app.screen.query_one("#evidence-section-header")
-        assert header.content_size.height >= 5
+        assert header.content_size.height >= 3
         for selector in ("#index-evidence-rag", "#add-evidence"):
             button = app.screen.query_one(selector)
             assert button.region.y >= header.content_region.y
             assert button.region.bottom <= header.content_region.bottom
 
 
+async def test_evidence_table_columns_align_with_document_rows(tmp_path: Path) -> None:
+    investigations = FakeInvestigations()
+    created = investigations.create(
+        InvestigationDraft(name="Aligned evidence", questions=("Who?",))
+    )
+    evidence = investigations.add_evidence(created.investigation_id, tmp_path / "report.pdf")
+    investigation = replace(created, evidence_documents=(evidence,))
+    investigations.investigations[0] = investigation
+    app = make_app(tmp_path, investigations=investigations)
+
+    async with app.run_test(size=(120, 32)) as pilot:
+        app.open_investigation(investigation)
+        await pilot.pause()
+
+        table = app.screen.query_one(EvidenceTable)
+        assert table.row_count == 1
+        assert list(table.get_row(evidence.document_id)) == [
+            "report.pdf",
+            "Not cataloged",
+            "PDF",
+            "2",
+            "Ready",
+            "Pending",
+            "Pending",
+        ]
+
+
+async def test_rag_indexing_shows_animated_document_and_overall_progress(tmp_path: Path) -> None:
+    class BlockingRagChat(FakeChat):
+        def __init__(self) -> None:
+            super().__init__()
+            self.started = Event()
+            self.release = Event()
+
+        def index_knowledge_base(
+            self,
+            investigation,
+            documents,
+            cancelled=None,
+            progress=None,
+        ) -> int:
+            document = documents[0]
+            if progress is not None:
+                progress(
+                    RagIndexProgress(
+                        document.document_id,
+                        document.original_name,
+                        EvidenceIngestionState.PROCESSING,
+                        0,
+                        1,
+                        "Embedding 8 chunks",
+                    )
+                )
+            self.started.set()
+            assert self.release.wait(2)
+            if progress is not None:
+                progress(
+                    RagIndexProgress(
+                        document.document_id,
+                        document.original_name,
+                        EvidenceIngestionState.READY,
+                        1,
+                        1,
+                        "Verified 8 chunks in Qdrant",
+                        8,
+                    )
+                )
+            return 1
+
+    investigations = FakeInvestigations()
+    created = investigations.create(InvestigationDraft(name="RAG progress", questions=("Who?",)))
+    evidence = investigations.add_evidence(created.investigation_id, tmp_path / "report.pdf")
+    investigation = replace(created, evidence_documents=(evidence,))
+    investigations.investigations[0] = investigation
+    chat = BlockingRagChat()
+    app = make_app(tmp_path, investigations=investigations, investigation_chat=chat)
+    app.settings = replace(
+        app.settings,
+        ai=AiNodeSettings(model="chat-model", embedding_model="embed-model"),
+    )
+
+    async with app.run_test(size=(120, 32)) as pilot:
+        app.open_investigation(investigation)
+        await pilot.pause()
+        await pilot.click("#index-evidence-rag")
+        for _ in range(20):
+            await pilot.pause(0.05)
+            if chat.started.is_set():
+                break
+
+        assert chat.started.is_set()
+        try:
+            assert not app.screen.query_one("#rag-index-progress-strip").has_class("hidden")
+            assert not app.screen.query_one("#rag-index-spinner").has_class("hidden")
+            assert app.screen.query_one("#rag-index-progress-detail").render().plain == (
+                "0 / 1 · 0%"
+            )
+            assert (
+                "Embedding 8 chunks"
+                in app.screen.query_one("#evidence-operation-status").render().plain
+            )
+            table = app.screen.query_one(EvidenceTable)
+            assert table.get_cell(evidence.document_id, "rag") == "Processing"
+        finally:
+            chat.release.set()
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+        assert app.screen.query_one("#rag-index-progress-strip").has_class("success")
+        assert app.screen.query_one("#rag-index-spinner").has_class("hidden")
+        assert app.screen.query_one("#rag-index-progress-detail").render().plain == (
+            "Complete · 1 document"
+        )
+        assert app.screen.query_one(EvidenceTable).get_cell(evidence.document_id, "rag") == "Ready"
+        assert app.screen.query_one("#evidence-operation-status").render().plain == (
+            "● RAG verified in Qdrant · 1 document · 8 chunks"
+        )
+
+
 async def test_graph_toolbar_controls_are_not_clipped(tmp_path: Path) -> None:
     investigations = FakeInvestigations()
     investigation = investigations.create(
-        InvestigationDraft(name="Readable graph", questions=("Who?",))
+        InvestigationDraft(
+            name="Readable graph",
+            questions=("Who?",),
+            analysis_language=AnalysisLanguage.ENGLISH,
+        )
     )
     app = make_app(tmp_path, investigations=investigations)
 
-    async with app.run_test(size=(160, 32)) as pilot:
+    async with app.run_test(size=(80, 24)) as pilot:
         app.open_investigation(investigation)
         await pilot.pause()
         app.screen.query_one("#workspace-tabs", TabbedContent).active = "workspace-graph-tab"
         await pilot.pause()
 
         toolbar = app.screen.query_one("#graph-toolbar")
-        assert toolbar.content_size.height >= 5
-        for selector in ("#graph-preparation-mode", "#analyze-evidence"):
+        assert toolbar.content_size.height >= 3
+        for selector in (
+            "#graph-compress-evidence",
+            "#graph-chunk-evidence",
+            "#analyze-evidence",
+        ):
             control = app.screen.query_one(selector)
             assert control.region.y >= toolbar.content_region.y
             assert control.region.bottom <= toolbar.content_region.bottom
+        compression = app.screen.query_one("#graph-compress-evidence", Checkbox)
+        chunking = app.screen.query_one("#graph-chunk-evidence", Checkbox)
+        translation = app.screen.query_one("#graph-preparation-hint")
+        assert compression.label.plain == "Compress text"
+        assert chunking.label.plain == "Chunk overlap"
+        assert "…" not in compression.render_line(0).text
+        assert "…" not in chunking.render_line(0).text
+        assert translation.render().plain == "Translate automatically → English"
+        assert compression.value
+        assert not chunking.value
+        chunking.value = True
+        assert compression.value and chunking.value
 
 
 async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_path: Path) -> None:
@@ -994,30 +1309,45 @@ async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_pat
     async with app.run_test(size=(80, 24)) as pilot:
         await pilot.click("#nav-investigations")
         await app.workers.wait_for_complete()
-        await pilot.click(".open-investigation")
+        await pilot.click("#open-selected-investigation")
         await app.workers.wait_for_complete()
         app.screen.query_one("#workspace-tabs", TabbedContent).active = "workspace-graph-tab"
         await pilot.pause()
 
-        assert app.screen.query_one("#graph-toolbar").outer_size.height >= 5
+        assert app.screen.query_one("#graph-toolbar").outer_size.height >= 4
         await pilot.click("#analyze-evidence")
-        await app.workers.wait_for_complete()
-        await pilot.pause()
+        for _ in range(20):
+            await pilot.pause(0.05)
+            job = app.graph_analysis_job(created.investigation_id)
+            if job is not None and job.status is GraphJobStatus.COMPLETED:
+                break
+        completed = app.graph_analysis_job(created.investigation_id)
+        assert completed is not None
+        assert completed.status is GraphJobStatus.COMPLETED
+        await pilot.pause(0.2)
 
-        canvas = app.screen.query_one("#graph-canvas", GraphCanvas)
-        rendered = canvas.plain_summary()
-        assert canvas.size.width >= 40
-        assert canvas.size.height >= 4
+        table = app.screen.query_one("#graph-items-table", GraphItemsTable)
+        assert table.size.width >= 40
+        assert table.size.height >= 4
+        assert table.row_count == 3
         assert app.screen.has_class("narrow-workspace")
         assert graph_analysis.mode is EvidencePreparationMode.COMPRESS
-        assert "Mario Rossi" in rendered
-        assert "WORKS_FOR" in rendered
+        assert table.select_matching("Mario Rossi") is not None
+        assert table.select_matching("WORKS_FOR") is not None
         assert (
             app.screen.query_one("#graph-statistics")
             .render()
             .plain.startswith("2 entities · 1 relationships")
         )
+        assert "AI SEMANTIC RUN" in app.screen.query_one("#graph-provenance-hint").render().plain
+        assert "scripted-model" in app.screen.query_one("#graph-provenance-hint").render().plain
 
+        await pilot.click("#show-terminal-graph")
+        await pilot.pause()
+        canvas = app.screen.query_one("#graph-canvas", GraphCanvas)
+        assert canvas.size.width >= 40
+        assert canvas.size.height >= 4
+        assert "Mario Rossi" in canvas.plain_summary()
         await pilot.click("#zoom-in-graph")
         await pilot.pause()
         assert app.screen.query_one("#graph-zoom-label").render().plain.endswith("%")
@@ -1036,8 +1366,9 @@ async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_pat
         search.focus()
         await pilot.press("enter")
         await pilot.pause()
-        assert canvas.selected_entity is not None
-        assert canvas.selected_entity.canonical_name == "Alfa S.p.A."
+        selected = table.selected_item()
+        assert isinstance(selected, GraphEntity)
+        assert selected.canonical_name == "Alfa S.p.A."
 
 
 async def test_graph_analysis_continues_after_leaving_and_reopening_case(tmp_path: Path) -> None:
@@ -1134,16 +1465,29 @@ async def test_workspace_chat_streams_grounded_markdown_and_renders_mermaid(
         investigation_chat=chat,
     )
 
-    async with app.run_test(size=(100, 32)) as pilot:
+    async with app.run_test(size=(80, 32)) as pilot:
         app.open_investigation(investigation)
         await app.workers.wait_for_complete()
         await pilot.pause()
         assert isinstance(app.screen, InvestigationWorkspaceScreen)
         app.screen.query_one("#workspace-tabs", TabbedContent).active = "workspace-chat-tab"
-        app.screen.query_one("#chat-input", TextArea).text = "Explain the connection"
+        composer = app.screen.query_one("#chat-input", ChatInput)
+        send = app.screen.query_one("#send-chat")
+        assert send.region.y == composer.region.y
+        assert send.region.x >= composer.region.right
+
+        composer.text = "First line"
+        composer.focus()
+        await pilot.press("shift+enter")
+        await pilot.pause()
+        assert "\n" in composer.text
+        assert chat.question == ""
+
+        composer.text = "Explain the connection"
+        composer.focus()
         await pilot.pause()
 
-        assert await pilot.click("#send-chat")
+        await pilot.press("enter")
         await pilot.pause()
         await app.workers.wait_for_complete()
         await pilot.pause()
@@ -1158,14 +1502,27 @@ async def test_workspace_chat_streams_grounded_markdown_and_renders_mermaid(
             in app.screen.query_one("#chat-operation-status").render().plain
         )
         assert "222 tokens" in app.screen.query_one("#chat-operation-status").render().plain
-        assert "222 total" in app.screen.query_one("#chat-token-usage").render().plain
-        assert "input 180" in app.screen.query_one(".chat-message-usage").render().plain
+        token_summary = app.screen.query_one("#chat-token-usage")
+        assert "CONTEXT 180/32,768" in token_summary.render().plain
+        assert "USED 222" in token_summary.render().plain
+        assert "CHAT 222" in token_summary.render().plain
+        assert "generated: 42" in str(token_summary.tooltip)
+        assert "provider-reported" in str(token_summary.tooltip).lower()
+        assert token_summary.outer_size.height >= 3
+        message_usage = app.screen.query_one(".chat-message-usage").render().plain
+        assert "context 180" in message_usage
+        assert "generated 42" in message_usage
+        assert "used 222" in message_usage
         assert "report.pdf" in app.screen.query_one(".chat-message-sources").render().plain
 
         app.screen.query_one("#chat-input", TextArea).text = "/stats"
         await pilot.press("ctrl+enter")
         await pilot.pause()
         statistics = list(app.screen.query(LocalCommandView))[-1].markdown
+        assert "Context input (provider reported): **180 tokens**" in statistics
+        assert "Generated output: **42 tokens**" in statistics
+        assert "Tokens used: **222 tokens**" in statistics
+        assert "Configured context window: **32,768 tokens**" in statistics
         assert "Total tokens: **222**" in statistics
         assert "Saved messages: **2**" in statistics
         assert "local command · 0 tokens" in (

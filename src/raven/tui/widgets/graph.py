@@ -16,13 +16,14 @@ from netext import (
     JustContent,
     NodeProperties,
 )
-from netext.layout_engines import LayoutDirection, SugiyamaLayout
+from netext.layout_engines import ForceDirectedLayout, LayoutDirection, SugiyamaLayout
 from netext.textual_widget.widget import GraphView
 from rich import box
 from rich.segment import Segment
 from rich.style import Style
 from rich.text import Text
 from textual.binding import Binding
+from textual.events import Resize
 from textual.geometry import Region
 from textual.message import Message
 from textual.strip import Strip
@@ -33,6 +34,7 @@ _EMPTY_NODE_ID = "__raven_empty_graph__"
 _MIN_ZOOM = 0.2
 _MAX_ZOOM = 3.0
 _ZOOM_STEP = 1.25
+_MIN_READABLE_FIT_ZOOM = 0.75
 
 _TYPE_COLORS = {
     "PERSON": "#5eead4",
@@ -122,21 +124,43 @@ class GraphCanvas(GraphView):
         self._relationships_by_edge: dict[tuple[str, str], tuple[GraphRelationship, ...]] = {}
         self._node_data: dict[Hashable, dict[str, Any]] = {}
         self._edge_data: list[tuple[str, str, dict[str, Any]]] = []
+        self._fit_requested = True
+        self._readable_fit_active = False
         nodes, edges = self._render_data(graph)
         super().__init__(
             nodes=nodes,
             edges=edges,
             zoom=AutoZoom.FIT_PROPORTIONAL,
             scroll_via_viewport=False,
-            layout_engine=SugiyamaLayout(LayoutDirection.LEFT_RIGHT),
+            layout_engine=self._layout_engine(graph),
             **kwargs,
         )
+        # GraphView's reactive initialization can replace the constructor AutoZoom
+        # with its class default before the first render.
+        self._console_graph.zoom = self.zoom
 
     @property
     def zoom_label(self) -> str:
-        if self.zoom is AutoZoom.FIT_PROPORTIONAL:
+        if self._fit_requested:
             return "FIT"
         return f"{self._effective_zoom():.0%}"
+
+    def watch_zoom(self, old_zoom: object, new_zoom: object) -> None:
+        """Synchronize netext using Textual's documented old/new watcher order."""
+        if new_zoom != old_zoom:
+            self._console_graph.zoom = new_zoom  # type: ignore[assignment]
+            self._graph_was_updated()
+
+    def on_mount(self) -> None:
+        super().on_mount()
+        self._apply_readable_fit()
+
+    def on_resize(self, event: Resize) -> None:
+        if self._fit_requested and self.zoom is not AutoZoom.FIT_PROPORTIONAL:
+            self.zoom = AutoZoom.FIT_PROPORTIONAL
+        super().on_resize(event)
+        if self._fit_requested:
+            self._apply_readable_fit()
 
     @property
     def selected_entity(self) -> GraphEntity | None:
@@ -148,14 +172,21 @@ class GraphCanvas(GraphView):
         self.graph = graph
         self._selected_entity_id = None
         nodes, edges = self._render_data(graph)
+        self._console_graph_kwargs["layout_engine"] = self._layout_engine(graph)
+        self._fit_requested = True
+        self._readable_fit_active = False
         self.zoom = AutoZoom.FIT_PROPORTIONAL
         super().set_graph(nodes, edges)
+        self._apply_readable_fit()
         self.scroll_home(animate=False)
         self.post_message(self.SelectionChanged(None))
         self.post_message(self.ViewChanged(self.zoom_label))
 
     def fit(self) -> None:
+        self._fit_requested = True
+        self._readable_fit_active = False
         self.zoom = AutoZoom.FIT_PROPORTIONAL
+        self._apply_readable_fit()
         self.scroll_home(animate=False)
         self.post_message(self.ViewChanged(self.zoom_label))
 
@@ -395,6 +426,8 @@ class GraphCanvas(GraphView):
         return self.select_entity(self._entity_order[index])
 
     def _set_zoom(self, value: float) -> None:
+        self._fit_requested = False
+        self._readable_fit_active = False
         self.zoom = min(_MAX_ZOOM, max(_MIN_ZOOM, value))
         self.post_message(self.ViewChanged(self.zoom_label))
         if self._selected_entity_id is not None:
@@ -408,6 +441,37 @@ class GraphCanvas(GraphView):
         if isinstance(self.zoom, (int, float)):
             return float(self.zoom)
         return 1.0
+
+    def _apply_readable_fit(self) -> None:
+        """Keep automatic fit from collapsing graph nodes into unlabeled dots."""
+        if not self.graph or not self.graph.entities:
+            return
+        fitted_zoom = self._effective_zoom()
+        if fitted_zoom >= _MIN_READABLE_FIT_ZOOM:
+            self._readable_fit_active = False
+            self.tooltip = None
+            return
+        self._readable_fit_active = True
+        self.zoom = _MIN_READABLE_FIT_ZOOM
+        self.tooltip = (
+            "The complete graph is larger than the viewport. Labels remain readable; "
+            "use arrows to pan or J/K to select entities."
+        )
+
+    @staticmethod
+    def _layout_engine(graph: InvestigationGraph | None) -> Any:
+        """Choose a useful layout for both linked and entity-only extraction results."""
+        if graph is None or not graph.entities:
+            return SugiyamaLayout(LayoutDirection.LEFT_RIGHT)
+        entity_ids = {entity.entity_id for entity in graph.entities}
+        has_valid_relationship = any(
+            relationship.source_entity_id in entity_ids
+            and relationship.target_entity_id in entity_ids
+            for relationship in graph.relationships
+        )
+        if not has_valid_relationship:
+            return ForceDirectedLayout()
+        return SugiyamaLayout(LayoutDirection.LEFT_RIGHT)
 
     def _center_entity(self, entity_id: str) -> None:
         node_buffer = self._console_graph.node_buffers.get(entity_id)

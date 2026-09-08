@@ -24,6 +24,7 @@ from raven.config import (
     Neo4jSettings,
     QdrantSettings,
     RavenSettings,
+    UiLanguage,
 )
 from raven.exceptions import ConfigurationError
 from raven.models import ConnectionState, ServiceStatus
@@ -68,6 +69,25 @@ class ConfigurationScreen(Screen[None]):
             id="secret-hint",
         )
         with TabbedContent(initial="storage-tab", id="configuration-tabs"):
+            with TabPane("Interface", id="interface-tab"), VerticalScroll(classes="config-form"):
+                yield Label("Content density")
+                yield Select(
+                    [("Comfortable", "comfortable"), ("Compact", "compact")],
+                    value=self.settings.interface_density,
+                    allow_blank=False,
+                    id="interface-density",
+                )
+                yield Label("Interface language")
+                yield Select(
+                    [("English", UiLanguage.ENGLISH.value), ("Italiano", UiLanguage.ITALIAN.value)],
+                    value=self.settings.interface_language.value,
+                    allow_blank=False,
+                    id="interface-language",
+                )
+                yield Static(
+                    "The selected language is applied when Raven returns to Home.",
+                    classes="config-field-hint",
+                )
             with TabPane("Storage", id="storage-tab"), VerticalScroll(classes="config-form"):
                 yield Label("Evidence root directory")
                 with Horizontal(id="storage-root-row"):
@@ -379,10 +399,27 @@ class ConfigurationScreen(Screen[None]):
                     ),
                 ),
                 ai=self._draft_ai_settings(),
+                interface_language=UiLanguage(self.query_one("#interface-language", Select).value),
+                interface_density=str(self.query_one("#interface-density", Select).value),
             ).validated()
-            self._raven_app.save_configuration(settings)
+            self.query_one("#save-configuration", Button).disabled = True
+            self._persist_settings(settings)
         except (ConfigurationError, ValueError) as error:
             self.notify(str(error), title="Invalid configuration", severity="error")
+
+    @work(thread=True, exclusive=True, group="configuration-save", exit_on_error=False)
+    def _persist_settings(self, settings: RavenSettings) -> None:
+        try:
+            self._raven_app.persist_configuration(settings)
+        except Exception as error:
+            self.app.call_from_thread(self._save_failed, str(error))
+        else:
+            self.app.call_from_thread(self._raven_app.configuration_saved, settings)
+
+    def _save_failed(self, detail: str) -> None:
+        if self.is_mounted:
+            self.query_one("#save-configuration", Button).disabled = False
+            self.notify(detail, title="Configuration not saved", severity="error")
 
     def _start_ai_node_test(self) -> None:
         try:
@@ -407,7 +444,11 @@ class ConfigurationScreen(Screen[None]):
         labels = {
             ConnectionState.CONNECTED: "● Connected",
             ConnectionState.AUTHENTICATION_REQUIRED: "● Auth required",
-            ConnectionState.CONFIGURATION_REQUIRED: "● Invalid model",
+            ConnectionState.CONFIGURATION_REQUIRED: (
+                "● Embedding mismatch"
+                if "dimension" in status.detail.lower()
+                else "● Invalid model"
+            ),
             ConnectionState.UNAVAILABLE: "● Unavailable",
             ConnectionState.CHECKING: "● Testing...",
         }

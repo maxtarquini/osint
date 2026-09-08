@@ -28,6 +28,8 @@ _DEFINITION_KEYS = {
     "selectable_domain",
     "extends",
     "entity_types",
+    "page_categories",
+    "page_uses",
 }
 _ENTITY_KEYS = {
     "code",
@@ -77,6 +79,8 @@ class VocabularyDefinition:
     selectable_domain: bool
     extends: tuple[str, ...]
     entity_types: tuple[VocabularyEntityType, ...]
+    page_categories: tuple[str, ...] = ()
+    page_uses: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +94,8 @@ class ResolvedVocabulary:
     entity_types: tuple[VocabularyEntityType, ...]
     json: str
     sha256: str
+    page_categories: tuple[str, ...] = ()
+    page_uses: tuple[str, ...] = ()
 
     @property
     def allowed_classifications(self) -> frozenset[tuple[str, str | None]]:
@@ -140,6 +146,18 @@ class NamedEntityVocabularyCatalog:
             "vocabulary_versions": list(versions),
             "entity_types": [item.prompt_dict() for item in entity_types.values()],
         }
+        categories = tuple(
+            dict.fromkeys(
+                category
+                for definition in ordered.values()
+                for category in definition.page_categories
+            )
+        )
+        uses = tuple(
+            dict.fromkeys(use for definition in ordered.values() for use in definition.page_uses)
+        )
+        if categories or uses:
+            snapshot.update(page_categories=list(categories), page_uses=list(uses))
         serialized = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
         return ResolvedVocabulary(
             domain_code=domain.code,
@@ -149,6 +167,8 @@ class NamedEntityVocabularyCatalog:
             entity_types=tuple(entity_types.values()),
             json=serialized,
             sha256=hashlib.sha256(serialized.encode()).hexdigest(),
+            page_categories=categories,
+            page_uses=uses,
         )
 
     def _load_definitions(self) -> dict[str, VocabularyDefinition]:
@@ -203,6 +223,18 @@ class NamedEntityVocabularyCatalog:
             selectable_domain=payload.get("selectable_domain") is True,
             extends=extends,
             entity_types=entity_types,
+            page_categories=self._string_list(
+                payload.get("page_categories", []),
+                "page_categories",
+                path.name,
+                codes=True,
+            ),
+            page_uses=self._string_list(
+                payload.get("page_uses", []),
+                "page_uses",
+                path.name,
+                codes=True,
+            ),
         )
 
     def _entity_type(self, value: Any, source: str) -> VocabularyEntityType:

@@ -8,14 +8,15 @@ from typing import TYPE_CHECKING, cast
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Input, Label, Select, Static
 
 from raven.exceptions import InvestigationError
 from raven.models import Investigation
+from raven.tui.i18n import tr
 from raven.tui.screens.investigation_workspace import ConfirmInvestigationDelete
-from raven.tui.widgets import InvestigationRow, TopNavigation
+from raven.tui.widgets import InvestigationTable, TopNavigation
 
 if TYPE_CHECKING:
     from raven.app import RavenApp
@@ -41,6 +42,7 @@ class InvestigationCatalogScreen(Screen[None]):
         self._pending_delete: Investigation | None = None
 
     def compose(self) -> ComposeResult:
+        language = self._raven_app.settings.interface_language
         yield TopNavigation(active="investigations")
         yield Label("Investigations", id="catalog-title")
         with Horizontal(id="catalog-toolbar"):
@@ -51,16 +53,27 @@ class InvestigationCatalogScreen(Screen[None]):
                 allow_blank=False,
                 id="catalog-sort",
             )
-            yield Button("Refresh", id="refresh-investigations")
-            yield Button("New investigation", id="new-investigation-catalog", variant="primary")
+            yield Button(tr(language, "refresh", "Refresh"), id="refresh-investigations")
+            yield Button(
+                tr(language, "new_investigation", "New investigation"),
+                id="new-investigation-catalog",
+                variant="primary",
+            )
         yield Static("● Loading investigations...", id="catalog-load-status", classes="loading")
-        with Horizontal(id="catalog-header"):
-            yield Static("Name", classes="catalog-name")
-            yield Static("Status", classes="catalog-status")
-            yield Static("Updated", classes="catalog-updated")
-            yield Static("Evidence", classes="catalog-evidence-count")
-            yield Static("Actions", classes="catalog-action")
-        yield VerticalScroll(id="catalog-list")
+        yield InvestigationTable()
+        with Horizontal(id="catalog-selection-actions"):
+            yield Static(
+                "Enter open · D delete · arrows navigate",
+                id="catalog-table-hint",
+            )
+            yield Button(
+                tr(language, "open_selected", "Open selected"), id="open-selected-investigation"
+            )
+            yield Button(
+                tr(language, "delete_selected", "Delete selected"),
+                id="delete-selected-investigation",
+                variant="error",
+            )
         yield Footer()
 
     def on_mount(self) -> None:
@@ -80,6 +93,10 @@ class InvestigationCatalogScreen(Screen[None]):
             self.action_new_investigation()
         elif event.button.id == "refresh-investigations":
             self._refresh()
+        elif event.button.id == "open-selected-investigation":
+            self.query_one(InvestigationTable).action_open_selected()
+        elif event.button.id == "delete-selected-investigation":
+            self.query_one(InvestigationTable).action_delete_selected()
 
     async def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "catalog-search" and not self._loading:
@@ -89,14 +106,16 @@ class InvestigationCatalogScreen(Screen[None]):
         if event.select.id == "catalog-sort" and not self._loading:
             await self._render_catalog()
 
-    def on_investigation_row_open_requested(self, event: InvestigationRow.OpenRequested) -> None:
+    def on_investigation_table_open_requested(
+        self, event: InvestigationTable.OpenRequested
+    ) -> None:
         if self._deleting:
             return
         self._raven_app.open_investigation(event.investigation)
 
-    def on_investigation_row_delete_requested(
+    def on_investigation_table_delete_requested(
         self,
-        event: InvestigationRow.DeleteRequested,
+        event: InvestigationTable.DeleteRequested,
     ) -> None:
         if self._deleting or self._pending_delete is not None:
             return
@@ -166,8 +185,9 @@ class InvestigationCatalogScreen(Screen[None]):
     def _set_catalog_actions_disabled(self, disabled: bool) -> None:
         self.query_one("#refresh-investigations", Button).disabled = disabled
         self.query_one("#new-investigation-catalog", Button).disabled = disabled
-        for button in self.query(".investigation-row Button"):
-            button.disabled = disabled
+        self.query_one(InvestigationTable).disabled = disabled
+        self.query_one("#open-selected-investigation", Button).disabled = disabled
+        self.query_one("#delete-selected-investigation", Button).disabled = disabled
 
     def _refresh(self) -> None:
         if self._loading or self._deleting:
@@ -211,9 +231,7 @@ class InvestigationCatalogScreen(Screen[None]):
         status.set_classes("error")
         status.update("● Unable to load investigations")
         status.tooltip = detail
-        container = self.query_one("#catalog-list", VerticalScroll)
-        await container.remove_children()
-        await container.mount(Static("MongoDB must be connected to browse investigations."))
+        self.query_one(InvestigationTable).clear()
 
     async def _render_catalog(self) -> None:
         query = self.query_one("#catalog-search", Input).value.strip().casefold()
@@ -230,17 +248,7 @@ class InvestigationCatalogScreen(Screen[None]):
         else:
             visible.sort(key=lambda investigation: investigation.updated_at, reverse=True)
 
-        container = self.query_one("#catalog-list", VerticalScroll)
-        await container.remove_children()
-        if visible:
-            await container.mount(*(InvestigationRow(investigation) for investigation in visible))
-        else:
-            message = (
-                "No investigations match the search."
-                if query
-                else "No investigations yet. Create the first one."
-            )
-            await container.mount(Static(message, id="catalog-empty"))
+        self.query_one(InvestigationTable).set_investigations(tuple(visible))
         status = self.query_one("#catalog-load-status", Static)
         status.set_classes("ready")
         status.update(f"● {len(visible)} of {len(self.investigations)} investigations")

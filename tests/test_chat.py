@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -31,7 +32,7 @@ class FakeRepository:
         self.states: list[tuple[str, EvidenceIngestionState]] = []
         self.messages: list[ChatMessage] = []
 
-    def set_evidence_ingestion_state(self, document_id: str, state: EvidenceIngestionState) -> None:
+    def set_evidence_rag_state(self, document_id: str, state: EvidenceIngestionState) -> None:
         self.states.append((document_id, state))
 
     def save_chat_message(self, message: ChatMessage) -> None:
@@ -52,21 +53,38 @@ class FakeRepository:
 
 class FakeVectors:
     def __init__(self) -> None:
+        self.vector_size = 3
         self.manifest: dict[str, str] = {}
         self.upserts: list[tuple[EvidenceDocument, tuple[str, ...]]] = []
+        self.chunk_counts: dict[str, int] = {}
         self.removed: list[tuple[str, str]] = []
         self.search_investigation_id = ""
 
     def indexed_document_hashes(self, investigation_id: str) -> dict[str, str]:
         return dict(self.manifest)
 
-    def upsert_document(self, document, chunks, vectors, *, index_signature=None) -> None:
+    def upsert_document(
+        self,
+        document,
+        chunks,
+        vectors,
+        *,
+        index_signature=None,
+        page_numbers=None,
+    ) -> None:
         assert len(chunks) == len(vectors)
+        assert page_numbers is None or len(page_numbers) == len(chunks)
         self.upserts.append((document, chunks))
         self.manifest[document.document_id] = index_signature or document.sha256
+        self.chunk_counts[document.document_id] = len(chunks)
+
+    def document_chunk_count(self, investigation_id: str, document_id: str) -> int:
+        return self.chunk_counts.get(document_id, 0)
 
     def remove_document(self, investigation_id: str, document_id: str) -> None:
         self.removed.append((investigation_id, document_id))
+        self.manifest.pop(document_id, None)
+        self.chunk_counts.pop(document_id, None)
 
     def remove_investigation(self, investigation_id: str) -> None:
         self.manifest.clear()
@@ -93,7 +111,7 @@ class FakeAiNode:
     def embed(self, texts: list[str]):
         return tuple((0.1, 0.2, 0.3) for _ in texts)
 
-    def chat(self, system_message: str, user_message: str, *, json_mode: bool = False):
+    def chat(self, system_message: str, user_message: str, *, json_mode: bool = False, **options):
         if "Language Detection" in system_message:
             return "en"
         return user_message.split("Evidence:\n", 1)[-1]
@@ -116,6 +134,9 @@ class FakeAiNode:
 class FakeKnowledgeBase:
     def extract_text(self, document, cancelled=None):
         return "First paragraph about Acme.\n\nSecond paragraph about Beta."
+
+    def extract_pages(self, document, cancelled=None):
+        return (self.extract_text(document, cancelled),)
 
 
 def _investigation() -> Investigation:
@@ -169,12 +190,35 @@ def test_index_is_incremental_and_removes_stale_documents() -> None:
     assert repository.states == [
         (document.document_id, EvidenceIngestionState.PROCESSING),
         (document.document_id, EvidenceIngestionState.READY),
+        (document.document_id, EvidenceIngestionState.READY),
     ]
-    assert [update.state for update in progress] == [
-        EvidenceIngestionState.PROCESSING,
-        EvidenceIngestionState.READY,
-    ]
-    assert [(update.completed, update.total) for update in progress] == [(0, 1), (1, 1)]
+    assert progress[0].detail == "Checking embedding compatibility"
+    assert progress[-1].state is EvidenceIngestionState.READY
+    assert progress[-1].detail == "Verified 1 chunks in Qdrant"
+    assert progress[-1].chunk_count == 1
+    assert (progress[-1].completed, progress[-1].total) == (1, 1)
+
+
+def test_embedding_dimension_mismatch_fails_before_document_processing() -> None:
+    investigation = _investigation()
+    document = _document(investigation.investigation_id)
+    repository = FakeRepository()
+    vectors = FakeVectors()
+    vectors.vector_size = 1536
+    progress: list[RagIndexProgress] = []
+
+    with pytest.raises(InvestigationChatError, match="model returns 3.*expects 1536"):
+        InvestigationChatService(
+            repository,
+            vectors,
+            FakeAiNode(),
+            FakeKnowledgeBase(),
+        ).index_knowledge_base(investigation, (document,), progress=progress.append)
+
+    assert vectors.upserts == []
+    assert repository.states == [(document.document_id, EvidenceIngestionState.FAILED)]
+    assert progress[-1].state is EvidenceIngestionState.FAILED
+    assert "dimension mismatch" in progress[-1].detail
 
 
 def test_investigation_rag_deletion_reports_backend_failure() -> None:
@@ -200,7 +244,7 @@ def test_failed_rag_document_is_reported_and_persisted() -> None:
     progress: list[RagIndexProgress] = []
 
     class FailingKnowledgeBase:
-        def extract_text(self, document, cancelled=None):
+        def extract_pages(self, document, cancelled=None):
             raise OSError("unreadable")
 
     service = InvestigationChatService(
@@ -217,10 +261,10 @@ def test_failed_rag_document_is_reported_and_persisted() -> None:
             progress=progress.append,
         )
 
-    assert [update.state for update in progress] == [
-        EvidenceIngestionState.PROCESSING,
-        EvidenceIngestionState.FAILED,
-    ]
+    assert progress[0].state is EvidenceIngestionState.PROCESSING
+    assert progress[0].detail == "Checking embedding compatibility"
+    assert progress[-1].state is EvidenceIngestionState.FAILED
+    assert progress[-1].detail == "Unable to complete the Evidence indexing stage"
     assert repository.states == [
         (document.document_id, EvidenceIngestionState.PROCESSING),
         (document.document_id, EvidenceIngestionState.FAILED),
@@ -265,7 +309,7 @@ def test_streamed_answer_injects_retrieved_evidence_and_current_graph() -> None:
     assert vectors.search_investigation_id == investigation.investigation_id
     assert [event.kind for event in events].count(ChatEventKind.TOKEN) == 2
     assert events[-1].kind is ChatEventKind.COMPLETE
-    assert events[-1].sources == ("brief.md · chunk 1",)
+    assert events[-1].sources == ("[E1] brief.md · chunk 1",)
     assert events[-1].usage == TokenUsage(240, 60, 300)
     assert "Mermaid" in ai.system_message
     assert "Acme controls Beta" in ai.messages[-1]["content"]
@@ -295,7 +339,9 @@ def test_reference_language_is_part_of_index_signature_and_translates_chunks() -
     vectors = FakeVectors()
     ai = FakeAiNode()
 
-    def translated_chat(system_message: str, user_message: str, *, json_mode: bool = False):
+    def translated_chat(
+        system_message: str, user_message: str, *, json_mode: bool = False, **options
+    ):
         if "Language Detection" in system_message:
             return "it"
         return "Translated Evidence"
@@ -306,4 +352,46 @@ def test_reference_language_is_part_of_index_signature_and_translates_chunks() -
     service.index_knowledge_base(investigation, (document,))
 
     assert vectors.upserts[0][1] == ("Translated Evidence",)
-    assert vectors.manifest[document.document_id] == f"{document.sha256}:english"
+    original_signature = vectors.manifest[document.document_id]
+    service.index_knowledge_base(investigation, (document,))
+    assert len(vectors.upserts) == 1
+    service.index_knowledge_base(
+        replace(investigation, analysis_language=AnalysisLanguage.ITALIAN), (document,)
+    )
+    assert len(vectors.upserts) == 2
+    assert vectors.manifest[document.document_id] != original_signature
+
+
+def test_rag_translation_has_bounded_requests_and_reports_each_chunk():
+    from raven.config import AiThinkingLevel
+
+    class TranslatingNode(FakeAiNode):
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        def chat(self, system_message, user_message, **options):
+            self.calls.append(options)
+            return "it" if "Language Detection" in system_message else "Translated passage"
+
+    node = TranslatingNode()
+    service = InvestigationChatService(FakeRepository(), FakeVectors(), node, FakeKnowledgeBase())
+    case = replace(_investigation(), analysis_language=AnalysisLanguage.ENGLISH)
+    updates = []
+
+    def cancelled():
+        return False
+
+    chunks = service._normalize_chunks(
+        case,
+        ("Primo passaggio", "Secondo passaggio"),
+        cancelled,
+        on_chunk=lambda n, total: updates.append((n, total)),
+    )
+    assert chunks == ("Translated passage", "Translated passage")
+    assert updates == [(1, 2), (2, 2)]
+    assert node.calls[0]["timeout_seconds"] == 60
+    assert all(call["timeout_seconds"] == 120 for call in node.calls[1:])
+    assert all(call["thinking"] is AiThinkingLevel.LOW for call in node.calls)
+    assert all(call["cancelled"] is cancelled for call in node.calls)
+    assert all(call["max_output_tokens"] > 0 for call in node.calls)

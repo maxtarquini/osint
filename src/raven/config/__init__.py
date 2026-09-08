@@ -16,6 +16,7 @@ from raven.config.settings import (
     Neo4jSettings,
     QdrantSettings,
     RavenSettings,
+    UiLanguage,
 )
 from raven.config.store import ConfigurationStore
 
@@ -33,5 +34,6 @@ __all__ = [
     "Neo4jSettings",
     "QdrantSettings",
     "RavenSettings",
+    "UiLanguage",
     "SystemCredentialStore",
 ]

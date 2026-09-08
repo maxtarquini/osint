@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from textual.widgets import Static
 
+from raven.config import UiLanguage
 from raven.models import ConnectionState, ServiceName, ServiceStatus
 
 SERVICE_LABELS = {
@@ -19,6 +20,22 @@ STATE_LABELS = {
     ConnectionState.AUTHENTICATION_REQUIRED: "Auth required",
     ConnectionState.CONFIGURATION_REQUIRED: "Configure node",
     ConnectionState.UNAVAILABLE: "Unavailable",
+}
+
+ITALIAN_STATE_LABELS = {
+    ConnectionState.CHECKING: "Verifica in corso",
+    ConnectionState.CONNECTED: "Connesso",
+    ConnectionState.AUTHENTICATION_REQUIRED: "Credenziali richieste",
+    ConnectionState.CONFIGURATION_REQUIRED: "Da configurare",
+    ConnectionState.UNAVAILABLE: "Non raggiungibile",
+}
+
+STATE_SYMBOLS = {
+    ConnectionState.CHECKING: "↻",
+    ConnectionState.CONNECTED: "✓",
+    ConnectionState.AUTHENTICATION_REQUIRED: "!",
+    ConnectionState.CONFIGURATION_REQUIRED: "!",
+    ConnectionState.UNAVAILABLE: "✕",
 }
 
 
@@ -49,6 +66,11 @@ class ServiceStatusIndicator(Static):
         )
         self.add_class(self.status.state.value)
         label = SERVICE_LABELS[self.service]
-        state = STATE_LABELS[self.status.state]
-        self.update(f"● {label}\n{state}")
+        labels = (
+            ITALIAN_STATE_LABELS
+            if self.app.settings.interface_language is UiLanguage.ITALIAN
+            else STATE_LABELS
+        )
+        state = labels[self.status.state]
+        self.update(f"{STATE_SYMBOLS[self.status.state]} {label}\n{state}")
         self.tooltip = self.status.detail

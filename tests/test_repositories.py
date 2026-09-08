@@ -48,7 +48,7 @@ def test_mongodb_bootstrap_creates_collections_indexes_and_schema_marker() -> No
     client.admin.command.assert_called_once_with("ping")
     assert database.create_collection.call_count == len(BASE_COLLECTIONS)
     collections["investigations"].create_index.assert_called()
-    assert collections["evidence_documents"].create_index.call_count == 3
+    assert collections["evidence_documents"].create_index.call_count == 5
     assert collections["chat_messages"].create_index.call_count == 2
     collections["entities"].create_index.assert_called()
     collections["relationships"].create_index.assert_called()
@@ -216,13 +216,48 @@ def test_qdrant_bootstrap_validates_existing_vector_size() -> None:
     client = MagicMock()
     client.collection_exists.return_value = True
     client.get_collection.return_value = SimpleNamespace(
-        config=SimpleNamespace(params=SimpleNamespace(vectors=SimpleNamespace(size=1536)))
+        config=SimpleNamespace(params=SimpleNamespace(vectors=SimpleNamespace(size=1024)))
     )
     repository = QdrantRepository(MagicMock(return_value=client))
 
     repository.initialize(QdrantSettings())
 
     client.create_collection.assert_not_called()
+
+
+def test_qdrant_bootstrap_recreates_empty_collection_for_new_vector_size() -> None:
+    client = MagicMock()
+    client.collection_exists.return_value = True
+    client.get_collection.return_value = SimpleNamespace(
+        config=SimpleNamespace(params=SimpleNamespace(vectors=SimpleNamespace(size=1536))),
+        points_count=0,
+    )
+    repository = QdrantRepository(MagicMock(return_value=client))
+
+    repository.initialize(QdrantSettings(collection="case_vectors", vector_size=1024))
+
+    client.delete_collection.assert_called_once_with(collection_name="case_vectors")
+    create = client.create_collection.call_args.kwargs
+    assert create["collection_name"] == "case_vectors"
+    assert create["vectors_config"].size == 1024
+    assert client.create_payload_index.call_count == 3
+
+
+def test_qdrant_bootstrap_preserves_non_empty_collection_on_size_mismatch() -> None:
+    client = MagicMock()
+    client.collection_exists.return_value = True
+    client.get_collection.return_value = SimpleNamespace(
+        config=SimpleNamespace(params=SimpleNamespace(vectors=SimpleNamespace(size=1536))),
+        points_count=4,
+    )
+    repository = QdrantRepository(MagicMock(return_value=client))
+
+    with pytest.raises(ValueError, match="contains 4 points"):
+        repository.initialize(QdrantSettings(collection="case_vectors", vector_size=1024))
+
+    client.delete_collection.assert_not_called()
+    client.create_collection.assert_not_called()
+    client.close.assert_called_once()
 
 
 def test_qdrant_rag_search_is_always_partitioned_by_investigation() -> None:
@@ -253,6 +288,26 @@ def test_qdrant_rag_search_is_always_partitioned_by_investigation() -> None:
     assert query["query_filter"].must[0].match.value == "investigation-a"
     assert chunks[0].document_name == "report.pdf"
     assert chunks[0].chunk_index == 2
+
+
+def test_qdrant_reports_confirmed_document_chunk_count_and_vector_size() -> None:
+    client = MagicMock()
+    client.collection_exists.return_value = False
+    client.count.return_value = SimpleNamespace(count=7)
+    repository = QdrantRepository(MagicMock(return_value=client))
+    repository.initialize(QdrantSettings(collection="case_vectors", vector_size=1024))
+
+    count = repository.document_chunk_count("investigation-a", "document-a")
+
+    assert repository.vector_size == 1024
+    assert count == 7
+    request = client.count.call_args.kwargs
+    assert request["collection_name"] == "case_vectors"
+    assert request["exact"] is True
+    assert [condition.match.value for condition in request["count_filter"].must] == [
+        "investigation-a",
+        "document-a",
+    ]
 
 
 def test_qdrant_deletes_complete_investigation_partition() -> None:
@@ -368,14 +423,17 @@ def test_neo4j_synchronizes_proposed_graph_with_evidence_provenance() -> None:
         ),
         now,
     )
-    calls_before = driver.execute_query.call_count
+    session = driver.session.return_value.__enter__.return_value
+    transaction = MagicMock()
+    session.execute_write.side_effect = lambda fn, *args: fn(transaction, *args)
 
     repository.save_graph_snapshot(graph)
 
-    assert driver.execute_query.call_count == calls_before + 5
-    entity_call = driver.execute_query.call_args_list[calls_before + 2]
+    session.execute_write.assert_called_once()
+    assert transaction.run.call_count == 5
+    entity_call = transaction.run.call_args_list[2]
     assert entity_call.kwargs["entities"][0]["evidence_ids"] == ["evidence"]
-    relationship_call = driver.execute_query.call_args_list[calls_before + 4]
+    relationship_call = transaction.run.call_args_list[4]
     assert relationship_call.kwargs["relationships"][0]["type"] == "WORKS_FOR"
 
 

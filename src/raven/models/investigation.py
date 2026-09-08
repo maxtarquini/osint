@@ -56,7 +56,7 @@ class AnalysisLanguage(StrEnum):
 
 
 class EvidenceIngestionState(StrEnum):
-    """Processing state of a document in the investigation knowledge base."""
+    """Reusable lifecycle state for one independent Evidence processing lane."""
 
     PENDING = "pending"
     PROCESSING = "processing"
@@ -129,6 +129,9 @@ class EvidenceDocument:
     page_count_estimated: bool
     ingestion_state: EvidenceIngestionState
     created_at: datetime
+    rag_state: EvidenceIngestionState = EvidenceIngestionState.PENDING
+    graph_state: EvidenceIngestionState = EvidenceIngestionState.PENDING
+    storage_root: str | None = None
 
     @property
     def page_label(self) -> str:

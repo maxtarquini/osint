@@ -52,6 +52,8 @@ class ConfigurationStore:
             qdrant=settings.qdrant.validated(),
             neo4j=settings.neo4j.validated(),
             ai=settings.ai.validated(),
+            interface_language=settings.interface_language,
+            interface_density=settings.interface_density,
         )
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         temporary = self.path.with_suffix(".tmp")

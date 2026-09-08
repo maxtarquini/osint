@@ -129,7 +129,11 @@ class InvestigationService:
             updated = replace(
                 updated,
                 evidence_documents=tuple(
-                    replace(document, ingestion_state=EvidenceIngestionState.PENDING)
+                    replace(
+                        document,
+                        rag_state=EvidenceIngestionState.PENDING,
+                        graph_state=EvidenceIngestionState.PENDING,
+                    )
                     for document in updated.evidence_documents
                 ),
             )
@@ -141,20 +145,27 @@ class InvestigationService:
             "Deleting investigation. investigation_id=%s",
             investigation.investigation_id,
         )
-        staged = self._knowledge_bases.stage_investigation_delete(investigation.investigation_id)
+        roots = {self._knowledge_bases.root}
+        roots.update(
+            self._knowledge_bases.document_path(document).parent.parent
+            for document in investigation.evidence_documents
+        )
+        staged: list[tuple[KnowledgeBaseStore, Path | None]] = []
         try:
+            for root in sorted(roots):
+                store = KnowledgeBaseStore(root)
+                staged.append(
+                    (store, store.stage_investigation_delete(investigation.investigation_id))
+                )
             self._repository.delete_investigation(investigation.investigation_id)
-        except InvestigationError:
-            self._knowledge_bases.restore_investigation_delete(
-                investigation.investigation_id, staged
-            )
-            raise
         except Exception as error:
-            self._knowledge_bases.restore_investigation_delete(
-                investigation.investigation_id, staged
-            )
+            for store, directory in reversed(staged):
+                store.restore_investigation_delete(investigation.investigation_id, directory)
+            if isinstance(error, InvestigationError):
+                raise
             raise InvestigationPersistenceError("Unable to delete the investigation") from error
-        self._knowledge_bases.commit_investigation_delete(staged)
+        for store, directory in staged:
+            store.commit_investigation_delete(directory)
         logger.info(
             "Investigation deleted. investigation_id=%s",
             investigation.investigation_id,
@@ -199,3 +210,4 @@ class InvestigationService:
             self._knowledge_bases.restore_delete(document, staged)
             raise InvestigationPersistenceError("Unable to delete evidence metadata") from error
         self._knowledge_bases.commit_delete(staged)
+        self._knowledge_bases.remove_ocr_cache(document)

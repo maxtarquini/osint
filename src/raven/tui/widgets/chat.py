@@ -7,16 +7,39 @@ import re
 from rich.text import Text
 from termaid import render_rich
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Vertical
-from textual.widgets import Markdown, Static
+from textual.message import Message
+from textual.widgets import Collapsible, Markdown, Static, TextArea
 from textual.widgets.markdown import MarkdownStream
 
-from raven.models import ChatMessage, ChatRole, TokenUsage
+from raven.models import ChatMessage, ChatRole, EvidenceCitation, TokenUsage
 
 _MERMAID_FENCE = re.compile(
     r"```mermaid[^\n]*\n(?P<source>.*?)```",
     flags=re.IGNORECASE | re.DOTALL,
 )
+
+
+class ChatInput(TextArea):
+    """Multiline composer where Enter submits and Shift+Enter inserts a line break."""
+
+    BINDINGS = [
+        *TextArea.BINDINGS,
+        Binding("enter", "submit", "Send", show=False, priority=True),
+        Binding("shift+enter", "newline", "New line", show=False, priority=True),
+    ]
+
+    class Submit(Message):
+        """Request submission of the current composer content."""
+
+    def action_submit(self) -> None:
+        if self.text.strip():
+            self.post_message(self.Submit())
+
+    def action_newline(self) -> None:
+        start, end = self.selection
+        self.replace("\n", start, end, maintain_selection_offset=False)
 
 
 class MermaidDiagram(Markdown):
@@ -71,8 +94,31 @@ def _content_block(markdown: str) -> Markdown:
 def token_usage_label(usage: TokenUsage) -> str:
     """Render provider-reported usage consistently across live and saved turns."""
     return (
-        f"TOKENS  input {usage.input_tokens:,}  ·  output {usage.output_tokens:,}  ·  "
-        f"total {usage.total_tokens:,}"
+        f"TOKENS · context {usage.input_tokens:,} · generated {usage.output_tokens:,} · "
+        f"used {usage.total_tokens:,} · provider reported"
+    )
+
+
+def citation_passages(citations: tuple[EvidenceCitation, ...]) -> Collapsible:
+    return Collapsible(
+        *(
+            Static(
+                f"[{item.label}] {item.document_name} · "
+                + (
+                    f"page {item.page_number}"
+                    if item.page_number
+                    else f"section {item.section_number}"
+                    if item.section_number is not None
+                    else f"chunk {item.chunk_index + 1}"
+                )
+                + f"\n{item.text}\n",
+                markup=False,
+            )
+            for item in citations
+        ),
+        title="Retrieved passages",
+        collapsed=True,
+        classes="chat-citations",
     )
 
 
@@ -101,6 +147,8 @@ class ChatMessageView(Vertical):
                 classes="chat-message-usage",
                 markup=False,
             )
+        if self.message.citations:
+            yield citation_passages(self.message.citations)
 
 
 class LocalCommandView(Vertical):
@@ -148,10 +196,13 @@ class StreamingAssistantView(Vertical):
         usage: TokenUsage | None = None,
         *,
         show_usage: bool = False,
+        citations: tuple[EvidenceCitation, ...] = (),
     ) -> None:
         if self._markdown_stream is not None:
             await self._markdown_stream.stop()
         self.remove_class("streaming")
+        if citations:
+            await self.mount(citation_passages(citations))
         self.query_one(".chat-message-header", Static).update("RAVEN")
         content = self.query_one("#streamed-chat-content", Vertical)
         if _MERMAID_FENCE.search(self._source):

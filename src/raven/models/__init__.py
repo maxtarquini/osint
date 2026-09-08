@@ -5,12 +5,14 @@ from raven.models.chat import (
     ChatMessage,
     ChatRole,
     ChatStreamEvent,
+    EvidenceCitation,
     RagIndexProgress,
     RetrievedEvidenceChunk,
     TokenUsage,
 )
 from raven.models.graph import (
     EvidencePreparationMode,
+    EvidenceSpan,
     GraphAnalysisJob,
     GraphAnalysisProgress,
     GraphAnalysisResult,
@@ -33,9 +35,11 @@ from raven.models.investigation import (
     InvestigationDraft,
     InvestigationStatus,
 )
+from raven.models.jobs import BackgroundJob, JobKind, JobStatus
 
 __all__ = [
     "AnalysisLanguage",
+    "BackgroundJob",
     "ChatEventKind",
     "ChatMessage",
     "ChatRole",
@@ -43,6 +47,8 @@ __all__ = [
     "DEFAULT_ANALYSIS_DOMAIN",
     "ConnectionState",
     "EvidenceDocument",
+    "EvidenceCitation",
+    "EvidenceSpan",
     "EvidenceIngestionState",
     "EvidencePreparationMode",
     "GraphAnalysisProgress",
@@ -59,6 +65,8 @@ __all__ = [
     "InvestigationDraft",
     "InvestigationStatus",
     "InvestigationGraph",
+    "JobKind",
+    "JobStatus",
     "RagIndexProgress",
     "RetrievedEvidenceChunk",
     "TokenUsage",

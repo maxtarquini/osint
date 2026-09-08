@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from raven.exceptions import GraphAnalysisCancelledError, GraphAnalysisError
 from raven.models import (
+    BackgroundJob,
     EvidenceDocument,
     EvidencePreparationMode,
     GraphAnalysisJob,
@@ -21,7 +22,10 @@ from raven.models import (
     GraphJobStatus,
     GraphRunStatus,
     Investigation,
+    JobKind,
+    JobStatus,
 )
+from raven.services.job_persistence import BackgroundJobWriter
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +43,10 @@ class GraphAnalysisRunner(Protocol):
     ) -> GraphAnalysisResult: ...
 
 
+class JobRecorder(Protocol):
+    def save_background_job(self, job: BackgroundJob) -> None: ...
+
+
 @dataclass(slots=True)
 class _GraphJobRecord:
     snapshot: GraphAnalysisJob
@@ -50,8 +58,16 @@ class _GraphJobRecord:
 class GraphAnalysisQueue:
     """Run graph jobs independently from any mounted Textual screen."""
 
-    def __init__(self, runner: GraphAnalysisRunner) -> None:
+    def __init__(
+        self,
+        runner: GraphAnalysisRunner,
+        recorder: JobRecorder | None = None,
+        on_change: Callable[[str], None] | None = None,
+    ) -> None:
         self._runner = runner
+        self._writer = BackgroundJobWriter(recorder)
+        self._on_change = on_change
+        self._names: dict[str, str] = {}
         self._jobs: dict[str, _GraphJobRecord] = {}
         self._queue: Queue[tuple[str, str] | None] = Queue()
         self._lock = RLock()
@@ -79,6 +95,7 @@ class GraphAnalysisQueue:
                 GraphJobStatus.RUNNING,
             }:
                 return current.snapshot
+            self._names[investigation.investigation_id] = investigation.name
             now = datetime.now(UTC)
             job_id = str(uuid4())
             snapshot = GraphAnalysisJob(
@@ -101,6 +118,7 @@ class GraphAnalysisQueue:
                 documents,
                 Event(),
             )
+            self._persist(snapshot)
             self._queue.put((investigation.investigation_id, job_id))
             return snapshot
 
@@ -109,6 +127,21 @@ class GraphAnalysisQueue:
         with self._lock:
             record = self._jobs.get(investigation_id)
             return record.snapshot if record is not None else None
+
+    def investigation_name(self, investigation_id: str) -> str:
+        with self._lock:
+            return self._names.get(investigation_id, "")
+
+    def snapshots(self) -> tuple[GraphAnalysisJob, ...]:
+        """Return newest in-memory snapshots for immediate UI refreshes."""
+        with self._lock:
+            return tuple(
+                sorted(
+                    (record.snapshot for record in self._jobs.values()),
+                    key=lambda item: item.updated_at,
+                    reverse=True,
+                )
+            )
 
     def cancel(self, investigation_id: str) -> GraphAnalysisJob | None:
         """Cancel queued work immediately or request cancellation for active work."""
@@ -142,14 +175,26 @@ class GraphAnalysisQueue:
                         message="Cancellation requested after the active model call",
                     ),
                 )
+            self._persist(record.snapshot)
             return record.snapshot
 
     def remove(self, investigation_id: str) -> None:
         """Forget a case-owned job after requesting cancellation."""
         with self._lock:
+            record = self._jobs.get(investigation_id)
+            if record is not None and record.snapshot.status in {
+                GraphJobStatus.QUEUED,
+                GraphJobStatus.RUNNING,
+            }:
+                self._finish_cancelled(investigation_id, record.snapshot.job_id)
             record = self._jobs.pop(investigation_id, None)
             if record is not None:
                 record.cancellation.set()
+        if self._on_change is not None:
+            self._on_change(investigation_id)
+
+    def flush(self, timeout: float = 10) -> bool:
+        return self._writer.flush(timeout)
 
     def close(self) -> None:
         """Stop accepting work and request cancellation of remaining jobs."""
@@ -167,6 +212,7 @@ class GraphAnalysisQueue:
             queued = self._queue.get()
             try:
                 if queued is None:
+                    self._writer.close()
                     return
                 investigation_id, job_id = queued
                 record = self._begin(investigation_id, job_id)
@@ -195,6 +241,7 @@ class GraphAnalysisQueue:
                     message="Starting persistent graph analysis",
                 ),
             )
+            self._persist(record.snapshot)
             return record
 
     def _execute(
@@ -229,6 +276,8 @@ class GraphAnalysisQueue:
                 "Unable to analyze Evidence; check the Raven log",
             )
         else:
+            # The service checks cancellation before its commit point. A completed
+            # publication must remain completed if a late cancellation arrives.
             self._finish_completed(investigation_id, job_id, result)
 
     def _progress(
@@ -245,6 +294,7 @@ class GraphAnalysisQueue:
                     updated_at=datetime.now(UTC),
                     progress=progress,
                 )
+                self._persist(record.snapshot)
 
     def _finish_completed(
         self,
@@ -269,6 +319,7 @@ class GraphAnalysisQueue:
                 result=result,
                 error=result.run.last_error,
             )
+            self._persist(record.snapshot)
 
     def _finish_cancelled(self, investigation_id: str, job_id: str) -> None:
         with self._lock:
@@ -285,6 +336,7 @@ class GraphAnalysisQueue:
                     message="Graph analysis cancelled",
                 ),
             )
+            self._persist(record.snapshot)
 
     def _finish_failed(self, investigation_id: str, job_id: str, detail: str) -> None:
         with self._lock:
@@ -302,6 +354,27 @@ class GraphAnalysisQueue:
                 ),
                 error=detail,
             )
+            self._persist(record.snapshot)
+
+    def _persist(self, snapshot: GraphAnalysisJob) -> None:
+        self._writer.submit(
+            BackgroundJob(
+                job_id=snapshot.job_id,
+                investigation_id=snapshot.investigation_id,
+                investigation_name=self._names.get(snapshot.investigation_id, ""),
+                kind=JobKind.GRAPH,
+                status=JobStatus(snapshot.status.value),
+                stage=snapshot.progress.stage.value,
+                completed=snapshot.progress.completed,
+                total=snapshot.progress.total,
+                message=snapshot.progress.message,
+                created_at=snapshot.submitted_at,
+                updated_at=snapshot.updated_at,
+                error=snapshot.error,
+            )
+        )
+        if self._on_change is not None:
+            self._on_change(snapshot.investigation_id)
 
     def _matching_record(
         self,

@@ -98,55 +98,60 @@ class Neo4jRepository:
             for relationship in graph.relationships
         ]
         try:
-            self._driver.execute_query(
-                "MERGE (i:Investigation {id: $investigation_id}) "
-                "SET i.latest_run_id = $run_id, i.graph_updated_at = datetime()",
-                investigation_id=graph.investigation_id,
-                run_id=graph.run_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "MATCH (e:Entity {investigation_id: $investigation_id}) SET e.active = false",
-                investigation_id=graph.investigation_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "UNWIND $entities AS item "
-                "MERGE (e:Entity {id: item.id}) "
-                "SET e.investigation_id = $investigation_id, e.run_id = $run_id, "
-                "e.type = item.type, e.subtype = item.subtype, e.name = item.name, "
-                "e.aliases = item.aliases, e.identifiers = item.identifiers, "
-                "e.evidence_ids = item.evidence_ids, e.rationale = item.rationale, "
-                "e.confidence = item.confidence, e.status = item.status, e.active = true "
-                "WITH e MATCH (i:Investigation {id: $investigation_id}) "
-                "MERGE (i)-[:CONTAINS]->(e)",
-                entities=entities,
-                investigation_id=graph.investigation_id,
-                run_id=graph.run_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "MATCH (:Entity {investigation_id: $investigation_id})"
-                "-[r:EVIDENCE_RELATION]->(:Entity) SET r.active = false",
-                investigation_id=graph.investigation_id,
-                database_=self._database,
-            )
-            self._driver.execute_query(
-                "UNWIND $relationships AS item "
-                "MATCH (source:Entity {id: item.source_id}) "
-                "MATCH (target:Entity {id: item.target_id}) "
-                "MERGE (source)-[r:EVIDENCE_RELATION {id: item.id}]->(target) "
-                "SET r.investigation_id = $investigation_id, r.run_id = $run_id, "
-                "r.type = item.type, r.evidence_ids = item.evidence_ids, "
-                "r.rationale = item.rationale, r.confidence = item.confidence, "
-                "r.status = item.status, r.active = true",
-                relationships=relationships,
-                investigation_id=graph.investigation_id,
-                run_id=graph.run_id,
-                database_=self._database,
-            )
+            with self._driver.session(database=self._database) as session:
+                session.execute_write(self._write_snapshot, graph, entities, relationships)
         except Exception as error:
             raise GraphPersistenceError("Unable to synchronize the graph with Neo4j") from error
+
+    @staticmethod
+    def _write_snapshot(
+        tx: Any,
+        graph: InvestigationGraph,
+        entities: list[dict[str, Any]],
+        relationships: list[dict[str, Any]],
+    ) -> None:
+        tx.run(
+            "MERGE (i:Investigation {id: $investigation_id}) "
+            "SET i.latest_run_id = $run_id, i.graph_updated_at = datetime()",
+            investigation_id=graph.investigation_id,
+            run_id=graph.run_id,
+        )
+        tx.run(
+            "MATCH (e:Entity {investigation_id: $investigation_id}) SET e.active = false",
+            investigation_id=graph.investigation_id,
+        )
+        tx.run(
+            "UNWIND $entities AS item "
+            "MERGE (e:Entity {id: item.id}) "
+            "SET e.investigation_id = $investigation_id, e.run_id = $run_id, "
+            "e.type = item.type, e.subtype = item.subtype, e.name = item.name, "
+            "e.aliases = item.aliases, e.identifiers = item.identifiers, "
+            "e.evidence_ids = item.evidence_ids, e.rationale = item.rationale, "
+            "e.confidence = item.confidence, e.status = item.status, e.active = true "
+            "WITH e MATCH (i:Investigation {id: $investigation_id}) "
+            "MERGE (i)-[:CONTAINS]->(e)",
+            entities=entities,
+            investigation_id=graph.investigation_id,
+            run_id=graph.run_id,
+        )
+        tx.run(
+            "MATCH (:Entity {investigation_id: $investigation_id})"
+            "-[r:EVIDENCE_RELATION]->(:Entity) SET r.active = false",
+            investigation_id=graph.investigation_id,
+        )
+        tx.run(
+            "UNWIND $relationships AS item "
+            "MATCH (source:Entity {id: item.source_id}) "
+            "MATCH (target:Entity {id: item.target_id}) "
+            "MERGE (source)-[r:EVIDENCE_RELATION {id: item.id}]->(target) "
+            "SET r.investigation_id = $investigation_id, r.run_id = $run_id, "
+            "r.type = item.type, r.evidence_ids = item.evidence_ids, "
+            "r.rationale = item.rationale, r.confidence = item.confidence, "
+            "r.status = item.status, r.active = true",
+            relationships=relationships,
+            investigation_id=graph.investigation_id,
+            run_id=graph.run_id,
+        )
 
     def delete_investigation(self, investigation_id: str) -> None:
         """Delete an investigation subgraph without touching other case partitions."""

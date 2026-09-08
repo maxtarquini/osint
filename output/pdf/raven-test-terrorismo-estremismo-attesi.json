@@ -1,0 +1,124 @@
+{
+  "fixture": "RX41",
+  "pdf": "raven-test-terrorismo-estremismo.pdf",
+  "dictionary": "TERRORISM_EXTREMISM",
+  "dictionary_version": "1.0.0",
+  "note": "Riferimento manuale, non risultati ottenuti da un agente. Categorie alternative accettabili dove indicate; entità elencate come sottoinsieme atteso, non lista esaustiva.",
+  "pages": [
+    {
+      "page": 1,
+      "title": "Identità e attribuzioni",
+      "acceptable_categories": [
+        "IDENTITY",
+        "RELATIONSHIPS"
+      ],
+      "expected_entity_subset": {
+        "Fronte Vela RX41": "TER_TERRORIST_ORGANIZATION",
+        "Elenco di designazione RX41-01": "TER_DESIGNATION",
+        "Ramo Est RX41": "TER_AFFILIATE",
+        "Nucleo Bruma RX41": "TER_TERRORIST_CELL",
+        "Cerchio Grigio RX41": "TER_EXTREMIST_GROUP",
+        "Rete Passaggio RX41": "TER_RECRUITMENT_NETWORK"
+      },
+      "checks": []
+    },
+    {
+      "page": 2,
+      "title": "Pubblicazioni e comunicazione",
+      "acceptable_categories": [
+        "NARRATIVE",
+        "RELATIONSHIPS"
+      ],
+      "expected_entity_subset": {
+        "Carta del Varco RX41": "TER_MANIFESTO",
+        "Bollettino Ceneri RX41": "TER_PROPAGANDA_PUBLICATION",
+        "Canale Prisma RX41": "TER_MEDIA_CHANNEL",
+        "Campagna Eco RX41": "TER_PROPAGANDA_CAMPAIGN",
+        "Campagna Soglia RX41": "TER_RECRUITMENT_CAMPAIGN",
+        "Percorso Obbedienza RX41": "TER_RADICALIZATION_PROGRAM"
+      },
+      "checks": []
+    },
+    {
+      "page": 3,
+      "title": "Cronologia di eventi riferiti",
+      "acceptable_categories": [
+        "TEMPORAL",
+        "NARRATIVE"
+      ],
+      "expected_entity_subset": {
+        "Operazione Vetro RX41": "TER_OPERATION",
+        "Attacco di Piazza Lume RX41": "TER_ATTACK",
+        "Crisi degli ostaggi di Sala Niva RX41": "TER_HOSTAGE_CRISIS"
+      },
+      "checks": []
+    },
+    {
+      "page": 4,
+      "title": "Luoghi e strutture citate",
+      "acceptable_categories": [
+        "GEOGRAPHIC",
+        "RELATIONSHIPS"
+      ],
+      "expected_entity_subset": {
+        "Campo Altura RX41": "TER_TRAINING_CAMP",
+        "Casa Nebbia RX41": "TER_SAFEHOUSE"
+      },
+      "checks": []
+    },
+    {
+      "page": 5,
+      "title": "Contrasto e prevenzione",
+      "acceptable_categories": [
+        "NARRATIVE",
+        "TEMPORAL",
+        "RELATIONSHIPS"
+      ],
+      "expected_entity_subset": {
+        "Operazione Argine RX41": "TER_COUNTERTERRORISM_OPERATION",
+        "Unità Tutela RX41": "TER_COUNTERTERRORISM_UNIT",
+        "Programma Ritorno RX41": "TER_DERADICALIZATION_PROGRAM"
+      },
+      "checks": []
+    },
+    {
+      "page": 6,
+      "title": "Movimento economico da verificare",
+      "acceptable_categories": [
+        "FINANCIAL",
+        "EVIDENCE_ONLY"
+      ],
+      "expected_entity_subset": {},
+      "checks": [
+        "Non creare finanziamenti verso Fronte Vela RX41 o Rete Passaggio RX41.",
+        "Conservare 240 euro e 16 febbraio 2026; causale dichiarata e finalità ipotizzata devono restare distinte."
+      ]
+    },
+    {
+      "page": 7,
+      "title": "Rettifica e omonimia",
+      "acceptable_categories": [
+        "IDENTITY",
+        "NARRATIVE"
+      ],
+      "expected_entity_subset": {},
+      "checks": [
+        "Non assegnare TER_EXTREMIST_GROUP al partito politico.",
+        "Non unire Lista Civica Ramo Est RX41 e Ramo Est RX41.",
+        "Rilevare rettifica, negazioni e rinvii alle pagine 1, 5 e 6."
+      ]
+    },
+    {
+      "page": 8,
+      "title": "Attività della biblioteca",
+      "acceptable_categories": [
+        "EVIDENCE_ONLY"
+      ],
+      "expected_entity_subset": {},
+      "checks": [
+        "Classificare EVIDENCE_ONLY senza inventare rilevanza per il dominio.",
+        "Non assegnare TER_TERRORIST_CELL a Cellula Verde RX41."
+      ]
+    }
+  ]
+}

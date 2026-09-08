@@ -11,14 +11,21 @@ from uuid import uuid4
 import pytest
 
 from raven.ai import SharedAiNode
-from raven.exceptions import GraphAgentError, GraphAnalysisCancelledError, GraphPersistenceError
-from raven.graph import EvidenceGraphExtractor, word_chunks
+from raven.exceptions import (
+    GraphAgentError,
+    GraphAnalysisCancelledError,
+    GraphAnalysisValidationError,
+    GraphPersistenceError,
+)
+from raven.graph import EvidenceGraphExtractor, page_groups, word_chunks
 from raven.models import (
     AnalysisLanguage,
     EvidenceDocument,
     EvidenceIngestionState,
     EvidencePreparationMode,
     GraphAnalysisRun,
+    GraphEntity,
+    GraphItemStatus,
     Investigation,
     InvestigationGraph,
     InvestigationStatus,
@@ -33,7 +40,7 @@ class GraphRepository:
         self.runs: list[GraphAnalysisRun] = []
         self.graph: InvestigationGraph | None = None
 
-    def set_evidence_ingestion_state(
+    def set_evidence_graph_state(
         self,
         document_id: str,
         state: EvidenceIngestionState,
@@ -69,7 +76,7 @@ class ScriptedNode:
     available = True
     settings = SimpleNamespace(model="scripted-model")
 
-    def chat(self, system: str, user: str, *, json_mode: bool = False) -> str:
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **options) -> str:
         if "named-entity" in system:
             return """{"entities":[
                 {"type":"PERSON","canonical_name":"Mario Rossi","aliases":[],
@@ -86,12 +93,65 @@ class ScriptedNode:
         return user.split("\n\n")[-1]
 
 
+class PreparationTrackingNode(ScriptedNode):
+    def __init__(self) -> None:
+        self.compression_calls = 0
+        self.translation_calls = 0
+        self.entity_calls = 0
+        self.compression_word_counts: list[int] = []
+        self.entity_inputs: list[str] = []
+
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **options) -> str:
+        if "Operational Evidence Language Detection system" in system:
+            return "en"
+        if "Operational Evidence Translation system" in system:
+            self.translation_calls += 1
+            return user.partition("Evidence:\n")[2]
+        if "Operational Evidence Compression system" in system:
+            self.compression_calls += 1
+            self.compression_word_counts.append(len(user.split("\n\n")[-1].split()))
+        if "named-entity extraction system" in system:
+            self.entity_calls += 1
+            self.entity_inputs.append(user)
+        return super().chat(system, user, json_mode=json_mode)
+
+
 class FailingNode:
     available = True
     settings = SimpleNamespace(model="failing-model")
 
-    def chat(self, system: str, user: str, *, json_mode: bool = False) -> str:
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **options) -> str:
         raise GraphAgentError("model unavailable")
+
+
+class OversizedCompressionNode(PreparationTrackingNode):
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **options) -> str:
+        if "Operational Evidence Compression system" in system:
+            evidence = user.split("\n\n")[-1]
+            if len(evidence.split()) > 450:
+                raise GraphAgentError("request timed out")
+        return super().chat(system, user, json_mode=json_mode)
+
+
+class PageSelectiveCompressionNode(PreparationTrackingNode):
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **options) -> str:
+        if "Operational Evidence Compression system" in system and "[PAGE 2]" in user:
+            raise GraphAgentError("request timed out")
+        return super().chat(system, user, json_mode=json_mode)
+
+
+class EmptySemanticNode:
+    available = True
+    settings = SimpleNamespace(model="empty-semantic-model")
+
+    def __init__(self) -> None:
+        self.entity_system = ""
+
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **options) -> str:
+        if "named-entity" in system:
+            self.entity_system = system
+            return '{"entities":[]}'
+        return user.split("\n\n")[-1]
 
 
 class VocabularyAwareNode:
@@ -101,7 +161,7 @@ class VocabularyAwareNode:
     def __init__(self) -> None:
         self.entity_prompt = ""
 
-    def chat(self, system: str, user: str, *, json_mode: bool = False) -> str:
+    def chat(self, system: str, user: str, *, json_mode: bool = False, **options) -> str:
         if "named-entity" in system:
             self.entity_prompt = user
             return """{"entities":[
@@ -153,7 +213,25 @@ def test_llm_pipeline_extracts_entities_then_only_grounded_relationships() -> No
     assert model == "scripted-model"
 
 
-def test_persistent_analysis_uses_deterministic_fallback_and_syncs_neo4j(
+def test_compression_and_overlapping_chunks_can_run_together() -> None:
+    node = PreparationTrackingNode()
+    extractor = EvidenceGraphExtractor(node)  # type: ignore[arg-type]
+
+    extractor.extract(
+        str(uuid4()),
+        "evidence-1",
+        " ".join(f"word-{index}" for index in range(1100)),
+        AnalysisLanguage.ITALIAN,
+        EvidencePreparationMode.COMPRESS_AND_CHUNK,
+    )
+
+    assert node.compression_calls == 2
+    assert node.translation_calls == 2
+    assert node.entity_calls == 2
+    assert max(node.compression_word_counts) <= 1000
+
+
+def test_persistent_analysis_requires_ai_instead_of_generating_a_regex_graph(
     tmp_path: Path,
 ) -> None:
     investigation_id = str(uuid4())
@@ -170,42 +248,46 @@ def test_persistent_analysis_uses_deterministic_fallback_and_syncs_neo4j(
         knowledge_bases,
     )
 
-    result = service.analyze(
-        investigation(investigation_id),
-        (document,),
-        EvidencePreparationMode.COMPRESS,
-    )
+    with pytest.raises(GraphAnalysisValidationError, match="shared AI node is not connected"):
+        service.analyze(
+            investigation(investigation_id),
+            (document,),
+            EvidencePreparationMode.COMPRESS,
+        )
 
-    assert result.run.status.value == "completed"
-    assert result.run.model_name == "deterministic"
-    assert result.run.dictionary_domain == "GENERAL_OSINT"
-    assert result.run.dictionary_versions == ("CORE@2.0.0", "GENERAL_OSINT@1.0.0")
-    assert len(result.run.dictionary_hash) == 64
-    assert repository.states[document.document_id] is EvidenceIngestionState.READY
-    assert {entity.entity_type for entity in result.graph.entities} >= {
-        "EMAIL_ADDRESS",
-        "URL",
-        "DOMAIN",
-    }
-    assert repository.graph == result.graph
-    assert graph_store.graph == result.graph
-    assert service.latest(investigation_id) == result.graph
+    assert repository.graph is None
+    assert graph_store.graph is None
 
 
-def test_llm_failure_retains_deterministic_observables() -> None:
+def test_llm_failure_does_not_fall_back_to_regex_output() -> None:
     extractor = EvidenceGraphExtractor(FailingNode())  # type: ignore[arg-type]
+
+    with pytest.raises(GraphAgentError, match="Semantic Evidence analysis failed"):
+        extractor.extract(
+            str(uuid4()),
+            "evidence-1",
+            "Contact analyst@example.org",
+            AnalysisLanguage.ORIGINAL,
+            EvidencePreparationMode.COMPRESS,
+        )
+
+
+def test_paragraph_numbers_are_not_injected_as_deterministic_ip_entities() -> None:
+    node = EmptySemanticNode()
+    extractor = EvidenceGraphExtractor(node)  # type: ignore[arg-type]
 
     entities, relationships, model = extractor.extract(
         str(uuid4()),
         "evidence-1",
-        "Contact analyst@example.org",
+        "4.3.1.1 Scope\n4.3.1.2 Requirements\nContact info@example.org.",
         AnalysisLanguage.ORIGINAL,
-        EvidencePreparationMode.COMPRESS,
+        EvidencePreparationMode.FULL_TEXT,
     )
 
-    assert "EMAIL_ADDRESS" in {entity.entity_type for entity in entities}
+    assert entities == ()
     assert relationships == ()
-    assert model == "deterministic-fallback"
+    assert model == "empty-semantic-model"
+    assert "dotted section" in node.entity_system
 
 
 def test_entity_extraction_prompt_and_output_are_dictionary_bounded() -> None:
@@ -319,7 +401,7 @@ def test_graph_service_uses_the_domain_selected_for_the_investigation(tmp_path: 
     assert '"domain_code":"MARITIME_INTELLIGENCE"' in node.entity_prompt
 
 
-def test_analysis_cancellation_is_persisted_before_reading_evidence(tmp_path: Path) -> None:
+def test_already_cancelled_analysis_does_not_start_a_run(tmp_path: Path) -> None:
     investigation_id = str(uuid4())
     source = tmp_path / "evidence.md"
     source.write_text("Evidence")
@@ -329,7 +411,7 @@ def test_analysis_cancellation_is_persisted_before_reading_evidence(tmp_path: Pa
     service = GraphAnalysisService(
         repository,
         GraphStore(),
-        SharedAiNode(),
+        ScriptedNode(),  # type: ignore[arg-type]
         knowledge_bases,
     )
 
@@ -340,7 +422,7 @@ def test_analysis_cancellation_is_persisted_before_reading_evidence(tmp_path: Pa
             cancelled=lambda: True,
         )
 
-    assert repository.runs[-1].status.value == "cancelled"
+    assert repository.runs == []
     assert document.document_id not in repository.states
 
 
@@ -348,6 +430,108 @@ def test_overlapping_word_chunks_preserve_boundary_context() -> None:
     chunks = word_chunks("one two three four five six", 4, 2)
 
     assert chunks == ("one two three four", "three four five six")
+
+
+def test_page_groups_preserve_page_markers_and_overlap() -> None:
+    pages = (
+        "one two three",
+        "four five three",
+        "six seven three",
+        "eight nine three",
+    )
+
+    groups = page_groups(pages, maximum_words=6, overlap_pages=1)
+
+    assert groups == (
+        "[PAGE 1]\none two three\n\n[PAGE 2]\nfour five three",
+        "[PAGE 2]\nfour five three\n\n[PAGE 3]\nsix seven three",
+        "[PAGE 3]\nsix seven three\n\n[PAGE 4]\neight nine three",
+    )
+
+
+def test_page_groups_limit_tiny_pages_to_two_pages_per_ai_batch() -> None:
+    pages = tuple(f"page {index}" for index in range(1, 6))
+
+    groups = page_groups(pages, maximum_words=10_000, overlap_pages=1)
+
+    assert groups == (
+        "[PAGE 1]\npage 1\n\n[PAGE 2]\npage 2",
+        "[PAGE 2]\npage 2\n\n[PAGE 3]\npage 3",
+        "[PAGE 3]\npage 3\n\n[PAGE 4]\npage 4",
+        "[PAGE 4]\npage 4\n\n[PAGE 5]\npage 5",
+    )
+
+
+def test_failed_page_group_is_retried_as_smaller_page_preserving_chunks() -> None:
+    node = OversizedCompressionNode()
+    extractor = EvidenceGraphExtractor(node)  # type: ignore[arg-type]
+    warnings: list[str] = []
+    page = " ".join(f"word-{index}" for index in range(700))
+
+    entities, relationships, _model = extractor.extract(
+        str(uuid4()),
+        "evidence-1",
+        page,
+        AnalysisLanguage.ORIGINAL,
+        EvidencePreparationMode.COMPRESS,
+        evidence_segments=(f"[PAGE 7]\n{page}",),
+        warning=warnings.append,
+    )
+
+    assert node.compression_calls == 2
+    assert node.entity_calls == 2
+    assert all("[PAGE 7]" in entity_input for entity_input in node.entity_inputs)
+    assert entities
+    assert relationships
+    assert warnings == []
+
+
+def test_one_failed_page_group_does_not_discard_successful_groups() -> None:
+    node = PageSelectiveCompressionNode()
+    extractor = EvidenceGraphExtractor(node)  # type: ignore[arg-type]
+    warnings: list[str] = []
+
+    entities, relationships, _model = extractor.extract(
+        str(uuid4()),
+        "evidence-1",
+        "First evidence\n\nSecond evidence",
+        AnalysisLanguage.ORIGINAL,
+        EvidencePreparationMode.COMPRESS,
+        evidence_segments=(
+            "[PAGE 1]\nFirst evidence",
+            "[PAGE 2]\nSecond evidence",
+        ),
+        warning=warnings.append,
+    )
+
+    assert node.entity_calls == 1
+    assert "[PAGE 1]" in node.entity_inputs[0]
+    assert entities
+    assert relationships
+    assert len(warnings) == 1
+    assert "page group 2/2" in warnings[0]
+
+
+def test_page_groups_are_analyzed_individually_with_page_provenance() -> None:
+    node = PreparationTrackingNode()
+    extractor = EvidenceGraphExtractor(node)  # type: ignore[arg-type]
+    groups = ("[PAGE 1]\nFirst evidence", "[PAGE 2]\nSecond evidence")
+
+    entities, relationships, model = extractor.extract(
+        str(uuid4()),
+        "evidence-1",
+        "First evidence\n\nSecond evidence",
+        AnalysisLanguage.ORIGINAL,
+        EvidencePreparationMode.FULL_TEXT,
+        evidence_segments=groups,
+    )
+
+    assert node.entity_calls == 2
+    assert "[PAGE 1]" in node.entity_inputs[0]
+    assert "[PAGE 2]" in node.entity_inputs[1]
+    assert {entity.canonical_name for entity in entities} == {"Mario Rossi", "Alfa S.p.A."}
+    assert len(relationships) == 1
+    assert model == "scripted-model"
 
 
 def test_investigation_graph_deletion_propagates_neo4j_failure(tmp_path: Path) -> None:
@@ -364,3 +548,29 @@ def test_investigation_graph_deletion_propagates_neo4j_failure(tmp_path: Path) -
 
     with pytest.raises(GraphPersistenceError, match="Neo4j unavailable"):
         service.remove_investigation("investigation-id")
+
+
+def test_manual_graph_review_is_persisted_to_mongodb_and_neo4j(tmp_path: Path) -> None:
+    repository = GraphRepository()
+    graph_store = GraphStore()
+    service = GraphAnalysisService(
+        repository,
+        graph_store,
+        SharedAiNode(),
+        KnowledgeBaseStore(tmp_path / "knowledge-bases"),
+    )
+    now = datetime.now(UTC)
+    graph = InvestigationGraph(
+        "case-id",
+        "run-id",
+        (GraphEntity("entity-id", "PERSON", "Mario Rossi"),),
+        (),
+        now,
+    )
+
+    repository.save_graph_snapshot(graph)
+    reviewed = service.review_item(graph, "entity-id", GraphItemStatus.VERIFIED)
+
+    assert reviewed.entities[0].status is GraphItemStatus.VERIFIED
+    assert repository.graph == reviewed
+    assert graph_store.graph == reviewed

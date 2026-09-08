@@ -11,6 +11,7 @@ from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Label, Static
 
 from raven.models import ServiceName
+from raven.tui.i18n import tr
 from raven.tui.widgets import ServiceStatusIndicator, TopNavigation
 from raven.tui.widgets.logo import RavenLogo
 
@@ -53,6 +54,7 @@ class HomeScreen(Screen[None]):
     ]
 
     def compose(self) -> ComposeResult:
+        language = self._raven_app.settings.interface_language
         yield TopNavigation(active="home")
         with Vertical(id="home-shell"):
             yield RavenLogo(id="brand-logo")
@@ -64,7 +66,7 @@ class HomeScreen(Screen[None]):
                 yield ServiceStatusIndicator(ServiceName.AI)
             with Center(id="primary-action-row"):
                 yield Button(
-                    "Start a new investigation",
+                    tr(language, "start_investigation", "Start a new investigation"),
                     id="new-investigation",
                     variant="primary",
                 )

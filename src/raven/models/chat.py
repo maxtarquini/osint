@@ -15,6 +15,19 @@ class ChatRole(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class EvidenceCitation:
+    """Stable mapping from an answer label to the exact retrieved passage."""
+
+    label: str
+    document_id: str
+    document_name: str
+    chunk_index: int
+    page_number: int | None
+    text: str
+    section_number: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class TokenUsage:
     """Provider-reported token counts for one model response."""
 
@@ -32,6 +45,8 @@ class RagIndexProgress:
     state: EvidenceIngestionState
     completed: int
     total: int
+    detail: str = ""
+    chunk_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +58,7 @@ class ChatMessage:
     created_at: datetime
     sources: tuple[str, ...] = ()
     usage: TokenUsage | None = None
+    citations: tuple[EvidenceCitation, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +69,8 @@ class RetrievedEvidenceChunk:
     text: str
     score: float
     page_count: int | None = None
+    page_number: int | None = None
+    section_number: int | None = None
 
 
 class ChatEventKind(StrEnum):
@@ -68,3 +86,4 @@ class ChatStreamEvent:
     text: str = ""
     sources: tuple[str, ...] = ()
     usage: TokenUsage | None = None
+    citations: tuple[EvidenceCitation, ...] = ()

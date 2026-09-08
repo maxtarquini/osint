@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
 import pytest
 
 from raven.ai import SharedAiNode
 from raven.config import AiNodeSettings, AiProvider, AiThinkingLevel
 from raven.exceptions import (
+    GraphAgentError,
     InfrastructureAuthenticationError,
     InfrastructureConfigurationError,
 )
@@ -43,9 +45,10 @@ class FakeClient:
         self.requested_url = url
         return self.response
 
-    def post(self, url: str, *, json: dict[str, Any]) -> FakeResponse:
+    def post(self, url: str, *, json: dict[str, Any], **options: Any) -> FakeResponse:
         self.posted_url = url
         self.posted_json = json
+        self.post_options = options
         return self.post_response or self.response
 
     def stream(self, method: str, url: str, *, json: dict[str, Any]):
@@ -135,6 +138,24 @@ def test_probe_closes_its_client_without_replacing_active_node() -> None:
     assert clients[1].closed
 
 
+def test_probe_executes_embedding_and_returns_its_dimension() -> None:
+    clients: list[FakeClient] = []
+    models = FakeResponse({"models": [{"model": "qwen3"}, {"model": "bge-m3"}]})
+
+    def create(**options: Any) -> FakeClient:
+        client = FakeClient(models, **options)
+        if clients:
+            client.post_response = FakeResponse({"embeddings": [[0.1, 0.2, 0.3]]})
+        clients.append(client)
+        return client
+
+    dimension = SharedAiNode(create).probe(AiNodeSettings(model="qwen3", embedding_model="bge-m3"))
+
+    assert dimension == 3
+    assert clients[1].posted_url == "http://localhost:11434/api/embed"
+    assert all(client.closed for client in clients)
+
+
 def test_missing_or_unknown_model_requires_configuration() -> None:
     create, clients = client_factory(FakeResponse({"models": []}))
     node = SharedAiNode(create)
@@ -196,6 +217,25 @@ def test_ollama_chat_uses_the_initialized_shared_node_and_json_mode() -> None:
         "options": {"top_k": 40, "num_ctx": 32768},
         "think": "medium",
     }
+
+
+def test_chat_timeout_reports_configured_duration() -> None:
+    class TimeoutClient(FakeClient):
+        def post(self, url: str, *, json: dict[str, Any]) -> FakeResponse:
+            raise httpx.ReadTimeout("model response timed out")
+
+    clients: list[TimeoutClient] = []
+
+    def create(**options: Any) -> TimeoutClient:
+        client = TimeoutClient(FakeResponse({"models": [{"model": "qwen3"}]}), **options)
+        clients.append(client)
+        return client
+
+    node = SharedAiNode(create)
+    node.initialize(AiNodeSettings(model="qwen3", timeout_seconds=45))
+
+    with pytest.raises(GraphAgentError, match="timed out after 45 seconds"):
+        node.chat("system", "Evidence")
 
 
 def test_ollama_embeddings_use_the_configured_embedding_model() -> None:
@@ -342,3 +382,94 @@ def test_llama_cpp_receives_sampling_and_template_thinking_controls() -> None:
         "reasoning_effort": "low",
         "enable_thinking": True,
     }
+
+
+@pytest.mark.parametrize("provider", list(AiProvider))
+def test_bounded_catalog_request_preserves_global_settings(provider):
+    model = "catalog-model"
+    discovery = (
+        {"models": [{"model": model}]}
+        if provider is AiProvider.OLLAMA
+        else {"data": [{"id": model}]}
+    )
+    create, clients = client_factory(FakeResponse(discovery))
+    node = SharedAiNode(create)
+    node.initialize(
+        AiNodeSettings(
+            provider=provider,
+            model=model,
+            api_key="test-key",
+            timeout_seconds=1200,
+            thinking=AiThinkingLevel.HIGH,
+        )
+    )
+    clients[0].post_response = FakeResponse(
+        {"message": {"content": "{}"}, "done_reason": "stop"}
+        if provider is AiProvider.OLLAMA
+        else {"choices": [{"message": {"content": "{}"}, "finish_reason": "stop"}]}
+    )
+    assert (
+        node.chat(
+            "system",
+            "source",
+            json_mode=True,
+            json_schema={"type": "object", "properties": {}},
+            max_output_tokens=4096,
+            timeout_seconds=180,
+            thinking=AiThinkingLevel.LOW,
+        )
+        == "{}"
+    )
+    payload = clients[0].posted_json
+    if provider is AiProvider.OLLAMA:
+        assert payload["format"] == {"type": "object", "properties": {}}
+        assert payload["options"]["num_predict"] == 4096
+        assert payload["think"] == "low"
+    else:
+        assert payload["response_format"]["type"] == "json_schema"
+        assert payload["response_format"]["json_schema"]["strict"] is True
+        assert payload["response_format"]["json_schema"]["schema"] == {
+            "type": "object",
+            "properties": {},
+        }
+        key = "max_completion_tokens" if provider is AiProvider.OPENAI else "max_tokens"
+        assert payload[key] == 4096
+    assert 0 < clients[0].post_options["timeout"].read <= 180
+    assert node.settings.thinking is AiThinkingLevel.HIGH
+    assert node.settings.timeout_seconds == 1200
+
+
+def test_output_limit_is_an_error_even_if_partial_response_is_valid_json():
+    from raven.exceptions import GraphAgentRequestError
+
+    create, clients = client_factory(FakeResponse({"data": [{"id": "model"}]}))
+    node = SharedAiNode(create)
+    node.initialize(AiNodeSettings(provider=AiProvider.LLAMA_CPP, model="model"))
+    clients[0].post_response = FakeResponse(
+        {"choices": [{"message": {"content": "{}"}, "finish_reason": "length"}]}
+    )
+    with pytest.raises(GraphAgentRequestError) as failure:
+        node.chat("system", "source", max_output_tokens=4096)
+    assert failure.value.code == "output_limit"
+
+
+def test_cancelled_request_waiting_for_shared_node_never_posts():
+    from raven.exceptions import InvestigationChatCancelledError
+
+    create, clients = client_factory(FakeResponse({"models": [{"model": "qwen3"}]}))
+    node = SharedAiNode(create)
+    node.initialize(AiNodeSettings(model="qwen3"))
+    checks = 0
+
+    def cancelled():
+        nonlocal checks
+        checks += 1
+        return checks > 1
+
+    node._request_lock.acquire()
+    try:
+        with pytest.raises(InvestigationChatCancelledError):
+            node.chat("system", "source", timeout_seconds=180, cancelled=cancelled)
+    finally:
+        node._request_lock.release()
+    assert clients[0].posted_json is None

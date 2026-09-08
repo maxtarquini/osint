@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from threading import RLock
 from typing import Any
@@ -22,6 +23,8 @@ from qdrant_client.models import (
 from raven.config import QdrantSettings
 from raven.models import EvidenceDocument, RetrievedEvidenceChunk
 
+logger = logging.getLogger(__name__)
+
 
 class QdrantRepository:
     """Own the Qdrant client and prepare the configured vector collection."""
@@ -41,15 +44,9 @@ class QdrantRepository:
         try:
             candidate.get_collections()
             if not candidate.collection_exists(settings.collection):
-                candidate.create_collection(
-                    collection_name=settings.collection,
-                    vectors_config=VectorParams(
-                        size=settings.vector_size,
-                        distance=Distance.COSINE,
-                    ),
-                )
+                self._create_collection(candidate, settings)
             else:
-                self._validate_vector_size(candidate, settings)
+                self._ensure_vector_size(candidate, settings)
             for field_name in ("investigation_id", "document_id", "sha256"):
                 candidate.create_payload_index(
                     collection_name=settings.collection,
@@ -66,12 +63,58 @@ class QdrantRepository:
             previous.close()
 
     @staticmethod
-    def _validate_vector_size(client: Any, settings: QdrantSettings) -> None:
+    def _create_collection(client: Any, settings: QdrantSettings) -> None:
+        client.create_collection(
+            collection_name=settings.collection,
+            vectors_config=VectorParams(
+                size=settings.vector_size,
+                distance=Distance.COSINE,
+            ),
+        )
+
+    @classmethod
+    def _ensure_vector_size(cls, client: Any, settings: QdrantSettings) -> None:
         collection = client.get_collection(settings.collection)
         vectors = collection.config.params.vectors
         current_size = getattr(vectors, "size", None)
-        if current_size is not None and current_size != settings.vector_size:
-            raise ValueError("Configured Qdrant vector size differs from the existing collection")
+        if current_size is None or current_size == settings.vector_size:
+            return
+
+        points_count = cls._collection_point_count(client, settings, collection)
+        if points_count > 0:
+            raise ValueError(
+                f"Qdrant collection '{settings.collection}' contains {points_count} points "
+                f"at vector size {current_size}; configure a new empty collection before "
+                f"changing to {settings.vector_size} dimensions"
+            )
+
+        logger.info(
+            "Recreating empty Qdrant collection %s with vector size %s (was %s)",
+            settings.collection,
+            settings.vector_size,
+            current_size,
+        )
+        client.delete_collection(collection_name=settings.collection)
+        cls._create_collection(client, settings)
+
+    @staticmethod
+    def _collection_point_count(
+        client: Any,
+        settings: QdrantSettings,
+        collection: Any,
+    ) -> int:
+        points_count = getattr(collection, "points_count", None)
+        if points_count is None:
+            count_result = client.count(
+                collection_name=settings.collection,
+                exact=True,
+            )
+            points_count = getattr(count_result, "count", None)
+        if points_count is None:
+            raise ValueError(
+                f"Cannot verify whether Qdrant collection '{settings.collection}' is empty"
+            )
+        return int(points_count)
 
     def close(self) -> None:
         if self._client is not None:
@@ -83,10 +126,17 @@ class QdrantRepository:
     def available(self) -> bool:
         return self._client is not None and self._settings is not None
 
+    @property
+    def vector_size(self) -> int:
+        """Return the vector dimension enforced by the active collection."""
+        _client, settings = self._ready()
+        return settings.vector_size
+
     def indexed_document_hashes(self, investigation_id: str) -> dict[str, str]:
         """Return the Evidence manifest already present in one investigation partition."""
         client, settings = self._ready()
         found: dict[str, str] = {}
+        manifests: dict[str, list[dict[str, Any]]] = {}
         offset: Any | None = None
         query_filter = self._investigation_filter(investigation_id)
         with self._lock:
@@ -96,7 +146,13 @@ class QdrantRepository:
                     scroll_filter=query_filter,
                     limit=256,
                     offset=offset,
-                    with_payload=["document_id", "sha256", "index_signature"],
+                    with_payload=[
+                        "document_id",
+                        "sha256",
+                        "index_signature",
+                        "chunk_index",
+                        "chunk_count",
+                    ],
                     with_vectors=False,
                 )
                 for point in points:
@@ -105,8 +161,26 @@ class QdrantRepository:
                     digest = payload.get("index_signature") or payload.get("sha256")
                     if document_id and digest:
                         found[str(document_id)] = str(digest)
+                        manifests.setdefault(str(document_id), []).append(payload)
                 if offset is None:
-                    return found
+                    return {
+                        document_id: digest
+                        if self._complete_manifest(manifests[document_id])
+                        else ""
+                        for document_id, digest in found.items()
+                    }
+
+    @staticmethod
+    def _complete_manifest(chunks: list[dict[str, Any]]) -> bool:
+        """An interrupted upsert must never be mistaken for a usable index."""
+        expected = chunks[0].get("chunk_count")
+        if not isinstance(expected, int) or expected <= 0 or len(chunks) != expected:
+            return False
+        return (
+            {chunk.get("chunk_index") for chunk in chunks} == set(range(expected))
+            and len({chunk.get("index_signature") for chunk in chunks}) == 1
+            and all(chunk.get("chunk_count") == expected for chunk in chunks)
+        )
 
     def upsert_document(
         self,
@@ -115,13 +189,22 @@ class QdrantRepository:
         vectors: tuple[tuple[float, ...], ...],
         *,
         index_signature: str | None = None,
+        page_numbers: tuple[int | None, ...] | None = None,
     ) -> None:
         """Replace the deterministic chunk points for one Evidence document."""
         client, settings = self._ready()
         if len(chunks) != len(vectors):
             raise ValueError("Every Evidence chunk must have one embedding")
-        if any(len(vector) != settings.vector_size for vector in vectors):
-            raise ValueError("Embedding size differs from the configured Qdrant vector size")
+        resolved_pages = page_numbers or tuple(None for _ in chunks)
+        if len(resolved_pages) != len(chunks):
+            raise ValueError("Every Evidence chunk must have one page reference")
+        dimensions = {len(vector) for vector in vectors}
+        if dimensions != {settings.vector_size}:
+            actual = ", ".join(str(value) for value in sorted(dimensions)) or "empty"
+            raise ValueError(
+                f"Embedding model returned {actual} dimensions; "
+                f"Qdrant collection expects {settings.vector_size}"
+            )
         self.remove_document(document.investigation_id, document.document_id)
         points = [
             PointStruct(
@@ -139,15 +222,36 @@ class QdrantRepository:
                     "sha256": document.sha256,
                     "index_signature": index_signature or document.sha256,
                     "chunk_index": index,
+                    "chunk_count": len(chunks),
                     "text": chunk,
                     "page_count": document.page_count,
+                    "page_number": page_number,
                 },
             )
-            for index, (chunk, vector) in enumerate(zip(chunks, vectors, strict=True))
+            for index, (chunk, vector, page_number) in enumerate(
+                zip(chunks, vectors, resolved_pages, strict=True)
+            )
         ]
         if points:
             with self._lock:
                 client.upsert(collection_name=settings.collection, points=points, wait=True)
+
+    def document_chunk_count(self, investigation_id: str, document_id: str) -> int:
+        """Count confirmed chunk points for one Evidence document."""
+        client, settings = self._ready()
+        query_filter = Filter(
+            must=[
+                FieldCondition(key="investigation_id", match=MatchValue(value=investigation_id)),
+                FieldCondition(key="document_id", match=MatchValue(value=document_id)),
+            ]
+        )
+        with self._lock:
+            result = client.count(
+                collection_name=settings.collection,
+                count_filter=query_filter,
+                exact=True,
+            )
+        return int(result.count)
 
     def remove_document(self, investigation_id: str, document_id: str) -> None:
         client, settings = self._ready()
@@ -211,6 +315,11 @@ class QdrantRepository:
                     page_count=(
                         int(payload["page_count"])
                         if payload.get("page_count") is not None
+                        else None
+                    ),
+                    page_number=(
+                        int(payload["page_number"])
+                        if payload.get("page_number") is not None
                         else None
                     ),
                 )

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from raven.ai import SharedAiNode
-from raven.config import AiNodeSettings, RavenSettings
+from raven.config import AiNodeSettings, QdrantSettings, RavenSettings
 from raven.exceptions import (
     InfrastructureAuthenticationError,
     InfrastructureConfigurationError,
@@ -42,15 +42,17 @@ class Adapter:
 
 
 class ProbeAiNode(SharedAiNode):
-    def __init__(self, failure: Exception | None = None) -> None:
+    def __init__(self, failure: Exception | None = None, dimension: int | None = None) -> None:
         super().__init__()
         self.failure = failure
+        self.dimension = dimension
         self.probed: AiNodeSettings | None = None
 
-    def probe(self, settings: AiNodeSettings) -> None:
+    def probe(self, settings: AiNodeSettings) -> int | None:
         self.probed = settings
         if self.failure is not None:
             raise self.failure
+        return self.dimension
 
 
 def test_service_returns_connected_after_successful_bootstrap() -> None:
@@ -109,3 +111,16 @@ def test_ai_node_probe_uses_draft_settings_without_reconfiguring_service() -> No
 
     assert status.state is ConnectionState.CONNECTED
     assert node.probed == draft
+
+
+def test_ai_node_probe_reports_embedding_dimension_mismatch_with_qdrant() -> None:
+    adapters = {service: Adapter() for service in ServiceName}
+    adapters[ServiceName.AI] = ProbeAiNode(dimension=1024)
+    service = InfrastructureService(
+        RavenSettings(qdrant=QdrantSettings(vector_size=1536)), adapters
+    )
+
+    status = service.test_ai_node(AiNodeSettings(model="qwen3", embedding_model="bge-m3"))
+
+    assert status.state is ConnectionState.CONFIGURATION_REQUIRED
+    assert status.detail == "Embedding model returns 1024 dimensions; Qdrant expects 1536"

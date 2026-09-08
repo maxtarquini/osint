@@ -1,0 +1,109 @@
+{
+  "scenario": "RX41",
+  "dictionary": "TERRORISM_EXTREMISM",
+  "note": "Riferimento manuale per il revisore; non output ottenuto da Raven. Non caricare questo file fra le evidenze. Le relazioni rimangono affermazioni dello scenario e delle rispettive fonti.",
+  "documents": [
+    {
+      "id": "RX41-D2",
+      "file": "raven-test-02-connessioni-rx41.pdf",
+      "pages": 5,
+      "sha256": "218cb4639d0807ec3f6ddc447c2306a904734e25aaa19af2aff3ae57af85373d"
+    },
+    {
+      "id": "RX41-D3",
+      "file": "raven-test-03-negazioni-rx41.pdf",
+      "pages": 5,
+      "sha256": "649299133b3434ff66044ffc8c0e0c15d665aea4458714dbe8ef6b5622de8b57"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "A2-01",
+      "document_2_page": 1,
+      "initial_claim": "Unione Levante RX41 affiliata a Fronte Vela RX41 e collegata a Ramo Est RX41",
+      "response_id": "N3-02",
+      "document_3_page": 1,
+      "expected_interpretation": "Attribuzione invariata; nessuna nuova conferma indipendente"
+    },
+    {
+      "claim_id": "A2-02",
+      "document_2_page": 1,
+      "initial_claim": "Dipendenza di Cerchio Grigio RX41 da Ramo Est RX41 secondo fonte anonima",
+      "response_id": "N3-01",
+      "document_3_page": 1,
+      "expected_interpretation": "Contestata dalla parte interessata; preservare accusa e smentita, senza decidere automaticamente"
+    },
+    {
+      "claim_id": "A2-03",
+      "document_2_page": 2,
+      "initial_claim": "Unione Levante RX41 pubblica Bollettino Ceneri RX41; Canale Prisma RX41 lo diffonde; il bollettino cita Carta del Varco RX41",
+      "response_id": "N3-04",
+      "document_3_page": 2,
+      "expected_interpretation": "Relazioni non ritirate; CE-03 resta unica fonte originaria"
+    },
+    {
+      "claim_id": "A2-04",
+      "document_2_page": 2,
+      "initial_claim": "Canale Prisma RX41 e Laboratorio Prisma RX41 potrebbero coincidere",
+      "response_id": "N3-03",
+      "document_3_page": 2,
+      "expected_interpretation": "Ipotesi ritirata dal suo autore; mantenere identità separate, non inferire assenza universale di rapporti"
+    },
+    {
+      "claim_id": "A2-05",
+      "document_2_page": 3,
+      "initial_claim": "Presunto trasferimento di 240 euro a Rete Passaggio RX41",
+      "response_id": "N3-05",
+      "document_3_page": 3,
+      "expected_interpretation": "Smentita del beneficiario limitata a contributo e periodo; conflitto fra fonti, nessun finanziamento accertato"
+    },
+    {
+      "claim_id": "A2-06",
+      "document_2_page": 3,
+      "initial_claim": "Possibile uso del contributo per Programma Ritorno RX41",
+      "response_id": "N3-06",
+      "document_3_page": 3,
+      "expected_interpretation": "Finalità ancora non determinata; ricevuta senza il nome non prova né esclude uso per il programma"
+    },
+    {
+      "claim_id": "A2-07",
+      "document_2_page": 4,
+      "initial_claim": "Attacco di Piazza Lume RX41 datato 11 febbraio 2026",
+      "response_id": "N3-07",
+      "document_3_page": 4,
+      "expected_interpretation": "Errore ritirato dal suo autore; data corretta nella fonte 10 febbraio 2026, coerente con D1 p3"
+    },
+    {
+      "claim_id": "A2-08",
+      "document_2_page": 4,
+      "initial_claim": "Casa Nebbia RX41 provvisoriamente a Valle Torva RX41",
+      "response_id": "N3-08",
+      "document_3_page": 4,
+      "expected_interpretation": "Localizzazione ritirata dalla fonte; posizione sconosciuta, nessuna coordinata deducibile"
+    },
+    {
+      "claim_id": "A2-09",
+      "document_2_page": 4,
+      "initial_claim": "Responsabilità del Nucleo Bruma RX41 presentata come accertata",
+      "response_id": "N3-09",
+      "document_3_page": 4,
+      "expected_interpretation": "Qualificazione accertata ritirata; ipotesi non confermata, non prova di estraneità"
+    },
+    {
+      "claim_id": "A2-10",
+      "document_2_page": 5,
+      "initial_claim": "Biblioteca Quercia RX41 collabora con Centro Civico Aurora RX41 per Programma Ritorno RX41",
+      "response_id": "N3-11",
+      "document_3_page": 5,
+      "expected_interpretation": "Rapporto dichiarato ancora attivo al 5 marzo; stessa fonte, nessuna affiliazione estremista"
+    },
+    {
+      "claim_id": "A2-11",
+      "document_2_page": 5,
+      "initial_claim": "Supporto grafico di Laboratorio Prisma RX41 al Centro Civico Aurora RX41 attivo al 1 marzo",
+      "response_id": "N3-10",
+      "document_3_page": 5,
+      "expected_interpretation": "Rapporto valido 21 febbraio - 2 marzo inclusi, cessato dal 3 marzo; variazione temporale, non contraddizione"
+    }
+  ]
+}

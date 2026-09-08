@@ -1,12 +1,7 @@
-$background: #071012;
-$surface: #0d1a1d;
-$ink: #d8ede7;
-$muted: #91aaa4;
-$accent: #42e8b4;
-$accent-dark: #215246;
-$surface-raised: #102326;
-$warning: #f4c95d;
-$error: #ff6b6b;
+$ink: $foreground;
+$muted: $text-muted;
+$accent-dark: $primary-muted;
+$surface-raised: $panel;
 
 Screen {
     background: $background;
@@ -14,7 +9,6 @@ Screen {
 }
 
 Input,
-Select,
 TextArea {
     background: $surface-raised;
     color: $ink;
@@ -22,8 +16,23 @@ TextArea {
 }
 
 Input:focus,
-Select:focus,
 TextArea:focus {
+    border: tall $accent;
+}
+
+Select {
+    background: $surface-raised;
+    color: $ink;
+    border: none;
+}
+
+Select > SelectCurrent {
+    background: $surface-raised;
+    color: $ink;
+    border: tall $muted;
+}
+
+Select:focus > SelectCurrent {
     border: tall $accent;
 }
 
@@ -62,6 +71,8 @@ Button {
     border: none;
     background: $surface;
     color: $muted;
+    content-align: center top;
+    padding-top: 1;
 }
 
 .navigation-item.active {
@@ -119,10 +130,11 @@ Button {
     max-width: 24;
     height: 5;
     margin: 0 1;
-    padding: 1 0;
-    border: round $muted;
+    padding: 0;
+    border: solid $accent-dark;
     background: $surface;
     text-align: center;
+    content-align: center middle;
     text-style: bold;
 }
 
@@ -132,8 +144,8 @@ Button {
 }
 
 .service-status.connected {
-    color: $accent;
-    border: round $accent;
+    color: $success;
+    border: round $success;
 }
 
 .service-status.authentication-required {
@@ -185,7 +197,7 @@ Button {
 .config-form {
     padding: 1 2 2 2;
     background: $surface;
-    border: round $accent-dark;
+    border: solid $accent-dark;
 }
 
 .config-form Label {
@@ -305,7 +317,7 @@ Button {
 }
 
 #ai-test-result.connected {
-    color: $accent;
+    color: $success;
 }
 
 #ai-test-result.unavailable {
@@ -314,7 +326,7 @@ Button {
 
 #configuration-actions {
     width: 100%;
-    height: 5;
+    height: 6;
     padding: 1 0;
     background: $surface;
     border-top: solid $accent-dark;
@@ -348,7 +360,7 @@ ConfigurationScreen.compact-configuration .config-form {
 }
 
 ConfigurationScreen.compact-configuration #configuration-actions {
-    height: 3;
+    height: 4;
     padding: 0;
 }
 
@@ -410,7 +422,7 @@ HelpScreen {
     margin: 1 2 0 2;
     padding: 1 2 2 2;
     background: $surface;
-    border: round $accent-dark;
+    border: solid $accent-dark;
 }
 
 #investigation-form Label {
@@ -426,13 +438,13 @@ HelpScreen {
 
 #investigation-form .short-editor {
     height: 4;
-    border: round $muted;
+    border: solid $accent-dark;
 }
 
 #investigation-form .questions-editor {
     height: 12;
     min-height: 12;
-    border: round $muted;
+    border: solid $accent-dark;
 }
 
 InvestigationCreateScreen.compact-investigation-form #investigation-form .questions-editor {
@@ -548,7 +560,7 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
 
 #overview-grid {
     width: 100%;
-    height: 12;
+    height: auto;
 }
 
 #overview-case-actions {
@@ -579,19 +591,33 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
     height: auto;
     min-height: 5;
     padding: 1 2 2 2;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $surface-raised;
 }
 
 #overview-brief-card {
     width: 2fr;
-    height: 12;
+    height: auto;
     margin-right: 1;
 }
 
 #overview-profile-card {
     width: 1fr;
-    height: 12;
+    height: auto;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #overview-grid {
+    layout: vertical;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #overview-brief-card,
+InvestigationWorkspaceScreen.narrow-workspace #overview-profile-card {
+    width: 100%;
+    margin-right: 0;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #overview-profile-card {
+    margin-top: 1;
 }
 
 #overview-questions-card {
@@ -626,7 +652,7 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
     height: 9;
     padding: 1 2;
     background: $surface-raised;
-    border: round $accent-dark;
+    border: solid $accent-dark;
 }
 
 .section-heading {
@@ -670,11 +696,52 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
 }
 
 #evidence-operation-status.success {
-    color: $accent;
+    color: $success;
 }
 
 #evidence-operation-status.error {
     color: $error;
+}
+
+#rag-index-progress-strip {
+    width: 100%;
+    height: 3;
+    padding: 0 2;
+    align-vertical: middle;
+    background: $surface-raised;
+    border-bottom: solid $accent-dark;
+}
+
+#rag-index-spinner {
+    width: 5;
+    height: 3;
+    color: $accent;
+}
+
+#rag-index-progress {
+    width: 1fr;
+    height: 3;
+    color: $accent;
+}
+
+#rag-index-progress-detail {
+    width: 24;
+    height: 3;
+    padding-left: 1;
+    content-align: right middle;
+    color: $muted;
+}
+
+#rag-index-progress-strip.success #rag-index-progress-detail {
+    color: $success;
+}
+
+#rag-index-progress-strip.error #rag-index-progress-detail {
+    color: $error;
+}
+
+#rag-index-progress-strip.cancelled #rag-index-progress-detail {
+    color: $warning;
 }
 
 #evidence-count {
@@ -685,29 +752,80 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
     color: $muted;
 }
 
-#evidence-header {
-    width: 100%;
-    height: 2;
-    padding: 0 1;
-    background: $surface;
-    content-align: left middle;
-    color: $muted;
-    text-style: bold;
-}
-
-#evidence-list {
+#evidence-table {
     width: 100%;
     height: 1fr;
     margin: 0 1 1 1;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $background;
 }
 
-#evidence-empty {
+#evidence-table > .datatable--header {
+    background: $surface-raised;
+    color: $accent;
+    text-style: bold;
+}
+
+#evidence-table > .datatable--cursor {
+    background: $accent-dark;
+    color: $ink;
+}
+
+#evidence-table-hint {
     width: 100%;
-    height: 3;
-    content-align: center middle;
+    height: 2;
+    padding-left: 2;
     color: $muted;
+}
+
+/* Persistent background-job workspace */
+#jobs-workspace {
+    height: 1fr;
+    padding: 1 2;
+    background: $surface;
+}
+
+#jobs-heading {
+    height: 5;
+    min-height: 5;
+    padding: 0 1;
+    align-vertical: middle;
+    background: $surface-raised;
+    border-left: thick $accent;
+}
+
+#jobs-heading .section-heading {
+    width: 1fr;
+}
+
+#jobs-heading Button {
+    min-width: 18;
+    height: 3;
+    margin-left: 1;
+}
+
+#jobs-status {
+    height: 2;
+    padding: 0 1;
+}
+
+#jobs-table {
+    height: 1fr;
+    min-height: 12;
+    border: solid $accent-dark;
+    background: $background;
+}
+
+#jobs-table > .datatable--header {
+    background: $surface;
+    color: $text-muted;
+    text-style: bold;
+}
+
+#jobs-hint {
+    height: 2;
+    padding: 0 1;
+    color: $text-muted;
 }
 
 .evidence-row {
@@ -747,7 +865,7 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
 }
 
 .evidence-state.ready {
-    color: $accent;
+    color: $success;
 }
 
 .evidence-state.failed {
@@ -756,16 +874,103 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
 
 .evidence-action,
 .delete-evidence {
-    width: 9;
+    width: 16;
+    min-width: 16;
+}
+
+.evidence-action {
+    content-align: center middle;
 }
 
 EvidenceFilePicker,
 EvidenceStorageDirectoryPicker,
 MarkdownExportPicker,
 NewDirectoryDialog,
-ConfirmEvidenceDelete {
+ConfirmEvidenceDelete,
+EvidenceInspectorScreen {
     align: center middle;
     background: rgba(0, 0, 0, 0.72);
+}
+
+#evidence-inspector-dialog {
+    width: 92%;
+    max-width: 132;
+    height: 90%;
+    min-height: 22;
+    padding: 1 2;
+    border: round $accent;
+    background: $surface;
+}
+
+#evidence-inspector-title {
+    width: 100%;
+    height: 2;
+    color: $accent;
+    text-style: bold;
+}
+
+#evidence-inspector-name {
+    width: 100%;
+    height: 2;
+    color: $ink;
+    text-style: bold;
+}
+
+#evidence-inspector-metadata {
+    width: 100%;
+    height: 9;
+    margin-bottom: 1;
+}
+
+.evidence-inspector-card {
+    width: 18;
+    height: 9;
+    margin-right: 1;
+    padding: 1;
+    border: solid $accent-dark;
+    color: $muted;
+}
+
+.evidence-inspector-wide {
+    width: 1fr;
+}
+
+#evidence-text-preview {
+    width: 100%;
+    height: 1fr;
+}
+
+#evidence-inspector-actions {
+    width: 100%;
+    height: 4;
+}
+
+#evidence-page-toolbar {
+    width: 100%;
+    height: 4;
+    min-height: 4;
+    align-vertical: middle;
+}
+
+#evidence-page-toolbar .panel-title {
+    width: 1fr;
+}
+
+#evidence-page-select {
+    width: 20;
+    min-width: 20;
+    height: 3;
+}
+
+#evidence-inspector-hint {
+    width: 1fr;
+    height: 3;
+    color: $muted;
+    content-align: left middle;
+}
+
+#close-evidence-inspector {
+    width: 14;
 }
 
 .path-picker-dialog {
@@ -838,7 +1043,7 @@ ConfirmEvidenceDelete {
 #markdown-export-directory-tree {
     width: 100%;
     height: 1fr;
-    border: round $muted;
+    border: solid $accent-dark;
     background: $background;
 }
 
@@ -1057,7 +1262,7 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
 
 #catalog-title {
     width: 100%;
-    height: 4;
+    height: 3;
     padding: 0 2;
     content-align: left middle;
     background: $surface;
@@ -1069,10 +1274,10 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
 #catalog-toolbar {
     width: 100%;
     height: 5;
-    margin: 1 2 0 2;
+    margin: 0 2;
     padding: 0 1;
     background: $surface-raised;
-    border: round $accent-dark;
+    border: solid $accent-dark;
 }
 
 #catalog-search {
@@ -1080,7 +1285,9 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
 }
 
 #catalog-sort {
-    width: 16;
+    width: 20;
+    min-width: 20;
+    height: 3;
 }
 
 #refresh-investigations {
@@ -1094,7 +1301,7 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
 
 #catalog-load-status {
     width: 100%;
-    height: 2;
+    height: 1;
     margin: 0 2;
     padding-left: 1;
     content-align: left middle;
@@ -1124,8 +1331,46 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     width: 100%;
     height: 1fr;
     margin: 0 2 1 2;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $background;
+}
+
+#catalog-table {
+    width: 100%;
+    height: 1fr;
+    min-height: 4;
+    margin: 0 2;
+    border: solid $accent-dark;
+    background: $background;
+}
+
+#catalog-table > .datatable--header {
+    background: $surface;
+    color: $muted;
+    text-style: bold;
+}
+
+#catalog-selection-actions {
+    width: 100%;
+    height: 4;
+    min-height: 4;
+    margin: 0 2 1 2;
+    padding: 0 1;
+    align-vertical: middle;
+    background: $surface-raised;
+    border-top: solid $accent-dark;
+}
+
+#catalog-table-hint {
+    width: 1fr;
+    color: $muted;
+}
+
+#open-selected-investigation,
+#delete-selected-investigation {
+    min-width: 18;
+    height: 3;
+    margin-left: 1;
 }
 
 #catalog-empty {
@@ -1188,7 +1433,7 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     height: 10;
     padding: 1 2;
     background: $surface-raised;
-    border: round $accent-dark;
+    border: solid $accent-dark;
 }
 
 #graph-mode-control {
@@ -1204,8 +1449,25 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     text-style: bold;
 }
 
-#graph-preparation-mode {
+#graph-preparation-options {
     width: 100%;
+    height: 3;
+}
+
+#graph-compress-evidence,
+#graph-chunk-evidence {
+    width: 21;
+    min-width: 21;
+    height: 3;
+    padding: 0;
+}
+
+#graph-preparation-hint {
+    width: 100%;
+    height: 2;
+    content-align: left middle;
+    color: $accent;
+    text-style: bold;
 }
 
 #graph-actions {
@@ -1237,7 +1499,7 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
 }
 
 #graph-analysis-status.success {
-    color: $accent;
+    color: $success;
 }
 
 #graph-analysis-status.error {
@@ -1260,7 +1522,7 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
 #graph-visual-panel {
     width: 1fr;
     height: 100%;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $surface-raised;
 }
 
@@ -1295,6 +1557,27 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     content-align: left middle;
 }
 
+.graph-mode-button {
+    width: 16;
+    min-width: 12;
+    height: 3;
+}
+
+#show-graph-table {
+    width: 10;
+}
+
+#open-interactive-graph {
+    width: 20;
+    min-width: 18;
+    height: 3;
+}
+
+#graph-terminal-controls {
+    width: 21;
+    height: 3;
+}
+
 #graph-zoom-label {
     width: 6;
     height: 3;
@@ -1317,6 +1600,25 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     scrollbar-size: 1 1;
 }
 
+#graph-items-table {
+    width: 100%;
+    height: 1fr;
+    min-height: 4;
+    scrollbar-size: 1 1;
+    background: $surface-raised;
+}
+
+#graph-items-table > .datatable--header {
+    background: $surface;
+    color: $muted;
+    text-style: bold;
+}
+
+#graph-items-table > .datatable--cursor {
+    background: $accent-dark;
+    color: $ink;
+}
+
 #graph-canvas:focus {
     outline: tall $accent;
 }
@@ -1326,7 +1628,7 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     height: 100%;
     margin-left: 1;
     padding: 1 2;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $surface-raised;
 }
 
@@ -1354,6 +1656,85 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     height: auto;
     margin-top: 1;
     color: $muted;
+}
+
+#graph-provenance-hint.warning {
+    color: $warning;
+    text-style: bold;
+}
+
+#graph-provenance-hint.success {
+    color: $success;
+}
+
+#graph-review-actions {
+    width: 100%;
+    height: 9;
+    min-height: 9;
+    padding: 0;
+}
+
+#graph-review-actions Button {
+    width: 100%;
+    min-width: 11;
+    height: 3;
+    margin-right: 1;
+}
+
+#runs-toolbar {
+    height: 6;
+    min-height: 6;
+    padding: 1 2;
+    align-vertical: middle;
+    background: $surface-raised;
+    border: solid $accent-dark;
+}
+
+#runs-toolbar .section-heading {
+    width: 1fr;
+}
+
+#runs-toolbar Button {
+    min-width: 18;
+    height: 3;
+    margin-left: 1;
+}
+
+#graph-runs-status {
+    height: 2;
+    padding: 0 2;
+}
+
+#graph-runs-table {
+    height: 1fr;
+    min-height: 12;
+    margin: 0 1 1 1;
+    border: solid $accent-dark;
+    background: $background;
+}
+
+#graph-runs-table > .datatable--header {
+    background: $surface;
+    color: $muted;
+    text-style: bold;
+}
+
+.derived-view-title {
+    height: 4;
+    min-height: 4;
+    padding: 1 2;
+    background: $surface-raised;
+    border-left: thick $accent;
+}
+
+.derived-graph-view {
+    height: 1fr;
+    min-height: 12;
+    margin: 0 1 1 1;
+    padding: 1 2;
+    border: solid $accent-dark;
+    background: $background;
+    overflow-y: auto;
 }
 
 InvestigationWorkspaceScreen.compact-workspace #workspace-summary {
@@ -1390,11 +1771,11 @@ InvestigationWorkspaceScreen.compact-workspace .field-label {
 
 InvestigationWorkspaceScreen.compact-workspace #graph-mode-control,
 InvestigationWorkspaceScreen.compact-workspace #graph-actions {
-    height: 5;
+    height: 3;
 }
 
 InvestigationWorkspaceScreen.compact-workspace #graph-toolbar {
-    height: 6;
+    height: 4;
     padding: 0 1;
     border: none;
     border-bottom: solid $accent-dark;
@@ -1402,6 +1783,7 @@ InvestigationWorkspaceScreen.compact-workspace #graph-toolbar {
 
 InvestigationWorkspaceScreen.compact-workspace #graph-panel-header {
     height: 4;
+    border: none;
 }
 
 InvestigationWorkspaceScreen.compact-workspace #graph-panel-title-row {
@@ -1430,8 +1812,7 @@ InvestigationWorkspaceScreen.compact-workspace #graph-provenance-hint {
 }
 
 InvestigationWorkspaceScreen.narrow-workspace #graph-details-panel {
-    width: 24;
-    padding: 1;
+    display: none;
 }
 
 InvestigationWorkspaceScreen.narrow-workspace #graph-navigation-hint {
@@ -1439,7 +1820,62 @@ InvestigationWorkspaceScreen.narrow-workspace #graph-navigation-hint {
 }
 
 InvestigationWorkspaceScreen.compact-workspace #graph-actions {
-    padding: 1 0;
+    padding: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-preparation-hint {
+    display: none;
+}
+
+#graph-entity-search {
+    height: 3;
+    margin: 0;
+    width: 1fr;
+}
+
+#graph-search-bar { height: 3; }
+#graph-filters { width: 12; min-width: 12; }
+GraphFiltersScreen { align: center middle; background: rgba(0, 0, 0, 0.65); }
+#graph-filter-dialog {
+    width: 60;
+    height: auto;
+    max-height: 24;
+    background: $surface;
+    border: solid $accent;
+    padding: 1 2;
+}
+#graph-filter-dialog Label { height: 1; }
+#graph-filter-actions { height: 3; }
+
+GraphInspectorScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+#graph-inspector-dialog {
+    width: 90%;
+    max-width: 110;
+    height: 90%;
+    background: $surface;
+    border: solid $accent;
+    padding: 1 2;
+}
+
+#graph-inspector-content {
+    height: 1fr;
+}
+
+#graph-inspector-sources, #graph-inspector-actions {
+    height: 3;
+}
+
+#graph-source-select {
+    width: 1fr;
+}
+
+#graph-inspector-actions Button {
+    width: 1fr;
+    min-width: 10;
 }
 
 #chat-toolbar {
@@ -1447,7 +1883,7 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
     height: 6;
     padding: 1 2;
     background: $surface-raised;
-    border: round $accent-dark;
+    border: solid $accent-dark;
 }
 
 #chat-heading {
@@ -1455,12 +1891,17 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
 }
 
 #chat-token-usage {
-    width: 20;
-    height: 4;
-    padding-right: 1;
-    content-align: right middle;
-    color: $muted;
-    text-align: right;
+    width: 50;
+    min-width: 38;
+    height: 3;
+    margin: 1 1 0 0;
+    padding: 0 1;
+    content-align: center middle;
+    background: $background;
+    color: $accent;
+    border: tall $accent-dark;
+    text-align: center;
+    text-style: bold;
 }
 
 #index-chat-kb,
@@ -1485,7 +1926,7 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
 
 #chat-operation-status.success,
 #chat-operation-status.ready {
-    color: $accent;
+    color: $success;
 }
 
 #chat-operation-status.error {
@@ -1502,7 +1943,7 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
     width: 1fr;
     height: 100%;
     padding: 1 2;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $background;
 }
 
@@ -1521,7 +1962,7 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
     height: 100%;
     margin-left: 1;
     padding: 1 2 2 2;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $surface-raised;
 }
 
@@ -1546,31 +1987,36 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
     border-top: solid $accent-dark;
 }
 
-#chat-input {
+#chat-input-row {
     width: 100%;
     height: 4;
-    border: round $muted;
+    min-height: 4;
+    align-vertical: middle;
+}
+
+#chat-input {
+    width: 1fr;
+    height: 4;
+    border: solid $accent-dark;
 }
 
 #chat-input:focus {
     border: round $accent;
 }
 
-#chat-composer-actions {
-    width: 100%;
-    height: 3;
-}
-
 #chat-composer-hint {
-    width: 1fr;
-    height: 3;
+    width: 100%;
+    height: 2;
     content-align: left middle;
     color: $muted;
 }
 
 #send-chat,
 #cancel-chat {
-    width: 12;
+    width: 14;
+    min-width: 14;
+    height: 4;
+    margin-left: 1;
 }
 
 .chat-message {
@@ -1614,7 +2060,7 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
 }
 
 .chat-message.user .chat-message-header {
-    color: #66b3ff;
+    color: $accent;
 }
 
 .chat-markdown {
@@ -1644,13 +2090,22 @@ InvestigationWorkspaceScreen.compact-workspace #graph-actions {
 .mermaid-rendered MarkdownFence {
     margin: 0;
     padding: 0 1;
-    border: round $accent-dark;
+    border: solid $accent-dark;
     background: $background;
     color: $accent;
 }
 
 InvestigationWorkspaceScreen.narrow-workspace #chat-context-panel {
     display: none;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #chat-heading {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #chat-token-usage {
+    width: 1fr;
+    min-width: 28;
 }
 
 InvestigationWorkspaceScreen.compact-workspace #chat-toolbar {
@@ -1662,6 +2117,10 @@ InvestigationWorkspaceScreen.compact-workspace #chat-toolbar {
 
 InvestigationWorkspaceScreen.compact-workspace #chat-token-usage {
     height: 4;
+    margin-top: 0;
+    border: none;
+    border-left: solid $accent-dark;
+    border-right: solid $accent-dark;
 }
 
 InvestigationWorkspaceScreen.compact-workspace #chat-heading {
@@ -1684,16 +2143,22 @@ InvestigationWorkspaceScreen.compact-workspace #chat-body {
 }
 
 InvestigationWorkspaceScreen.compact-workspace #chat-composer {
-    height: 5;
+    height: 4;
     padding: 0 1;
 }
 
+InvestigationWorkspaceScreen.compact-workspace #chat-input-row,
 InvestigationWorkspaceScreen.compact-workspace #chat-input {
     height: 3;
+    min-height: 3;
 }
 
-InvestigationWorkspaceScreen.compact-workspace #chat-composer-actions {
-    height: 2;
+InvestigationWorkspaceScreen.compact-workspace #workspace-tabs {
+    margin-top: 0;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #navigation-context {
+    display: none;
 }
 
 InvestigationWorkspaceScreen.compact-workspace #chat-composer-hint {
@@ -1804,3 +2269,140 @@ ConfirmInvestigationDelete {
 #cancel-delete-investigation {
     width: 18;
 }
+
+/* Case workspace: a persistent navigation rail and focused working surfaces. */
+#workspace-body { height: 1fr; width: 100%; }
+#workspace-rail { display: none; }
+InvestigationWorkspaceScreen.rail-workspace #workspace-rail {
+    display: block;
+    width: 27;
+    height: 100%;
+    padding: 2 1;
+    background: $surface;
+    border-right: solid $accent-dark;
+}
+.rail-heading { height: 2; padding-left: 2; color: $muted; text-style: bold; }
+.rail-link {
+    width: 100%;
+    height: 3;
+    border: none;
+    border-left: thick transparent;
+    background: transparent;
+    color: $muted;
+    content-align: left middle;
+    padding: 0 1;
+    text-style: none;
+}
+.rail-link:hover { background: $panel; color: $foreground; }
+.rail-link.selected {
+    background: $panel;
+    border-left: thick $accent;
+    color: $accent;
+    text-style: bold;
+}
+#rail-note { height: 1fr; align-vertical: bottom; padding: 1 2; }
+.rail-signature { height: 2; color: $accent; text-style: bold; }
+.rail-description { height: auto; color: $muted; }
+InvestigationWorkspaceScreen.rail-workspace #workspace-tabs {
+    width: 1fr;
+    margin: 1 3;
+}
+InvestigationWorkspaceScreen.rail-workspace #workspace-tabs > ContentTabs { display: none; }
+InvestigationWorkspaceScreen.rail-workspace #workspace-summary {
+    height: 8;
+    padding: 1 3;
+}
+InvestigationWorkspaceScreen.rail-workspace #workspace-heading { height: 6; }
+InvestigationWorkspaceScreen.rail-workspace #workspace-title {
+    height: 3;
+    content-align: left middle;
+    color: $foreground;
+    text-style: bold;
+}
+InvestigationWorkspaceScreen.rail-workspace #workspace-metrics { width: 57; height: 5; }
+InvestigationWorkspaceScreen.rail-workspace .workspace-metric {
+    width: 18;
+    height: 5;
+    margin-right: 1;
+    padding: 0 2;
+    border: round $accent-dark;
+    background: $panel;
+}
+.derived-workspace { height: 1fr; }
+.derived-heading { height: 7; padding: 1 2; border-bottom: solid $accent-dark; }
+.derived-heading-copy { width: 1fr; height: 5; }
+.view-title { height: 2; text-style: bold; color: $foreground; }
+.view-subtitle { height: 1; color: $muted; }
+.derived-count {
+    width: 17;
+    height: 4;
+    border-left: solid $accent;
+    padding-left: 2;
+    content-align: left middle;
+    color: $accent;
+    text-style: bold;
+}
+.derived-footnote { height: 3; border-top: solid $accent-dark; padding: 1 2 0 2; }
+.derived-footnote Static { width: 1fr; color: $muted; height: 1; }
+.derived-footnote Static:first-child { width: 27; color: $accent; }
+.derived-results { height: 1fr; padding: 2 3; background: $surface; margin: 1 0; }
+.workspace-empty-state { height: 1fr; min-height: 0; align: center middle; overflow-y: auto; }
+.empty-state-card { width: 76; max-width: 95%; height: auto; align-horizontal: center; padding: 1 2; }
+.empty-state-art { width: 100%; height: auto; color: $accent; text-align: center; margin-bottom: 2; }
+.empty-state-title { height: auto; width: 100%; text-align: center; text-style: bold; color: $foreground; }
+.empty-state-description { height: auto; width: 60; max-width: 100%; text-align: center; color: $muted; margin-top: 1; }
+.empty-state-steps { height: 3; width: 100%; margin: 2 0 1 0; }
+.empty-state-steps Static {
+    width: 1fr;
+    height: 3;
+    content-align: center middle;
+    border-bottom: solid $accent-dark;
+    color: $muted;
+}
+.empty-state-action-row { width: 100%; height: auto; }
+.empty-state-action { width: auto; min-width: 28; margin-top: 1; }
+#graph-empty { display: none; }
+InvestigationWorkspaceScreen.without-graph #graph-empty { display: block; }
+InvestigationWorkspaceScreen.without-graph #graph-items-table { display: none; }
+InvestigationWorkspaceScreen.compact-workspace .empty-state-art,
+InvestigationWorkspaceScreen.compact-workspace .empty-state-steps { display: none; }
+InvestigationWorkspaceScreen.compact-workspace .empty-state-card { padding: 0 1; }
+InvestigationWorkspaceScreen.compact-workspace .empty-state-action { margin-top: 0; }
+InvestigationWorkspaceScreen.compact-workspace #graph-empty .empty-state-description { display: none; }
+InvestigationWorkspaceScreen.compact-workspace .derived-heading { height: 5; padding: 0 1; }
+InvestigationWorkspaceScreen.compact-workspace .derived-footnote { height: 2; padding: 0 1; }
+InvestigationWorkspaceScreen.narrow-workspace .derived-footnote Static:first-child { display: none; }
+
+/* Page catalog: a visible document overview and a source-linked page inspector. */
+CatalogSummary { height: auto; max-height: 8; padding: 1 2; background: $panel; border-left: thick $accent; }
+.catalog-summary-title { height: 1; color: $accent; text-style: bold; }
+.catalog-summary-status { height: auto; color: $foreground; text-style: bold; }
+.catalog-summary-content { height: auto; color: $muted; }
+#evidence-catalog-summary { margin-top: 1; }
+InvestigationWorkspaceScreen.compact-workspace #evidence-catalog-summary {
+    max-height: 4; padding: 0 1; margin-top: 0;
+}
+#evidence-inspector-dialog { width: 96%; max-width: 160; height: 96%; padding: 0 1; }
+#evidence-inspector-title, #evidence-inspector-name { height: 1; }
+#evidence-inspector-tabs { height: 1fr; }
+#document-catalog-summary { max-height: 6; padding: 0 1; }
+#document-catalog-summary .catalog-summary-title { display: none; }
+#catalog-page-search { height: 3; }
+#catalog-page-body { height: 1fr; min-height: 3; }
+#catalog-pages-table { width: 45%; height: 100%; }
+#catalog-page-details-scroll { width: 1fr; height: 100%; padding: 0 2; border-left: solid $accent-dark; }
+#catalog-page-details { height: auto; }
+#catalog-read-source { height: 3; width: 22; }
+#evidence-inspector-hint { height: 1; width: 100%; color: $muted; }
+#evidence-inspector-actions { height: 3; }
+#evidence-inspector-actions Button { min-width: 10; width: auto; margin-right: 1; }
+#evidence-page-toolbar { height: 3; min-height: 3; }
+InvestigationWorkspaceScreen.compact-workspace #evidence-section-header { height: 4; }
+InvestigationWorkspaceScreen.compact-workspace #evidence-section-header Button { margin: 0; }
+InvestigationWorkspaceScreen.compact-workspace #evidence-operation-status { height: 1; }
+InvestigationWorkspaceScreen.compact-workspace #evidence-table {
+    min-height: 4; border: none; margin: 0 1;
+}
+InvestigationWorkspaceScreen.compact-workspace #evidence-table-hint { height: 1; }
+EvidenceInspectorScreen.compact-catalog #document-catalog-summary { max-height: 2; }
+EvidenceInspectorScreen.compact-catalog #document-catalog-summary .catalog-summary-content { display: none; }
