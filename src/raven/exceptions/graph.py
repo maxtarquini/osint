@@ -19,3 +19,11 @@ class GraphPersistenceError(GraphAnalysisError):
 
 class GraphAnalysisCancelledError(GraphAnalysisError):
     """The analyst cancelled the active graph run."""
+
+
+class GraphAgentRequestError(GraphAgentError):
+    """A bounded model request failed; repeating it immediately is not useful."""
+
+    def __init__(self, message: str, code: str = "request_failed") -> None:
+        super().__init__(message)
+        self.code = code

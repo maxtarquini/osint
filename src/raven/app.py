@@ -45,6 +45,8 @@ from raven.services import (
     InvestigationChatService,
     InvestigationService,
 )
+from raven.services.capabilities import CapabilityRegistry
+from raven.tui.screens.capabilities import CapabilitiesScreen
 from raven.tui.screens.configuration import ConfigurationScreen
 from raven.tui.screens.home import HomeScreen
 from raven.tui.screens.investigation import InvestigationCreateScreen
@@ -160,6 +162,10 @@ class RavenApp(App[None]):
         self.chat_exports = ChatExportService()
         self.settings = self.configuration_store.load()
         self.infrastructure = infrastructure or InfrastructureService(self.settings)
+        self.capabilities = CapabilityRegistry(
+            self.settings.with_environment().skills.path,
+            getattr(self.infrastructure, "ai_node", None),
+        )
         self.graph_analysis = graph_analysis
         self.investigation_chat = investigation_chat
         self._knowledge_bases: KnowledgeBaseStore | None = None
@@ -225,6 +231,10 @@ class RavenApp(App[None]):
                 ),
             ):
                 self.pop_screen()
+            return
+        if target == "capabilities":
+            if not isinstance(self.screen, CapabilitiesScreen):
+                self.push_screen(CapabilitiesScreen(self.capabilities))
             return
         if target == "configuration":
             if not isinstance(self.screen, ConfigurationScreen):
@@ -297,6 +307,9 @@ class RavenApp(App[None]):
                 raise
             raise ConfigurationError(str(error)) from error
         self.settings = settings
+        self.capabilities = CapabilityRegistry(
+            settings.with_environment().skills.path, getattr(self.infrastructure, "ai_node", None)
+        )
         self.infrastructure.configure(settings)
         self.navigate("home")
         message = "Application configuration saved."

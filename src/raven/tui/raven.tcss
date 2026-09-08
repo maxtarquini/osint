@@ -1804,3 +1804,24 @@ ConfirmInvestigationDelete {
 #cancel-delete-investigation {
     width: 18;
 }
+
+
+/* Capability management keeps list, source consultation and actions visible at 80x24. */
+#capabilities-title { height: 1; color: $accent; text-style: bold; margin: 0 1; }
+#capabilities-root { height: 1; color: $text-muted; margin: 0 1; }
+#capabilities-status { height: 1; color: $accent; margin: 0 1; }
+.capability-actions { height: 3; }
+.capability-actions Button { width: 1fr; min-width: 12; height: 3; margin: 0; }
+#capability-search { height: 3; margin: 0; }
+#skills-table, #tools-table { height: 5; min-height: 3; }
+#skill-details, #tool-details { height: 1fr; min-height: 3; }
+CapabilitiesScreen TabPane { padding: 0 1; }
+SkillEditor { align: center middle; background: rgba(0, 0, 0, 0.65); }
+#skill-editor-dialog { width: 95%; height: 95%; border: round $accent; background: $surface; padding: 0 1; }
+#skill-editor-dialog .panel-title { height: 1; margin: 0; padding: 0; }
+#skill-source-editor { height: 1fr; }
+#skill-editor-status { height: 2; color: $warning; }
+
+CapabilitiesScreen > TabbedContent { height: 1fr; min-height: 0; }
+CapabilitiesScreen ContentSwitcher { height: 1fr; min-height: 0; }
+CapabilitiesScreen TabPane { height: 1fr; min-height: 0; }

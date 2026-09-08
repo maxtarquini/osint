@@ -48,6 +48,7 @@ class ConfigurationStore:
         public_settings = RavenSettings(
             storage=settings.storage.validated(),
             dictionaries=settings.dictionaries.validated(),
+            skills=settings.skills.validated(),
             mongodb=settings.mongodb.validated(allow_credentials=False),
             qdrant=settings.qdrant.validated(),
             neo4j=settings.neo4j.validated(),

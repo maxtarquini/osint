@@ -107,6 +107,22 @@ class DictionarySettings:
 
 
 @dataclass(frozen=True, slots=True)
+class SkillSettings:
+    """Writable folder containing Markdown .SKILL packages and their catalog."""
+
+    root: str = field(
+        default_factory=lambda: str(user_data_path("raven", appauthor=False) / "skills")
+    )
+
+    @property
+    def path(self) -> Path:
+        return Path(self.root).expanduser().resolve()
+
+    def validated(self) -> SkillSettings:
+        return SkillSettings(root=EvidenceStorageSettings(self.root).validated().root)
+
+
+@dataclass(frozen=True, slots=True)
 class MongoSettings:
     """MongoDB endpoint and Raven database name."""
 
@@ -282,6 +298,7 @@ class RavenSettings:
 
     storage: EvidenceStorageSettings = field(default_factory=EvidenceStorageSettings)
     dictionaries: DictionarySettings = field(default_factory=DictionarySettings)
+    skills: SkillSettings = field(default_factory=SkillSettings)
     mongodb: MongoSettings = field(default_factory=MongoSettings)
     qdrant: QdrantSettings = field(default_factory=QdrantSettings)
     neo4j: Neo4jSettings = field(default_factory=Neo4jSettings)
@@ -291,6 +308,7 @@ class RavenSettings:
         return RavenSettings(
             storage=self.storage.validated(),
             dictionaries=self.dictionaries.validated(),
+            skills=self.skills.validated(),
             mongodb=self.mongodb.validated(allow_credentials=False),
             qdrant=self.qdrant.validated(),
             neo4j=self.neo4j.validated(),
@@ -301,6 +319,7 @@ class RavenSettings:
         env = os.environ if environ is None else environ
         mongodb_uri = env.get("RAVEN_MONGODB_URI", self.mongodb.uri)
         return RavenSettings(
+            skills=SkillSettings(root=env.get("RAVEN_SKILL_ROOT", self.skills.root)).validated(),
             storage=EvidenceStorageSettings(
                 root=env.get("RAVEN_EVIDENCE_ROOT", self.storage.root)
             ).validated(),
@@ -369,6 +388,7 @@ class RavenSettings:
         return {
             "storage": {"root": self.storage.root},
             "dictionaries": {"root": self.dictionaries.root},
+            "skills": {"root": self.skills.root},
             "mongodb": {"uri": self.mongodb.uri, "database": self.mongodb.database},
             "qdrant": {
                 "url": self.qdrant.url,
@@ -409,6 +429,9 @@ class RavenSettings:
             ai_provider = AiProvider(ai.get("provider", defaults.ai.provider.value))
             ai_base_url = str(ai.get("base_url", defaults.ai.base_url))
             settings = cls(
+                skills=SkillSettings(
+                    root=str(data.get("skills", {}).get("root", defaults.skills.root))
+                ),
                 storage=EvidenceStorageSettings(
                     root=str(storage.get("root", defaults.storage.root)),
                 ),

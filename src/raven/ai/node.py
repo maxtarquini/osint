@@ -4,25 +4,29 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Iterator
+from dataclasses import replace
 from threading import Lock
+from time import monotonic
 from typing import Any, Protocol
 
 import httpx
 
-from raven.config import AiNodeSettings, AiProvider
+from raven.config import AiNodeSettings, AiProvider, AiThinkingLevel
 from raven.exceptions import (
     GraphAgentError,
     InfrastructureAuthenticationError,
     InfrastructureConfigurationError,
     InfrastructureError,
 )
+from raven.exceptions.chat import InvestigationChatCancelledError
+from raven.exceptions.graph import GraphAgentRequestError
 from raven.models import TokenUsage
 
 
 class HttpClient(Protocol):
     def get(self, url: str) -> Any: ...
 
-    def post(self, url: str, *, json: dict[str, Any]) -> Any: ...
+    def post(self, url: str, *, json: dict[str, Any], **kwargs: Any) -> Any: ...
 
     def stream(self, method: str, url: str, *, json: dict[str, Any]) -> Any: ...
 
@@ -66,24 +70,93 @@ class SharedAiNode:
     def available(self) -> bool:
         return self._chat_client is not None and self._settings is not None
 
-    def chat(self, system_message: str, user_message: str, *, json_mode: bool = False) -> str:
+    def chat(
+        self,
+        system_message: str,
+        user_message: str,
+        *,
+        json_mode: bool = False,
+        json_schema: dict[str, Any] | None = None,
+        max_output_tokens: int | None = None,
+        timeout_seconds: float | None = None,
+        thinking: AiThinkingLevel | None = None,
+        cancelled: Callable[[], bool] | None = None,
+    ) -> str:
         """Run one shared-node chat call through Ollama or an OpenAI-compatible API."""
         if self._chat_client is None or self._settings is None:
             raise GraphAgentError("The shared AI node is not connected")
         settings = self._settings
+        if thinking is not None:
+            settings = replace(settings, thinking=thinking)
+        timeout = min(settings.timeout_seconds, timeout_seconds or settings.timeout_seconds)
+        deadline = monotonic() + timeout
+
+        def check_request() -> None:
+            if cancelled and cancelled():
+                raise InvestigationChatCancelledError("AI request cancelled")
+            if monotonic() >= deadline:
+                raise GraphAgentRequestError(
+                    f"The AI request exceeded {timeout:g} seconds", "timeout"
+                )
+
         messages = [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message},
         ]
         url = self._chat_url(settings.provider, settings.base_url)
         payload = self._chat_payload(settings, messages, stream=False, json_mode=json_mode)
+        if json_schema is not None:
+            if settings.provider is AiProvider.OLLAMA:
+                payload["format"] = json_schema
+            else:
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "raven_response",
+                        "strict": True,
+                        "schema": json_schema,
+                    },
+                }
+        if max_output_tokens is not None:
+            if settings.provider is AiProvider.OLLAMA:
+                payload["options"]["num_predict"] = max_output_tokens
+            else:
+                key = (
+                    "max_completion_tokens"
+                    if settings.provider is AiProvider.OPENAI
+                    else "max_tokens"
+                )
+                payload[key] = max_output_tokens
         try:
-            with self._request_lock:
-                response = self._chat_client.post(url, json=payload)
+            check_request()
+            while not self._request_lock.acquire(timeout=0.1):
+                check_request()
+            try:
+                check_request()
+                options = {}
+                if timeout_seconds is not None:
+                    remaining = max(0.01, deadline - monotonic())
+                    options["timeout"] = httpx.Timeout(remaining, connect=min(5.0, remaining))
+                response = self._chat_client.post(url, json=payload, **options)
+            finally:
+                self._request_lock.release()
+            check_request()
             if response.status_code in {401, 403}:
-                raise GraphAgentError("The AI provider rejected its configured credentials")
+                raise GraphAgentRequestError(
+                    "The AI provider rejected its configured credentials", "authentication"
+                )
             response.raise_for_status()
             body = response.json()
+            reason = (
+                body.get("done_reason")
+                if settings.provider is AiProvider.OLLAMA
+                else body["choices"][0].get("finish_reason")
+            )
+            if reason == "length":
+                raise GraphAgentRequestError(
+                    "The model reached the output limit before completing its response",
+                    "output_limit",
+                )
             content = (
                 body["message"]["content"]
                 if settings.provider is AiProvider.OLLAMA
@@ -91,11 +164,30 @@ class SharedAiNode:
             )
         except GraphAgentError:
             raise
-        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
-            raise GraphAgentError("The AI node returned an invalid graph-agent response") from error
+        except httpx.TimeoutException as error:
+            raise GraphAgentRequestError(
+                f"The AI request timed out after {timeout:g} seconds", "timeout"
+            ) from error
+        except httpx.HTTPStatusError as error:
+            raise GraphAgentRequestError(
+                f"The AI provider returned HTTP {error.response.status_code}", "provider_http"
+            ) from error
+        except (
+            httpx.HTTPError,
+            AttributeError,
+            KeyError,
+            IndexError,
+            TypeError,
+            ValueError,
+        ) as error:
+            raise GraphAgentRequestError(
+                "The AI node returned an invalid graph-agent response", "invalid_response"
+            ) from error
         cleaned = str(content).strip()
         if not cleaned:
-            raise GraphAgentError("The AI node returned an empty graph-agent response")
+            raise GraphAgentRequestError(
+                "The AI node returned an empty graph-agent response", "empty_response"
+            )
         return cleaned
 
     def embed(self, texts: list[str]) -> tuple[tuple[float, ...], ...]:

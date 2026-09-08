@@ -24,6 +24,7 @@ from raven.config import (
     Neo4jSettings,
     QdrantSettings,
     RavenSettings,
+    SkillSettings,
 )
 from raven.exceptions import ConfigurationError
 from raven.models import ConnectionState, ServiceStatus
@@ -105,6 +106,27 @@ class ConfigurationScreen(Screen[None]):
                 yield Static(
                     "RAVEN_DICTIONARY_ROOT overrides this value when the variable is set.",
                     id="dictionary-environment-hint",
+                )
+            with (
+                TabPane("Skills & Tools", id="capabilities-tab"),
+                VerticalScroll(classes="config-form"),
+            ):
+                yield Label("Skill folder · Markdown files with .SKILL extension")
+                yield Input(value=self.settings.skills.root, id="skill-root")
+                yield Button("Browse folder / Sfoglia", id="browse-skill-root")
+                yield Static(
+                    "Save configuration to apply this folder. RAVEN_SKILL_ROOT overrides it. "
+                    "Existing files are not moved. The catalog is stored beside the skills.",
+                    classes="config-field-hint",
+                )
+                yield Button(
+                    "Manage skills & tools / Gestisci", id="manage-capabilities", variant="primary"
+                )
+                yield Static(
+                    "Consult and edit skills, inspect tool contracts and build the AI catalog. "
+                    "This registry prepares future orchestration; "
+                    "existing investigations use their current pipeline.",
+                    classes="config-field-hint",
                 )
             with TabPane("MongoDB", id="mongodb-tab"), VerticalScroll(classes="config-form"):
                 yield Label("URI")
@@ -280,8 +302,20 @@ class ConfigurationScreen(Screen[None]):
             self._browse_evidence_storage()
         elif event.button.id == "browse-dictionary-root":
             self._browse_dictionary_root()
+        elif event.button.id == "manage-capabilities":
+            self._raven_app.navigate("capabilities")
+        elif event.button.id == "browse-skill-root":
+            value = Path(self.query_one("#skill-root", Input).value).expanduser()
+            self.app.push_screen(
+                EvidenceStorageDirectoryPicker(value if value.is_dir() else Path.home()),
+                self._skill_directory_selected,
+            )
         elif event.button.id == "cancel-configuration":
             self._raven_app.navigate("home")
+
+    def _skill_directory_selected(self, path: Path | None) -> None:
+        if path is not None:
+            self.query_one("#skill-root", Input).value = str(path)
 
     def _browse_evidence_storage(self) -> None:
         value = self.query_one("#evidence-storage-root", Input).value.strip()
@@ -378,6 +412,7 @@ class ConfigurationScreen(Screen[None]):
                         or self.settings.neo4j.password
                     ),
                 ),
+                skills=SkillSettings(root=self.query_one("#skill-root", Input).value),
                 ai=self._draft_ai_settings(),
             ).validated()
             self._raven_app.save_configuration(settings)

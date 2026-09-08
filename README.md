@@ -237,3 +237,116 @@ services, and persistence adapters remain outside UI callbacks.
 
 Before adding components, review the quality gates in [`dev-guides`](dev-guides/), especially
 [`TUI_DEVELOPMENT_GUIDELINES.md`](dev-guides/TUI_DEVELOPMENT_GUIDELINES.md).
+
+
+## Registro di skill e tool
+
+In **Configurazione → Skills & Tools** puoi scegliere la cartella dei file `.SKILL`.
+Il valore viene applicato salvando la configurazione; `RAVEN_SKILL_ROOT`, quando presente,
+ha la precedenza. La cartella predefinita è `skills` nella directory dati di Raven.
+Cambiare cartella non sposta i file già presenti. **Gestisci** apre il registro che usa
+la configurazione salvata: le modifiche ancora nel modulo non vengono applicate al registro.
+
+La schermata **Capacità** separa le skill dai tool. Una skill è una definizione di lavoro
+investigativo, scritta in Markdown con un contratto iniziale; un tool è un'operazione
+implementata nel programma. **Aggiungi esempi** installa sei definizioni: catalogazione
+pagine, estrazione di entità e relazioni, riconciliazione delle identità, analisi delle
+contraddizioni, ricostruzione cronologica e risposte con citazioni. L'installazione conserva
+i file già presenti. Ogni esempio include metodo, limiti e un caso di test con risultato
+atteso. I casi descritti nei file sono specifiche per la futura esecuzione della skill,
+non risultati di un workflow già eseguito.
+
+**Nuova .SKILL** apre un modello modificabile. **Modifica** permette di aggiornare il file
+selezionato; `Ctrl+S` convalida e salva. `Invio` sulla tabella porta il fuoco alla consultazione,
+dove sono disponibili il testo completo e l'eventuale scheda AI. Il filtro cerca anche nel
+contenuto delle skill e nel catalogo. **Abilita/Disabilita** controlla la disponibilità nel
+registro, senza avviare analisi.
+
+Il file UTF-8 deve iniziare con un blocco JSON, seguito dalle istruzioni Markdown.
+L'estensione è `.SKILL`, maiuscola. Questo è un esempio minimo valido:
+
+````markdown
+```json
+{
+  "id": "verifica-citazioni",
+  "name": "Verifica delle citazioni",
+  "version": "1.0.0",
+  "description": "Verificare che una citazione compaia nella pagina indicata.",
+  "inputs": ["Documento, pagina e citazione proposta"],
+  "outputs": ["Esito della verifica con provenienza"],
+  "tools": ["read_page", "verify_quote"]
+}
+```
+
+# Metodo
+
+Leggi la pagina e verifica la citazione esatta. Riporta documento, numero di pagina
+ed esito. Non trasformare una parafrasi in una citazione.
+
+## Limiti
+
+La corrispondenza testuale non dimostra la verità dell'affermazione citata.
+
+## Caso di test
+
+Se la pagina riporta «240 euro» e la citazione proposta dice «250 euro»,
+il risultato atteso è una verifica negativa.
+````
+
+> **Identità e versione.** `id` è l'identificatore stabile della skill e deve essere unico
+> nella cartella. `version` usa tre numeri, per esempio `1.0.0`. `inputs` e `outputs`
+> descrivono ciò che serve e ciò che deve essere prodotto; `tools` contiene gli identificatori
+> esatti delle operazioni richieste. Il registro accetta al massimo 500 file, di 32 KiB
+> ciascuno. File non validi, identificatori duplicati e tool indisponibili vengono segnalati.
+> Una modifica esterna intervenuta dopo l'apertura dell'editor impedisce il salvataggio,
+> così una versione più recente non viene sovrascritta per errore.
+
+**Catalogo AI** usa `SkillCatalogAgent` e il modello configurato in AI Node per descrivere
+ogni skill: scopo, condizioni d'uso, esclusioni, metodo e temi. La richiesta ha uno schema
+JSON vincolante, un massimo di 2048 token e un limite di 120 secondi, ulteriormente ridotto
+se il nodo ha un timeout inferiore. Durante il lavoro vengono mostrati skill corrente,
+avanzamento e tempo trascorso; **Annulla** interrompe il lavoro conservando le schede già
+salvate. La risposta di una richiesta già inviata viene scartata dopo l’annullamento;
+la chiamata HTTP in corso termina alla risposta o al timeout. Errori di connessione,
+autenticazione e timeout fermano il lotto lasciando le altre skill da catalogare.
+Un nuovo avvio riprende le schede mancanti, fallite o da aggiornare.
+
+> **Descrizione e autorizzazione.** La scheda AI è un aiuto alla selezione, non una concessione
+> di permessi. Il programma conserva il contratto dichiarato nel file e non consente al modello
+> di aggiungere tool. Il contenuto della skill viene analizzato come dato dal catalogatore:
+> non viene eseguito. Il catalogo registra versione, impronta SHA-256, agente, modello e data;
+> cambiamenti al file o al profilo del catalogatore rendono la scheda da aggiornare.
+
+La scheda **Tools** mostra versione, descrizione, perimetro, timeout e schemi di input/output.
+I primi tool sono `read_page`, `search_evidence` e `verify_quote`. L'esecutore lavora su uno
+snapshot di pagine originali che il chiamante autorizzato ha preparato per una sola indagine:
+non legge percorsi arbitrari, non chiama servizi esterni e non modifica il grafo. Verifica
+permessi, stato abilitato, argomenti e appartenenza di tutte le pagine all'indagine prima di
+produrre risultati. La ricerca è letterale, senza distinzione tra maiuscole e minuscole,
+con al massimo 20 risultati; la verifica della citazione è invece esatta. Ogni risultato
+porta gli identificatori di indagine, documento e pagina. I tool accettano al massimo 2000
+pagine da 100.000 caratteri ciascuna e applicano un limite cooperativo di cinque secondi.
+Nuove implementazioni di tool richiedono codice e test: un file `.SKILL` non può installare
+codice eseguibile.
+
+Il catalogo e le preferenze sono salvati atomicamente in `.raven-capabilities.json` nella
+cartella delle skill. **Esporta** genera `raven-discovery-catalog.json`, con le sole skill
+valide, abilitate, aggiornate e dotate di tool disponibili, oltre ai contratti dei tool
+abilitati. L'esportazione è una fotografia: dopo una modifica va rigenerata. La futura
+orchestrazione dovrà ricaricare i file e ricontrollarne impronte e permessi prima di usarli.
+
+```mermaid
+flowchart LR
+    F[File .SKILL] --> V[Validazione del contratto]
+    V --> A[Agente di catalogazione]
+    A --> C[Descrizioni AI con provenienza]
+    T[Registro dei tool] --> E[Catalogo di selezione JSON]
+    V --> E
+    C --> E
+    E -.-> O[Orchestrazione futura]
+```
+
+Questa fase introduce gestione, catalogazione e strumenti di lettura controllati.
+Le pipeline investigative esistenti continuano a funzionare attraverso i loro servizi:
+abilitare una skill nel registro non cambia automaticamente la catalogazione dei documenti,
+la costruzione del grafo o le risposte della chat.
