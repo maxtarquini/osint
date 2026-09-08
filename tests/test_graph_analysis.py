@@ -187,7 +187,7 @@ def test_persistent_analysis_uses_deterministic_fallback_and_syncs_neo4j(
     assert result.run.dictionary_domain == "GENERAL_OSINT"
     assert result.run.dictionary_versions == ("CORE@2.0.0", "GENERAL_OSINT@1.0.0")
     assert len(result.run.dictionary_hash) == 64
-    assert repository.states[document.document_id] is EvidenceIngestionState.READY
+    assert repository.states == {}
     assert {entity.entity_type for entity in result.graph.entities} >= {
         "EMAIL_ADDRESS",
         "URL",
@@ -292,6 +292,7 @@ def test_graph_service_rejects_entities_outside_the_configured_dictionary(
     assert repository.graph is None
     assert repository.runs[-1].dictionary_versions == ("CORE@1.0.0", "GENERAL_OSINT@1.0.0")
     assert repository.runs[-1].page_outcomes[0].state == "failed"
+    assert repository.states == {}
 
 
 def test_graph_service_uses_the_domain_selected_for_the_investigation(tmp_path: Path) -> None:

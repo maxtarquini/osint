@@ -1,0 +1,16 @@
+{
+  "verified_at": "2026-09-08T14:06:06.470587+00:00",
+  "checks": [
+    "generation_does_not_activate",
+    "new_variant_preserves_active",
+    "bson_v2_events_and_manifest_roundtrip",
+    "foreign_variant_open_rejected",
+    "explicit_activation_persists",
+    "real_cypher_retrieves_exact_variant_denials_and_literals",
+    "unary_cessation_is_persisted_and_retrievable",
+    "identical_ids_are_isolated_by_variant",
+    "profile_change_preserves_immutable_variants"
+  ],
+  "disposable_data_removed": true,
+  "models_called": false
+}

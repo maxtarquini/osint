@@ -137,6 +137,16 @@ class KnowledgeBaseStore:
             raise InvestigationCancelledError("Evidence analysis cancelled")
         return self._normalize_text(text)
 
+    def verify_document_hash(self, document: EvidenceDocument, cancelled=None) -> bool:
+        """Verify immutable input identity before recording a generation manifest."""
+        digest = hashlib.sha256()
+        with self._document_path(document).open("rb") as stream:
+            while chunk := stream.read(1024 * 1024):
+                if cancelled and cancelled():
+                    raise InvestigationCancelledError("Evidence verification cancelled")
+                digest.update(chunk)
+        return digest.hexdigest() == document.sha256
+
     def extract_pages(
         self,
         document: EvidenceDocument,

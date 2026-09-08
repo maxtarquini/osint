@@ -83,22 +83,50 @@ Original filenames, media types, formats, sizes, SHA-256 hashes, page metadata, 
 `pending` ingestion states are registered in MongoDB's `evidence_documents` collection. Deleting
 evidence removes the Raven-managed copy and metadata but never modifies the original source file.
 
+The graph details sidebar starts at 30% of the available width. Drag the `↔` divider
+between the graph and details to adjust their sizes. You can also focus the divider with
+`Tab`, use `Left` / `Right` to resize, and press `Home` or double-click to restore the default.
+Both panes retain a usable minimum width. The chosen proportion is retained while switching
+tabs and resizing the terminal within the current workspace.
+
+The Evidence list verifies the RAG index in Qdrant when opening the workspace. `Indexed`
+means its signature matches the current document, language, and index format; `Da aggiornare`
+means an index exists but needs refreshing with `Reindicizza`. `Non verificato` means Qdrant
+could not be checked. This check runs no models and does not alter stored documents or vectors.
+Graph extraction failures remain in graph runs and page coverage; they never change RAG status.
+
 ## Evidence-to-Graph analysis
 
-The opened investigation workspace includes a `Graph` tab. `Analyze Evidence` runs a persistent,
-Evidence-grounded pipeline derived from Hudiny's Link Intelligence flow:
+In **Graph**, choose **Nuova variante** or **Varianti / confronta**. Select the investigative
+method and an optional name before generation. The method becomes the default for the case;
+its purpose, version and model are shown in the dialog. Each completed generation creates a
+persistent variant. Use **Apri A** to inspect one, **Confronta** for A/B, and **Imposta attiva**
+to explicitly select the graph used by chat. Opening or generating a variant does not activate it.
 
-1. read original pages, validate saved catalog hints against the page and dictionary, and reuse
-   successful page extractions whose content and analysis profile are unchanged;
-2. analyze every remaining page, prioritizing catalog uses such as relationships and chronology;
-   retain deterministic observables and quote the original even when analysis text is prepared;
-3. extract dictionary-bounded entities and attributed claims with explicit polarity, modality,
-   qualifications, source quotations and dates;
-4. resolve corroborated identities, compare matching propositions across documents, and build
-   proposed edges from affirmative claims, keeping denials separately accessible;
-5. persist page coverage, raw extraction caches, claims and comparisons in MongoDB; synchronize
-   the graph and claims to Neo4j in one Neo4j transaction;
-6. render the graph and expose **Affermazioni / copertura** for inspection.
+| Method | Investigative behavior |
+| --- | --- |
+| Affermazioni documentali | Original pages, document context, attributed propositions and semantic support review |
+| Verifica tra fonti | Shared document extraction plus targeted comparison of source scope, disagreement, copies and corrections |
+| Eventi e temporalità | Document extraction plus a dedicated pass for events, typed values, corrections, withdrawals and cessations |
+
+The methods extract from originals regardless of the legacy preparation control. Catalogs can
+prioritize pages but cannot exclude them or supply quotations. Program-assigned mention IDs
+and contiguous citation units constrain model references. Validation preserves valid siblings;
+claim repairs are bounded to one attempt per extraction batch. Source pages, model stages,
+elapsed time, cancellation and diagnostics remain visible during the run.
+
+Literal quotation matching and semantic support are separate. The supported graph only projects
+grounded affirmative relations whose semantics passed review. **Affermazioni / copertura** keeps
+all source assertions, including denials and absence of documentation; **Da revisionare** preserves
+unsupported candidates, and **Eventi / tempo** exposes source-specific event records. A semantic
+review does not certify the truth or reliability of a source.
+
+MongoDB snapshots preserve the immutable manifest: document hashes, catalog and dictionary
+versions, method and prompt versions, model and public configuration. Neo4j projections are
+partitioned by case and variant, including when they contain identical entity/claim IDs. Legacy
+snapshots remain readable without being rewritten. A/B aligns candidate identities and qualified
+propositions, showing recovered/missing assertions, classification differences, source coverage
+and fragmentation; the counts are not an accuracy score.
 
 The graph view uses `netext`'s native Textual widget with a deterministic left-to-right
 Sugiyama layout. It supports mouse selection, arrow-key panning, `J/K` entity navigation,
@@ -111,14 +139,22 @@ group. `Fit` keeps entity names readable; larger graphs extend into the scrollab
 than collapsing into anonymous dots. Use the arrows to pan, entity search or `J/K` to reach a
 node, and `+/-` for a manual overview. No relationships are added by this visual arrangement.
 
-If the AI node is unavailable, deterministic observables are still produced. Agent failures never
+The selected quality methods report an unavailable AI node as a failed analysis; the legacy
+compatibility pipeline can still extract deterministic observables. Agent failures never
 turn unsupported statements into verified facts: extracted graph items are stored as `PROPOSED`.
+Every new generation reloads the configured dictionary files, including edits made while Raven
+is open. Extraction and semantic review use the same resolved definitions, including custom
+types and their inclusion/exclusion rules. The resulting snapshot remains fixed during that run.
+Changing definitions or versions changes the cache signature; previously saved variants retain
+their original classification data and manifest.
+
 Every run freezes the investigation language, preparation mode, dictionary domain, component
 versions, and dictionary snapshot hash for reproducibility. The eleven copied Hudiny dictionaries
 live in `config/osint-vocabularies`; domains remain separate and are never globally overlaid.
 The `Overview` tab can edit the case brief, questions, reference/normalization language, and
-dictionary domain. Changing language or domain invalidates derived graph data and marks Evidence
-for reprocessing; the source documents remain untouched. `GENERAL_OSINT` is used for legacy cases
+dictionary domain. Changing language or domain retires legacy derived graph data and marks
+Evidence for reprocessing; named variants retain their original manifest and the source documents
+remain untouched. `GENERAL_OSINT` is used for legacy cases
 and as the creation-form default. The same tab provides a confirmed investigation deletion flow
 that removes Raven's Evidence directory, MongoDB records, chat history, Qdrant partition, and
 Neo4j subgraph without modifying the original source files.
@@ -409,7 +445,7 @@ distinte; un problema di sincronizzazione Neo4j viene segnalato nell'esito dell'
 
 ## Cataloghi, affermazioni e aggiornamenti del grafo
 
-In **Graph**, avvia **Analyze Evidence**, quindi apri **Affermazioni / copertura**. La scheda
+In **Graph**, avvia **Nuova variante**, scegli il metodo e quindi apri **Affermazioni / copertura**. La scheda
 **Affermazioni** permette di cercare un soggetto, una citazione o una fonte. Selezionando una
 riga trovi la proposizione, la sua eventuale negazione, l'attribuzione e i confronti con altre
 fonti. **Copertura** mostra ogni pagina, l'esito dell'analisi, lo stato del catalogo e gli errori;
@@ -436,8 +472,12 @@ diventano prove e non vengono usate come testo da citare.
 
 Le affermazioni conservano polarità, modalità dichiarativa o dubitativa, attribuzione e
 qualificatori come importo, valuta o riferimento a un evento. Una smentita viene salvata come
-affermazione negativa e non genera una relazione positiva. I confronti richiedono citazioni
-verificate e proposizioni con lo stesso predicato e gli stessi qualificatori. Raven segnala
+affermazione negativa e non genera una relazione positiva. Il confronto deterministico richiede citazioni
+verificate, predicati canonici e qualificatori compatibili. **Verifica tra fonti** aggiunge una
+revisione semantica delle coppie candidate con formulazioni diverse, conservandone motivazioni
+e disaccordi. Un passaggio dedicato propone anche confronti fra descrizioni con nomi o predicati
+diversi; gli estratti abbreviati servono soltanto a trovare candidati, mentre la verifica usa
+le citazioni complete. Queste proposte non modificano l'identità delle entità. Raven segnala
 accordo, opposizione o differenza temporale; quando gli estremi hanno soltanto nomi coincidenti,
 il confronto resta candidato e richiede verifica dell'identità. Identificatori incompatibili
 impediscono anche questo abbinamento.
@@ -446,11 +486,14 @@ impediscono anche questo abbinamento.
 > Il confronto non decide quale affermazione sia vera, non trasforma la confidenza del modello
 > in attendibilità della fonte e non considera automaticamente più corretta la fonte più recente.
 
-Ripetendo **Analyze Evidence**, Raven riutilizza le estrazioni riuscite della precedente
+Generando una nuova variante, Raven riutilizza le estrazioni riuscite della precedente
 istantanea. La chiave comprende pagina, testo, dizionario, lingua, preparazione, modello,
 profilo di generazione, versioni dei contratti e suggerimenti del catalogo effettivamente usati.
-Pagine cambiate, parziali o fallite vengono rielaborate. L'assenza del modello è indicata come
-estrazione dei soli osservabili e non viene memorizzata come analisi semantica completa.
+Pagine cambiate, parziali o fallite vengono rielaborate. Affermazioni documentali e Verifica tra
+fonti condividono soltanto il passaggio documentale compatibile; la revisione tra fonti viene
+sempre eseguita. Eventi e temporalità esegue anche il proprio passaggio dedicato. I tre metodi
+richiedono un modello disponibile: la sua assenza produce un errore esplicito. Il percorso
+legacy può conservare i soli osservabili, senza presentarli come analisi semantica completa.
 La riconciliazione e i confronti vengono ricostruiti dalle estrazioni delle fonti presenti:
 rimuovere un documento elimina i suoi contributi dalla nuova istantanea. La cache conserva
 le estrazioni prima delle fusioni, evitando di trascinare decisioni basate su fonti rimosse.

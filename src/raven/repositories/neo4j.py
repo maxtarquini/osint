@@ -16,10 +16,12 @@ from raven.exceptions import (
     InfrastructureAuthenticationError,
     InvestigationChatCancelledError,
 )
+from raven.graph.predicates import canonical_predicate
 from raven.models import InvestigationGraph
 from raven.models.retrieval import GraphRetrievalSelection
+from raven.repositories.graph_variants import VARIANT_SCHEMA, read_variant, write_variant
 
-NEO4J_SCHEMA_VERSION = 3
+NEO4J_SCHEMA_VERSION = 4
 
 SCHEMA_QUERIES = (
     "CREATE CONSTRAINT raven_investigation_id IF NOT EXISTS "
@@ -36,7 +38,7 @@ SCHEMA_QUERIES = (
     "FOR (node:Claim) ON (node.investigation_id, node.run_id, node.active)",
     "CREATE INDEX raven_entity_active_run IF NOT EXISTS "
     "FOR (node:Entity) ON (node.investigation_id, node.run_id, node.active)",
-)
+) + VARIANT_SCHEMA
 
 
 class Neo4jRepository:
@@ -122,7 +124,10 @@ class Neo4jRepository:
         ]
         try:
             with self._driver.session(database=self._database) as session:
-                session.execute_write(self._write_snapshot, graph, entities, relationships)
+                if graph.manifest:
+                    session.execute_write(write_variant, graph)
+                else:
+                    session.execute_write(self._write_snapshot, graph, entities, relationships)
         except Exception as error:
             raise GraphPersistenceError("Unable to synchronize the graph with Neo4j") from error
 
@@ -147,7 +152,11 @@ class Neo4jRepository:
         ) != len(graph.claim_links):
             raise GraphPersistenceError("Graph snapshot contains duplicate claim identifiers")
         if any(
-            claim.subject_entity_id not in entity_ids or claim.object_entity_id not in entity_ids
+            claim.subject_entity_id not in entity_ids
+            or (
+                claim.object_entity_id not in entity_ids
+                and not (not claim.object_entity_id and claim.allows_missing_object)
+            )
             for claim in graph.claims
         ):
             raise GraphPersistenceError("Graph snapshot contains an unknown claim endpoint")
@@ -164,7 +173,8 @@ class Neo4jRepository:
                     or claim.polarity != "affirmed"
                     or claim.subject_entity_id != relationship.source_entity_id
                     or claim.object_entity_id != relationship.target_entity_id
-                    or claim.predicate != relationship.relationship_type
+                    or canonical_predicate(claim.predicate)
+                    != canonical_predicate(relationship.relationship_type)
                 ):
                     raise GraphPersistenceError(
                         "Graph relationship must reference a matching affirmative claim"
@@ -393,6 +403,10 @@ class Neo4jRepository:
         limit: int,
         cancelled: Callable[[], bool] | None,
     ) -> GraphRetrievalSelection:
+        variant = read_variant(tx, investigation_id, expected_run_id, terms, source_pages, limit)
+        if variant is not None:
+            Neo4jRepository._check_retrieval_cancelled(cancelled)
+            return variant
         # Managed transactions reject neo4j.Query objects. unit_of_work sets the
         # timeout for the entire read transaction, not individually for every query.
         base = {"investigation_id": investigation_id, "run_id": expected_run_id, "limit": limit + 1}
@@ -523,6 +537,12 @@ class Neo4jRepository:
         if self._driver is None or self._database is None:
             raise GraphPersistenceError("Neo4j is not connected")
         try:
+            self._driver.execute_query(
+                "MATCH (n) WHERE (n:RavenVariant OR n:RavenVariantEntity OR n:RavenVariantClaim) "
+                "AND n.investigation_id=$investigation_id DETACH DELETE n",
+                investigation_id=investigation_id,
+                database_=self._database,
+            )
             self._driver.execute_query(
                 "MATCH (c:Claim {investigation_id: $investigation_id}) DETACH DELETE c",
                 investigation_id=investigation_id,

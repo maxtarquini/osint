@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from collections.abc import Callable
 from dataclasses import replace
@@ -27,6 +28,8 @@ from raven.graph import (
     consolidate_graph,
 )
 from raven.graph.claims import compare_claims, project_claims
+from raven.graph.integrity import IntegrityPageAnalyzer
+from raven.graph.methods import extraction_profile, graph_method
 from raven.graph.pages import PageGraphAnalyzer, plan_pages
 from raven.models import (
     EvidenceDocument,
@@ -42,18 +45,13 @@ from raven.models import (
     InvestigationGraph,
     PageGraphAnalysis,
 )
+from raven.models.graph import GraphManifest
 from raven.repositories.knowledge_base import KnowledgeBaseStore
 
 logger = logging.getLogger(__name__)
 
 
 class GraphRunRepository(Protocol):
-    def set_evidence_ingestion_state(
-        self,
-        document_id: str,
-        state: EvidenceIngestionState,
-    ) -> None: ...
-
     def save_graph_run(self, run: GraphAnalysisRun) -> None: ...
 
     def save_graph_snapshot(self, graph: InvestigationGraph) -> None: ...
@@ -99,11 +97,52 @@ class GraphAnalysisService:
         )
 
     def latest(self, investigation_id: str) -> InvestigationGraph | None:
-        return self._repository.latest_graph_snapshot(investigation_id)
+        loader = getattr(self._repository, "active_graph_snapshot", None)
+        return (
+            loader(investigation_id)
+            if callable(loader)
+            else self._repository.latest_graph_snapshot(investigation_id)
+        )
+
+    def variants(self, investigation_id):
+        return self._repository.list_graph_variants(investigation_id)
+
+    def open_variant(self, investigation_id, run_id):
+        graph = self._repository.graph_snapshot(investigation_id, run_id)
+        if graph is None:
+            raise GraphAnalysisValidationError("Variant does not belong to this investigation")
+        return graph
+
+    def activate_variant(self, investigation_id, run_id):
+        graph = self.open_variant(investigation_id, run_id)
+        # MongoDB is authoritative. A Neo4j failure cannot select a different snapshot;
+        # retrieval falls back to the exact MongoDB variant.
+        self._graph_store.save_graph_snapshot(graph)
+        self._repository.activate_graph_variant(investigation_id, run_id)
+        return graph
+
+    def compare_variants(self, investigation_id, first_id, second_id):
+        from raven.graph.variants import compare_variants
+
+        return compare_variants(
+            self.open_variant(investigation_id, first_id),
+            self.open_variant(investigation_id, second_id),
+        )
+
+    def method_preference(self, investigation_id):
+        return self._repository.graph_preferences(investigation_id).get(
+            "method_id", "document_claims"
+        )
+
+    def set_method_preference(self, investigation_id, method_id):
+        self._repository.set_graph_method(investigation_id, method_id)
 
     def invalidate(self, investigation_id: str) -> None:
         """Remove a graph that no longer matches the investigation analysis profile."""
         try:
+            active = self.latest(investigation_id)
+            if active is not None and active.manifest is not None:
+                return
             self._graph_store.delete_investigation(investigation_id)
         except GraphPersistenceError:
             logger.warning(
@@ -122,6 +161,9 @@ class GraphAnalysisService:
         preparation_mode: EvidencePreparationMode = EvidencePreparationMode.COMPRESS,
         cancelled: CancelledCallback | None = None,
         progress: ProgressCallback | None = None,
+        *,
+        method_id: str | None = None,
+        variant_name: str = "",
     ) -> GraphAnalysisResult:
         if not documents:
             raise GraphAnalysisValidationError("Add at least one Evidence document before analysis")
@@ -133,15 +175,94 @@ class GraphAnalysisService:
             raise GraphAnalysisValidationError(
                 f"Investigation analysis domain is unavailable: {investigation.analysis_domain}"
             ) from error
+        method = graph_method(method_id) if method_id else None
         run = self._new_run(investigation, documents, preparation_mode, vocabulary)
+        if method:
+            try:
+                for document in documents:
+                    if not self._knowledge_bases.verify_document_hash(document, cancelled):
+                        raise GraphAnalysisValidationError(
+                            "Stored Evidence hash differs from its manifest"
+                        )
+            except InvestigationCancelledError as error:
+                raise GraphAnalysisCancelledError("Graph analysis cancelled") from error
+            catalog_versions = []
+            loader = getattr(self._repository, "load_catalog", None)
+            for doc in documents:
+                try:
+                    catalog = (
+                        loader(investigation.investigation_id, doc.document_id)
+                        if callable(loader)
+                        else None
+                    )
+                    catalog_versions.append(
+                        (doc.document_id, catalog.signature if catalog else "missing")
+                    )
+                except Exception:
+                    catalog_versions.append((doc.document_id, "unavailable"))
+            settings = self._ai_node.settings
+            configuration = {
+                key: getattr(settings, key, None)
+                for key in (
+                    "provider",
+                    "model",
+                    "thinking",
+                    "top_k",
+                    "random_seed",
+                    "context_size",
+                    "timeout_seconds",
+                )
+            }
+            configuration.update(
+                language=investigation.analysis_language.value,
+                preparation_requested=preparation_mode.value,
+                extraction_basis="original",
+                predicates="raven-predicates-v1",
+                repair_budget=1,
+                effective_thinking="medium",
+                max_output_tokens=8192,
+                comparisons="raven-comparison-v3",
+                semantic_pair_retrieval="raven-source-candidates-v1",
+                events="raven-event-records-v1",
+                request_timeout=120,
+            )
+            manifest = GraphManifest(
+                method_id=method.method_id,
+                method_version=method.version,
+                prompt_version=method.prompt_version,
+                documents=tuple((d.document_id, d.sha256) for d in documents),
+                catalogs=tuple(catalog_versions),
+                dictionary_hash=vocabulary.sha256,
+                dictionary_versions=vocabulary.vocabulary_versions,
+                model=getattr(settings, "model", "unavailable"),
+                configuration=json.dumps(configuration, sort_keys=True),
+            )
+            run = replace(
+                run,
+                method_id=method.method_id,
+                variant_name=variant_name.strip()[:120]
+                or f"{method.name} · {run.created_at:%Y-%m-%d %H:%M}",
+                manifest=manifest,
+                prompt_version=method.prompt_version,
+            )
         self._repository.save_graph_run(run)
-        previous = self.latest(investigation.investigation_id)
+        previous = self._repository.latest_graph_snapshot(investigation.investigation_id)
         previous_pages = (
             {(page.evidence_id, page.page_number): page for page in previous.pages}
             if previous is not None and previous.investigation_id == investigation.investigation_id
             else {}
         )
-        page_analyzer = PageGraphAnalyzer(self._extractor)
+        page_analyzer = (
+            IntegrityPageAnalyzer(
+                self._extractor,
+                method,
+                lambda message: self._notify(
+                    progress, GraphRunStatus.EXTRACTING, completed, len(documents), message
+                ),
+            )
+            if method
+            else PageGraphAnalyzer(self._extractor)
+        )
         page_results: list[PageGraphAnalysis] = []
         entity_groups: list[tuple] = []
         claim_groups: list[tuple[GraphClaim, ...]] = []
@@ -163,10 +284,6 @@ class GraphAnalysisService:
                 index - 1,
                 len(documents),
                 f"Analyzing {document.original_name}",
-            )
-            self._repository.set_evidence_ingestion_state(
-                document.document_id,
-                EvidenceIngestionState.PROCESSING,
             )
             document_pages = []
             source_loaded = False
@@ -205,6 +322,7 @@ class GraphAnalysisService:
                     self._ai_node,
                     preparation_mode,
                     catalog_error=catalog_error,
+                    method_profile=extraction_profile(run.manifest) if run.manifest else None,
                 )
                 for page_index, plan in enumerate(plans, 1):
                     self._notify(
@@ -225,6 +343,8 @@ class GraphAnalysisService:
                         previous_pages.get((document.document_id, plan.number)),
                         cancelled,
                     )
+                    if previous is not None and page_result.state == "reused":
+                        page_result = replace(page_result, cache_origin=previous.run_id)
                     document_pages.append(page_result)
                 document_pages.sort(key=lambda page: page.page_number)
                 # Resolve from the raw page cache every time; deleted or changed sources cannot
@@ -235,7 +355,7 @@ class GraphAnalysisService:
                     GraphRelationship(
                         claim.claim_id,
                         claim.subject_entity_id,
-                        claim.object_entity_id,
+                        claim.object_entity_id or claim.subject_entity_id,
                         claim.predicate,
                     )
                     for claim in raw_claims
@@ -252,7 +372,7 @@ class GraphAnalysisService:
                     replace(
                         claim,
                         subject_entity_id=proxy.source_entity_id,
-                        object_entity_id=proxy.target_entity_id,
+                        object_entity_id=proxy.target_entity_id if claim.object_entity_id else "",
                     )
                     for claim, proxy in zip(raw_claims, resolved_proxies, strict=True)
                 )
@@ -261,9 +381,6 @@ class GraphAnalysisService:
                 InvestigationCancelledError,
                 InvestigationChatCancelledError,
             ) as error:
-                self._repository.set_evidence_ingestion_state(
-                    document.document_id, EvidenceIngestionState.PENDING
-                )
                 self._cancel(
                     replace(run, page_outcomes=tuple((*page_results, *document_pages))),
                     completed,
@@ -278,10 +395,6 @@ class GraphAnalysisService:
                     investigation.investigation_id,
                     document.document_id,
                     type(error).__name__,
-                )
-                self._repository.set_evidence_ingestion_state(
-                    document.document_id,
-                    EvidenceIngestionState.FAILED,
                 )
                 evidence_states.append((document.document_id, EvidenceIngestionState.FAILED))
                 # An unreadable source has known missing pages, or one logical unit when its
@@ -320,10 +433,6 @@ class GraphAnalysisService:
                 state = (
                     EvidenceIngestionState.FAILED if incomplete else EvidenceIngestionState.READY
                 )
-                self._repository.set_evidence_ingestion_state(
-                    document.document_id,
-                    state,
-                )
                 evidence_states.append((document.document_id, state))
             run = replace(
                 run,
@@ -359,12 +468,37 @@ class GraphAnalysisService:
         self._repository.save_graph_run(run)
         entities, _ = consolidate_graph(entity_groups, ())
         claims = tuple(claim for group in claim_groups for claim in group)
+        comparison_diagnostics = []
         try:
             claim_links = compare_claims(claims, entities, cancelled=cancelled)
+            if method and method.cross_source_review:
+                from raven.agents.source_review import review_comparisons
+
+                self._notify(
+                    progress,
+                    GraphRunStatus.CONSOLIDATING,
+                    completed,
+                    len(documents),
+                    "CrossSourceReviewAgent · reviewing attributed comparisons",
+                )
+                claim_links = review_comparisons(
+                    self._ai_node,
+                    investigation.investigation_id,
+                    claim_links,
+                    claims,
+                    cancelled,
+                    entities,
+                    diagnostics=comparison_diagnostics,
+                    on_stage=lambda stage: self._notify(
+                        progress, GraphRunStatus.CONSOLIDATING, completed, len(documents), stage
+                    ),
+                )
             relationships = project_claims(claims, cancelled=cancelled)
         except GraphAnalysisCancelledError:
             self._cancel(run, completed, failed)
             raise
+        from raven.graph.events import event_records
+
         now = datetime.now(UTC)
         graph = InvestigationGraph(
             investigation_id=investigation.investigation_id,
@@ -375,13 +509,22 @@ class GraphAnalysisService:
             claims=claims,
             claim_links=claim_links,
             pages=tuple(page_results),
+            variant_name=run.variant_name,
+            manifest=run.manifest,
+            events=event_records(claims, entities) if method else (),
         )
         if cancelled is not None and cancelled():
             self._cancel(run, completed, failed)
             raise GraphAnalysisCancelledError("Graph analysis cancelled")
         self._repository.save_graph_snapshot(graph)
 
-        warnings = []
+        warnings = list(comparison_diagnostics)
+        if method:
+            review_count = sum(
+                item.semantic_support != "supported" for item in (*entities, *claims)
+            )
+            if review_count:
+                warnings.append(f"{review_count} candidate(s) require semantic review")
         unsupported = sum(
             not item.support or not all(span.verified_original for span in item.support)
             for item in (*entities, *claims)

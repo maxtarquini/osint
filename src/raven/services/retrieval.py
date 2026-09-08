@@ -316,6 +316,12 @@ class HybridInvestigationRetriever:
 
     @staticmethod
     def _current_sources(graph, documents):
+        if graph.manifest:
+            hashes = dict(graph.manifest.documents)
+            documents = {
+                key: doc for key, doc in documents.items() if hashes.get(key) == doc.sha256
+            }
+
         def spans(support):
             return tuple(span for span in support if span.evidence_id in documents)
 
@@ -337,7 +343,10 @@ class HybridInvestigationRetriever:
                 claim.status is not GraphItemStatus.REJECTED
                 and spans(claim.support)
                 and claim.subject_entity_id in entity_ids
-                and claim.object_entity_id in entity_ids
+                and (
+                    claim.object_entity_id in entity_ids
+                    or (not claim.object_entity_id and claim.allows_missing_object)
+                )
             )
         )
         claim_ids = {claim.claim_id for claim in claims}

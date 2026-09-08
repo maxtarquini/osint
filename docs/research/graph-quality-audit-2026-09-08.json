@@ -1,0 +1,250 @@
+{
+  "audit_date": "2026-09-08",
+  "investigation_id": "e8891841-187b-4231-bcad-7fa351e413fa",
+  "scope": "Analisi in sola lettura dello snapshot, delle 18 pagine originali, dei cataloghi e del codice dev. Nessuna nuova generazione LLM e nessuna modifica ai database.",
+  "metrics": {
+    "run": "a8a71612-3a7f-4ca4-aa0f-e422e36170a2",
+    "generated": "2026-09-08 11:35:48.106000",
+    "mode": "compress",
+    "entities": 111,
+    "edges": 28,
+    "claims": 36,
+    "comparisons": 0,
+    "pages": {
+      "partial": 9,
+      "analyzed": 8,
+      "failed": 1
+    },
+    "errors": {
+      "unverified_source_citation": 5,
+      "invalid_claim_endpoint": 6,
+      "invalid_entity_classification": 1
+    },
+    "polarity": {
+      "affirmed": 28,
+      "denied": 8
+    },
+    "modality": {
+      "asserted": 25,
+      "alleged": 10,
+      "uncertain": 1
+    },
+    "grounded_claims": 34,
+    "unverified_entities": 7,
+    "ungrounded_edges": 2,
+    "confidence": {
+      "1.0": 30,
+      "0.8": 1,
+      "0.6": 1,
+      "0.0": 4
+    },
+    "distinct_type_names": 52,
+    "repeated_type_names": {
+      "ORGANIZATION: unione levante rx41": 3,
+      "ORGANIZATION: fronte vela rx41": 5,
+      "ORGANIZATION: ramo est rx41": 4,
+      "GROUP: cerchio grigio rx41": 2,
+      "DOCUMENT: documento 1": 3,
+      "DOCUMENT: documento 2": 2,
+      "DOCUMENT: segnalazione sa-02": 2,
+      "SERVICE: canale prisma rx41": 2,
+      "DOCUMENT: bollettino ceneri rx41": 2,
+      "DOCUMENT: carta del varco rx41": 2,
+      "ORGANIZATION: laboratorio prisma rx41": 3,
+      "CAMPAIGN: campagna eco rx41": 2,
+      "CAMPAIGN: campagna soglia rx41": 2,
+      "ORGANIZATION: associazione sportiva ponte rx41": 4,
+      "FACILITY: centro civico aurora rx41": 2,
+      "ORGANIZATION: rete passaggio rx41": 3,
+      "PROGRAM: programma ritorno rx41": 6,
+      "LOCATION: piazza lume rx41": 2,
+      "FACILITY: casa nebbia rx41": 3,
+      "LOCATION: valle torva rx41": 2,
+      "GROUP: nucleo bruma rx41": 6,
+      "ORGANIZATION: unità tutela rx41": 3,
+      "EVENT: attacco di piazza lume rx41": 3,
+      "EVENT: crisi degli ostaggi di sala niva rx41": 3,
+      "ORGANIZATION: centro civico aurora rx41": 5,
+      "ORGANIZATION: biblioteca quercia rx41": 3,
+      "GROUP: cellula verde rx41": 3,
+      "ORGANIZATION: lista civica ramo est rx41": 2,
+      "GROUP: rete passaggio rx41": 2,
+      "GROUP: fronte vela rx41": 2,
+      "LOCATION: porto lume rx41": 2
+    },
+    "isolated_nodes": 71,
+    "recomputed_comparisons": 0,
+    "per_document": {
+      "raven-test-02-connessioni-rx41.pdf": {
+        "mentions": 41,
+        "claims": 10,
+        "partial_or_failed_pages": [
+          1,
+          2,
+          3,
+          5
+        ]
+      },
+      "raven-test-terrorismo-estremismo.pdf": {
+        "mentions": 43,
+        "claims": 20,
+        "partial_or_failed_pages": [
+          3,
+          4,
+          7
+        ]
+      },
+      "raven-test-03-negazioni-rx41.pdf": {
+        "mentions": 28,
+        "claims": 6,
+        "partial_or_failed_pages": [
+          2,
+          4,
+          5
+        ]
+      }
+    }
+  },
+  "interpretation_limits": [
+    "Pagine analizzate non significa affermazioni corrette.",
+    "Nomi e tipi ripetuti indicano menzioni frammentate, non autorizzano fusioni automatiche.",
+    "La verifica letterale non misura il supporto semantico o la verità.",
+    "Le prove controllate usano due coppie scelte dopo aver osservato gli errori; non sono un benchmark indipendente."
+  ],
+  "controlled_in_memory_probes": [
+    {
+      "case": "dipendenza Cerchio Grigio",
+      "baseline": 0,
+      "controlled_normalization": [
+        [
+          "candidate_contradicts",
+          true
+        ]
+      ]
+    },
+    {
+      "case": "trasferimento 240 euro",
+      "baseline": 0,
+      "controlled_normalization": [
+        [
+          "candidate_contradicts",
+          true
+        ]
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "GQ01",
+      "priority": "P0",
+      "issue": "Classificazione semanticamente contraddetta dalla fonte",
+      "example": "Cellula Verde RX41 classificata GROUP/TER_TERRORIST_CELL nonostante il testo dica circolo di lettura, non una cellula terroristica.",
+      "document": "raven-test-03-negazioni-rx41.pdf",
+      "page": 5,
+      "catalog_classification": "GROUP",
+      "code": "src/raven/agents/graph.py:269"
+    },
+    {
+      "id": "GQ02",
+      "priority": "P0",
+      "issue": "Assenza di documentazione trasformata in negazione del rapporto",
+      "document": "raven-test-terrorismo-estremismo.pdf",
+      "pages": [
+        1,
+        6
+      ],
+      "example": "Non è documentato alcun trasferimento diventa TRANSFERRED denied e ECONOMIC_RELATIONSHIP denied.",
+      "code": "src/raven/agents/claims.py:151"
+    },
+    {
+      "id": "GQ03",
+      "priority": "P0",
+      "issue": "Una scheda malformata interrompe la validazione dell’intero insieme",
+      "affected_pages": {
+        "invalid_claim_endpoint": 6,
+        "invalid_entity_classification": 1
+      },
+      "code": "src/raven/agents/claims.py:108"
+    },
+    {
+      "id": "GQ04",
+      "priority": "P0",
+      "issue": "Confronti bloccati da predicati liberi, tipi incoerenti e qualificatori non normalizzati",
+      "examples": [
+        "DEPENDENT_ON / DEPENDENCE",
+        "TRANSFER / TRANSFERRED",
+        "Centro Civico Aurora FACILITY / ORGANIZATION",
+        "Cerchio Grigio GROUP / ORGANIZATION"
+      ],
+      "code": "src/raven/graph/claims.py:18"
+    },
+    {
+      "id": "GQ05",
+      "priority": "P1",
+      "issue": "Solo la presenza letterale della citazione è verificata; due archi senza citazione verificata restano nella proiezione",
+      "code": "src/raven/graph/claims.py:115"
+    },
+    {
+      "id": "GQ06",
+      "priority": "P1",
+      "issue": "Identità senza identificatori forti restano frammentate; occorrono menzioni e identità canoniche revisionabili distinte",
+      "code": "src/raven/graph/extraction.py:163"
+    },
+    {
+      "id": "GQ07",
+      "priority": "P1",
+      "issue": "Mancano rappresentazioni esplicite per ritiri, rettifiche e qualificazioni di altre affermazioni",
+      "documents": [
+        "raven-test-03-negazioni-rx41.pdf"
+      ],
+      "pages": [
+        2,
+        4,
+        5
+      ],
+      "code": "src/raven/models/graph.py:90"
+    }
+  ],
+  "acceptance_scenarios_proposed": [
+    "Cellula Verde resta un circolo culturale; la classificazione terroristica non entra fra i risultati supportati.",
+    "SA-02 e CG-01 restano accusa e smentita attribuite; emerge il confronto sulla dipendenza da Ramo Est.",
+    "ST-05 ed EC-03 sono confrontati sul trasferimento di 240 EUR, preservando intervallo e soggetti.",
+    "La rettifica Prisma ritira l’ipotesi di identità senza ritirare automaticamente le relazioni editoriali.",
+    "La correzione 11/10 febbraio riguarda la data dello stesso attentato, non due eventi né una variazione storica del rapporto.",
+    "Il ritiro della posizione di Casa Nebbia mantiene la storia e riporta a non determinata la localizzazione sostenuta dalla fonte corretta.",
+    "UT-09 ritira la certezza attribuita, non dichiara l’estraneità di Nucleo Bruma.",
+    "La cessazione del supporto grafico al 3 marzo è coerente con la sua esistenza al 1 marzo.",
+    "NI-01 e RI-02 non sono contate come conferme indipendenti dei documenti che trascrivono."
+  ],
+  "variant_proposals": [
+    {
+      "method_id": "document_claims",
+      "label": "Affermazioni documentali",
+      "status": "proposto, non implementato",
+      "focus": "Estrazione strutturata da originale e contesto documentale; unità citabili, predicati tipizzati, menzioni e identità separate."
+    },
+    {
+      "method_id": "cross_source_review",
+      "label": "Verifica tra fonti",
+      "status": "proposto, non implementato",
+      "focus": "Confronto mirato fra affermazioni e revisore semantico con rettifiche e dipendenza delle fonti."
+    },
+    {
+      "method_id": "event_temporal",
+      "label": "Eventi e temporalità",
+      "status": "proposto, non implementato",
+      "focus": "Eventi e transazioni come oggetti, ruoli, periodi e rettifiche versionati; Graphiti da valutare con adattatore isolato."
+    }
+  ],
+  "variant_management_proposal": {
+    "existing": "MongoDB conserva snapshot per run_id.",
+    "missing": [
+      "Registro dei metodi e relative versioni",
+      "Nome variante e input manifest immutabile",
+      "Scelta della variante attiva",
+      "Confronto semantico anziché confronto di UUID",
+      "Cache e proiezioni isolate per variante",
+      "Provenienza della variante nelle risposte RAG"
+    ]
+  }
+}

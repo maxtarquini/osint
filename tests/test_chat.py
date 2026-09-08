@@ -277,7 +277,7 @@ def test_streamed_answer_injects_retrieved_evidence_and_current_graph() -> None:
     )
 
     assert vectors.search_investigation_id == investigation.investigation_id
-    assert [event.kind for event in events].count(ChatEventKind.TOKEN) == 2
+    assert [event.kind for event in events].count(ChatEventKind.TOKEN) == 3
     assert events[-1].kind is ChatEventKind.COMPLETE
     assert events[-1].sources == ("brief.md · chunk 1",)
     assert events[-1].usage == TokenUsage(240, 60, 300)

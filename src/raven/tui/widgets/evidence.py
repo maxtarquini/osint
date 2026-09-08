@@ -16,6 +16,19 @@ STATE_LABELS = {
     EvidenceIngestionState.PROCESSING: "Indexing…",
     EvidenceIngestionState.READY: "Indexed",
     EvidenceIngestionState.FAILED: "Index failed",
+    EvidenceIngestionState.OUTDATED: "Da aggiornare",
+    EvidenceIngestionState.UNVERIFIED: "Non verificato",
+}
+
+
+STATE_DETAILS = {
+    EvidenceIngestionState.OUTDATED: (
+        "L'indice è presente in Qdrant, ma usa una versione del formato, del documento "
+        "o della lingua diversa da quella attuale. Reindicizza aggiorna solo questo documento."
+    ),
+    EvidenceIngestionState.UNVERIFIED: (
+        "Impossibile verificare Qdrant. Questo stato non indica un fallimento dell'indicizzazione."
+    ),
 }
 
 
@@ -45,10 +58,12 @@ class EvidenceRow(Horizontal):
         yield Static(self.document.original_name, classes="evidence-name", markup=False)
         yield Static(self.document.file_format, classes="evidence-format")
         yield Static(self.document.page_label, classes="evidence-pages")
-        yield Static(
+        status = Static(
             STATE_LABELS[self.document.ingestion_state],
             classes=f"evidence-state {self.document.ingestion_state.value}",
         )
+        status.tooltip = STATE_DETAILS.get(self.document.ingestion_state)
+        yield status
         with Horizontal(classes="evidence-document-actions"):
             yield Button("Apri catalogo", classes="open-evidence-catalog")
             yield Button("Reindicizza", classes="reindex-evidence")
@@ -70,3 +85,4 @@ class EvidenceRow(Horizontal):
         status = self.query_one(".evidence-state", Static)
         status.set_classes(f"evidence-state {state.value}")
         status.update(STATE_LABELS[state])
+        status.tooltip = STATE_DETAILS.get(state)

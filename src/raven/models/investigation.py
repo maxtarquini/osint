@@ -56,12 +56,14 @@ class AnalysisLanguage(StrEnum):
 
 
 class EvidenceIngestionState(StrEnum):
-    """Processing state of a document in the investigation knowledge base."""
+    """RAG ingestion/verification state, independent of graph extraction outcomes."""
 
     PENDING = "pending"
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
+    OUTDATED = "outdated"
+    UNVERIFIED = "unverified"
 
 
 @dataclass(frozen=True, slots=True)

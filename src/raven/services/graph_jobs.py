@@ -68,6 +68,9 @@ class GraphAnalysisQueue:
         investigation: Investigation,
         documents: tuple[EvidenceDocument, ...],
         preparation_mode: EvidencePreparationMode,
+        *,
+        method_id: str | None = None,
+        variant_name: str = "",
     ) -> GraphAnalysisJob:
         """Append one job, returning an existing active job for duplicate submissions."""
         with self._lock:
@@ -86,6 +89,8 @@ class GraphAnalysisQueue:
                 investigation_id=investigation.investigation_id,
                 status=GraphJobStatus.QUEUED,
                 preparation_mode=preparation_mode,
+                method_id=method_id,
+                variant_name=variant_name,
                 submitted_at=now,
                 updated_at=now,
                 progress=GraphAnalysisProgress(
@@ -204,12 +209,21 @@ class GraphAnalysisQueue:
         record: _GraphJobRecord,
     ) -> None:
         try:
+            options = (
+                {
+                    "method_id": record.snapshot.method_id,
+                    "variant_name": record.snapshot.variant_name,
+                }
+                if record.snapshot.method_id
+                else {}
+            )
             result = self._runner.analyze(
                 record.investigation,
                 record.documents,
                 record.snapshot.preparation_mode,
                 record.cancellation.is_set,
                 lambda progress: self._progress(investigation_id, job_id, progress),
+                **options,
             )
         except GraphAnalysisCancelledError:
             self._finish_cancelled(investigation_id, job_id)

@@ -7,6 +7,7 @@ from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from typing import Any
 
+from bson import BSON
 from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.errors import DuplicateKeyError
 
@@ -28,10 +29,20 @@ from raven.models import (
     InvestigationStatus,
     TokenUsage,
 )
-from raven.models.graph import ClaimLink, EvidenceSpan, GraphClaim, PageGraphAnalysis
+from raven.models.graph import (
+    ClaimLink,
+    ClaimReference,
+    EvidenceSpan,
+    GraphClaim,
+    GraphEvent,
+    GraphManifest,
+    LiteralValue,
+    PageGraphAnalysis,
+    SourceAttribution,
+)
 from raven.repositories.catalog import CatalogReader
 
-MONGO_SCHEMA_VERSION = 6
+MONGO_SCHEMA_VERSION = 7
 BASE_COLLECTIONS = (
     "investigations",
     "evidence_documents",
@@ -42,6 +53,7 @@ BASE_COLLECTIONS = (
     "graph_analysis_runs",
     "chat_messages",
     "app_metadata",
+    "graph_preferences",
 )
 
 
@@ -230,18 +242,16 @@ class MongoRepository(CatalogReader):
             ) from error
 
     def clear_graph_data(self, investigation_id: str) -> None:
-        """Remove MongoDB graph artifacts that no longer match the case profile."""
+        """Retire legacy derived data; immutable variants keep their original profile."""
         if self._database is None:
             raise InvestigationPersistenceError("MongoDB is not connected")
         try:
-            for collection_name in (
-                "sources",
-                "entities",
-                "relationships",
-                "graph_checkpoints",
-                "graph_analysis_runs",
-            ):
+            for collection_name in ("sources", "entities", "relationships"):
                 self._database[collection_name].delete_many({"investigation_id": investigation_id})
+            for collection_name in ("graph_checkpoints", "graph_analysis_runs"):
+                self._database[collection_name].delete_many(
+                    {"investigation_id": investigation_id, "manifest": None}
+                )
         except Exception as error:
             raise InvestigationPersistenceError("Unable to invalidate graph data") from error
 
@@ -250,6 +260,7 @@ class MongoRepository(CatalogReader):
         if self._database is None:
             raise InvestigationPersistenceError("MongoDB is not connected")
         try:
+            self._database["graph_preferences"].delete_one({"_id": investigation_id})
             for collection_name in (
                 "evidence_documents",
                 "sources",
@@ -386,6 +397,9 @@ class MongoRepository(CatalogReader):
             "checkpoint_id": graph.run_id,
             "investigation_id": graph.investigation_id,
             "generated_at": graph.generated_at,
+            "variant_name": graph.variant_name,
+            "events": [asdict(event) for event in graph.events],
+            "manifest": asdict(graph.manifest) if graph.manifest else None,
             "entities": [self._graph_entity_document(entity) for entity in graph.entities],
             "relationships": [
                 self._graph_relationship_document(relationship)
@@ -396,14 +410,29 @@ class MongoRepository(CatalogReader):
             "pages": [self._page_graph_document(page) for page in graph.pages],
         }
         try:
-            self._database["graph_checkpoints"].replace_one(
-                {
-                    "investigation_id": graph.investigation_id,
-                    "checkpoint_id": graph.run_id,
-                },
-                document,
-                upsert=True,
-            )
+            collection = self._database["graph_checkpoints"]
+            if graph.manifest is not None:
+                existing = collection.find_one(
+                    {"investigation_id": graph.investigation_id, "checkpoint_id": graph.run_id}
+                )
+                if existing and BSON.encode(document) != BSON.encode(
+                    {key: existing.get(key) for key in document}
+                ):
+                    raise InvestigationPersistenceError("An immutable variant cannot be replaced")
+                collection.update_one(
+                    {"investigation_id": graph.investigation_id, "checkpoint_id": graph.run_id},
+                    {"$setOnInsert": document},
+                    upsert=True,
+                )
+            else:
+                collection.replace_one(
+                    {
+                        "investigation_id": graph.investigation_id,
+                        "checkpoint_id": graph.run_id,
+                    },
+                    document,
+                    upsert=True,
+                )
             self._database["investigations"].update_one(
                 {"investigation_id": graph.investigation_id},
                 {"$set": {"updated_at": datetime.now(UTC)}},
@@ -423,6 +452,9 @@ class MongoRepository(CatalogReader):
             raise InvestigationPersistenceError("Unable to load graph snapshot") from error
         if not document:
             return None
+        return self._snapshot_from_document(document)
+
+    def _snapshot_from_document(self, document):
         return InvestigationGraph(
             investigation_id=str(document["investigation_id"]),
             run_id=str(document["checkpoint_id"]),
@@ -431,6 +463,30 @@ class MongoRepository(CatalogReader):
                 self._graph_relationship_from_document(item) for item in document["relationships"]
             ),
             generated_at=document["generated_at"],
+            variant_name=document.get("variant_name", ""),
+            events=tuple(
+                GraphEvent(
+                    **{
+                        **event,
+                        "roles": tuple(tuple(role) for role in event["roles"]),
+                        "claim_ids": tuple(event["claim_ids"]),
+                        "values": tuple(
+                            (key, LiteralValue(**value)) for key, value in event.get("values", ())
+                        ),
+                        "source": SourceAttribution(
+                            **{
+                                **event.get("source", {}),
+                                "derived_from": tuple(
+                                    event.get("source", {}).get("derived_from", ())
+                                ),
+                            }
+                        ),
+                        "support": tuple(EvidenceSpan(**span) for span in event.get("support", ())),
+                    }
+                )
+                for event in document.get("events", ())
+            ),
+            manifest=self._manifest_from_document(document.get("manifest")),
             claims=tuple(
                 self._graph_claim_from_document(item) for item in document.get("claims") or []
             ),
@@ -438,6 +494,79 @@ class MongoRepository(CatalogReader):
             pages=tuple(
                 self._page_graph_from_document(item) for item in document.get("pages") or []
             ),
+        )
+
+    @staticmethod
+    def _manifest_from_document(document):
+        if not document:
+            return None
+        return GraphManifest(
+            **{
+                **document,
+                "documents": tuple(tuple(v) for v in document.get("documents", ())),
+                "catalogs": tuple(tuple(v) for v in document.get("catalogs", ())),
+                "dictionary_versions": tuple(document.get("dictionary_versions", ())),
+            }
+        )
+
+    def graph_snapshot(self, investigation_id: str, run_id: str):
+        if self._database is None:
+            raise InvestigationPersistenceError("MongoDB is not connected")
+        document = self._database["graph_checkpoints"].find_one(
+            {"investigation_id": investigation_id, "checkpoint_id": run_id}
+        )
+        return self._snapshot_from_document(document) if document else None
+
+    def graph_preferences(self, investigation_id: str):
+        if self._database is None:
+            raise InvestigationPersistenceError("MongoDB is not connected")
+        return self._database["graph_preferences"].find_one({"_id": investigation_id}) or {}
+
+    def set_graph_method(self, investigation_id: str, method_id: str):
+        from raven.graph.methods import graph_method
+
+        graph_method(method_id)
+        if self._database is None:
+            raise InvestigationPersistenceError("MongoDB is not connected")
+        self._database["graph_preferences"].update_one(
+            {"_id": investigation_id}, {"$set": {"method_id": method_id}}, upsert=True
+        )
+
+    def active_graph_snapshot(self, investigation_id: str):
+        preferences = self.graph_preferences(investigation_id)
+        if preferences.get("active_run_id"):
+            return self.graph_snapshot(investigation_id, preferences["active_run_id"])
+        # A legacy graph remains available; new variants are never implicitly selected.
+        document = self._database["graph_checkpoints"].find_one(
+            {"investigation_id": investigation_id, "manifest": None},
+            sort=[("generated_at", DESCENDING)],
+        )
+        return self._snapshot_from_document(document) if document else None
+
+    def activate_graph_variant(self, investigation_id: str, run_id: str):
+        graph = self.graph_snapshot(investigation_id, run_id)
+        if graph is None:
+            raise InvestigationPersistenceError("Variant does not belong to this investigation")
+        self._database["graph_preferences"].update_one(
+            {"_id": investigation_id}, {"$set": {"active_run_id": run_id}}, upsert=True
+        )
+
+    def list_graph_variants(self, investigation_id: str):
+        if self._database is None:
+            raise InvestigationPersistenceError("MongoDB is not connected")
+        return tuple(
+            {
+                "run_id": d["checkpoint_id"],
+                "name": d.get("variant_name") or "Legacy " + d["checkpoint_id"][:8],
+                "generated_at": d["generated_at"],
+                "manifest": d.get("manifest"),
+            }
+            for d in self._database["graph_checkpoints"]
+            .find(
+                {"investigation_id": investigation_id},
+                {"checkpoint_id": 1, "variant_name": 1, "generated_at": 1, "manifest": 1},
+            )
+            .sort("generated_at", DESCENDING)
         )
 
     def save_chat_message(self, message: ChatMessage) -> None:
@@ -529,6 +658,9 @@ class MongoRepository(CatalogReader):
             "completed_at": run.completed_at,
             "last_error": run.last_error,
             "prompt_version": run.prompt_version,
+            "method_id": run.method_id,
+            "variant_name": run.variant_name,
+            "manifest": asdict(run.manifest) if run.manifest else None,
             "dictionary_domain": run.dictionary_domain,
             "dictionary_hash": run.dictionary_hash,
             "dictionary_versions": list(run.dictionary_versions),
@@ -544,6 +676,8 @@ class MongoRepository(CatalogReader):
     def _graph_entity_document(entity: GraphEntity) -> dict[str, Any]:
         return {
             "entity_id": entity.entity_id,
+            "semantic_support": entity.semantic_support,
+            "mention_id": entity.mention_id,
             "type": entity.entity_type,
             "subtype": entity.subtype,
             "canonical_name": entity.canonical_name,
@@ -578,6 +712,8 @@ class MongoRepository(CatalogReader):
     def _graph_entity_from_document(document: dict[str, Any]) -> GraphEntity:
         return GraphEntity(
             entity_id=str(document["entity_id"]),
+            semantic_support=document.get("semantic_support", "unreviewed"),
+            mention_id=document.get("mention_id", ""),
             entity_type=str(document["type"]),
             subtype=str(document["subtype"]) if document.get("subtype") else None,
             canonical_name=str(document["canonical_name"]),
@@ -609,6 +745,22 @@ class MongoRepository(CatalogReader):
     def _graph_claim_from_document(document: dict[str, Any]) -> GraphClaim:
         return GraphClaim(
             claim_id=str(document["claim_id"]),
+            schema_version=document.get("schema_version", 1),
+            typed_qualifiers=tuple(
+                (key, LiteralValue(**value)) for key, value in document.get("typed_qualifiers", ())
+            ),
+            epistemic_status=document.get("epistemic_status", "reported"),
+            claim_kind=document.get("claim_kind", "relation"),
+            literal=LiteralValue(**document["literal"]) if document.get("literal") else None,
+            source=SourceAttribution(
+                **{
+                    **document.get("source", {}),
+                    "derived_from": tuple(document.get("source", {}).get("derived_from", ())),
+                }
+            ),
+            references=tuple(ClaimReference(**ref) for ref in document.get("references", ())),
+            semantic_support=document.get("semantic_support", "unreviewed"),
+            review_rationale=document.get("review_rationale", ""),
             subject_entity_id=str(document["subject_entity_id"]),
             object_entity_id=str(document["object_entity_id"]),
             predicate=str(document["predicate"]),
@@ -642,6 +794,7 @@ class MongoRepository(CatalogReader):
             page_number=int(document["page_number"]),
             text_hash=str(document["text_hash"]),
             signature=str(document["signature"]),
+            cache_origin=str(document.get("cache_origin", "")),
             state=str(document["state"]),
             analyzed_at=document["analyzed_at"],
             catalog_state=str(document.get("catalog_state", "missing")),

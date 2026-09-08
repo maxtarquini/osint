@@ -100,7 +100,13 @@ class ClaimDetails:
     def claim_label(self, claim: GraphClaim) -> str:
         subject = self.entities.get(claim.subject_entity_id, claim.subject_entity_id)
         target = self.entities.get(claim.object_entity_id, claim.object_entity_id)
-        polarity = POLARITY_LABELS.get(claim.polarity, claim.polarity)
+        if claim.literal:
+            target = f"{claim.literal.value} {claim.literal.unit}"
+        polarity = (
+            "ASSENZA DI RISCONTRI"
+            if claim.epistemic_status == "not_documented"
+            else POLARITY_LABELS.get(claim.polarity, claim.polarity)
+        )
         return f"{polarity} · {subject} → {target}"
 
     def source_text(self, support: tuple[EvidenceSpan, ...]) -> str:
@@ -135,6 +141,20 @@ class ClaimDetails:
             + "CITAZIONI\n"
             + self.source_text(claim.support)
         )
+        if claim.schema_version >= 2:
+            text += (
+                f"\n\nSEMANTICA\nOperazione: {claim.claim_kind}\nStato epistemico: "
+                f"{claim.epistemic_status}"
+                f"\nSupporto semantico: {claim.semantic_support}\n{claim.review_rationale}"
+                f"\nFonte citata: {claim.source.source_id or 'non identificata'}"
+                f"\nDerivata da: {', '.join(claim.source.derived_from) or 'non dichiarato'}"
+                "\nAttendibilità della fonte: non valutata. Confidenza del modello non calibrata."
+            )
+            for ref in claim.references:
+                text += (
+                    f"\nRiferimento: {ref.source} · {ref.subject_name} · "
+                    f"{ref.predicate} · {ref.object_name}"
+                )
         if claim.qualifiers:
             text += "\n\nQUALIFICAZIONI\n" + "\n".join(
                 f"{name}: {value}" for name, value in claim.qualifiers
@@ -181,7 +201,11 @@ class ClaimDetails:
             if other is not None
             else f"Affermazione collegata non disponibile: {other_id}"
         )
-        return f"{label}{identity}\nMotivo: {link.rationale or 'Non specificato'}\n\n{other_text}"
+        return (
+            f"{label}{identity}\nRevisione confronto: {link.review_state} · "
+            f"{link.review_rationale}\nMotivo: "
+            f"{link.rationale or 'Non specificato'}\n\n{other_text}"
+        )
 
     def coverage_text(self, page: PageGraphAnalysis) -> str:
         uses = ", ".join(page.catalog_uses) or "Nessun uso registrato"

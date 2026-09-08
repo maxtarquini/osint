@@ -73,6 +73,7 @@ from raven.tui.widgets import (
 )
 from raven.tui.widgets.claim_details import ClaimDetails
 from raven.tui.widgets.graph_activity import GraphBuildActivity
+from raven.tui.widgets.resizable_split import PaneDivider, ResizableSplit
 
 if TYPE_CHECKING:
     from raven.app import RavenApp
@@ -184,6 +185,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self._chat_sources: tuple[str, ...] = ()
         self._rag_indexing = False
         self._rag_target = None
+        self._rag_state_revision = 0
         self._chat_input_tokens = 0
         self._chat_output_tokens = 0
         self._chat_total_tokens = 0
@@ -287,7 +289,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
                     yield Static("File", classes="evidence-name")
                     yield Static("Format", classes="evidence-format")
                     yield Static("Pages", classes="evidence-pages")
-                    yield Static("Status", classes="evidence-state")
+                    yield Static("RAG index", classes="evidence-state")
                     yield Static("Action", classes="evidence-action")
                 with VerticalScroll(id="evidence-list"):
                     if not self.documents:
@@ -315,7 +317,8 @@ class InvestigationWorkspaceScreen(Screen[None]):
                             id="graph-preparation-mode",
                         )
                     with Horizontal(id="graph-actions"):
-                        yield Button("Analyze Evidence", id="analyze-evidence", variant="primary")
+                        yield Button("Nuova variante", id="analyze-evidence", variant="primary")
+                        yield Button("Varianti / confronta", id="graph-variants")
                         yield Button("Cancel", id="cancel-graph-analysis", classes="hidden")
                 yield Static(
                     "● Ready · language: "
@@ -333,7 +336,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
                         yield Static(
                             "Every connection leads back to its sources.", id="graph-build-hint"
                         )
-                with Horizontal(id="graph-body"):
+                with ResizableSplit(id="graph-body"):
                     with Vertical(id="graph-visual-panel"):
                         with Vertical(id="graph-panel-header"):
                             with Horizontal(id="graph-panel-title-row"):
@@ -344,7 +347,11 @@ class InvestigationWorkspaceScreen(Screen[None]):
                                     "Arrows pan · J/K select · +/- zoom",
                                     id="graph-navigation-hint",
                                 )
-                                yield Button("Affermazioni / copertura", id="open-graph-claims")
+                                yield Button(
+                                    "Affermazioni / copertura",
+                                    id="open-graph-claims",
+                                    tooltip="Apri affermazioni, fonti e copertura delle pagine",
+                                )
                                 yield Static("FIT", id="graph-zoom-label")
                                 yield Button(
                                     "Fit",
@@ -358,6 +365,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
                                 yield Button("−", id="zoom-out-graph", classes="graph-view-button")
                                 yield Button("+", id="zoom-in-graph", classes="graph-view-button")
                         yield GraphCanvas(id="graph-canvas")
+                    yield PaneDivider(id="graph-pane-divider")
                     with VerticalScroll(id="graph-details-panel"):
                         yield Static("ANALYSIS CONTEXT", classes="panel-title")
                         yield Input(
@@ -453,8 +461,16 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self._set_responsive_layout(self.size.width, self.size.height)
         self._load_latest_graph()
         self._load_chat_history()
+        self._load_rag_states(self._rag_state_revision, tuple(self.documents))
         self._sync_graph_analysis_job()
         self.set_interval(0.15, self._sync_graph_analysis_job)
+
+    def on_resizable_split_resized(self, event: ResizableSplit.Resized) -> None:
+        compact = event.main_width < 85
+        self.query_one("#graph-visual-panel").set_class(compact, "compact-graph-pane")
+        self.query_one("#open-graph-claims", Button).label = (
+            "Affermazioni" if compact else "Affermazioni / copertura"
+        )
 
     def on_resize(self, event: Resize) -> None:
         self._set_responsive_layout(event.size.width, event.size.height)
@@ -514,6 +530,8 @@ class InvestigationWorkspaceScreen(Screen[None]):
         elif event.button.id == "cancel-evidence-upload":
             self._upload_cancel.set()
             self._set_operation_status("● Cancelling upload...", "running")
+        elif event.button.id == "graph-variants":
+            self._open_variants()
         elif event.button.id == "analyze-evidence":
             self._start_graph_analysis()
         elif event.button.id == "cancel-graph-analysis":
@@ -804,6 +822,35 @@ class InvestigationWorkspaceScreen(Screen[None]):
             f"Inference context\n{ai_settings.context_size:,} tokens"
         )
 
+    @work(thread=True, exclusive=True, group="rag-state", exit_on_error=False)
+    def _load_rag_states(self, revision: int, documents: tuple[EvidenceDocument, ...]) -> None:
+        try:
+            states = self._raven_app.evidence_index_states(self.investigation, documents)
+        except Exception as error:
+            logger.warning(
+                "Unable to verify RAG index. investigation_id=%s error_type=%s",
+                self.investigation.investigation_id,
+                type(error).__name__,
+            )
+            states = {
+                document.document_id: EvidenceIngestionState.UNVERIFIED for document in documents
+            }
+        self.app.call_from_thread(self._show_rag_states, revision, states)
+
+    def _show_rag_states(self, revision: int, states: dict[str, EvidenceIngestionState]) -> None:
+        # A delayed manifest read must never overwrite a newer indexing operation.
+        if not self.is_mounted or revision != self._rag_state_revision:
+            return
+        self.documents = [
+            replace(
+                document, ingestion_state=states.get(document.document_id, document.ingestion_state)
+            )
+            for document in self.documents
+        ]
+        for row in self.query(EvidenceRow):
+            if row.document.document_id in states:
+                row.set_ingestion_state(states[row.document.document_id])
+
     @work(thread=True, exclusive=True, group="chat-history", exit_on_error=False)
     def _load_chat_history(self) -> None:
         try:
@@ -868,6 +915,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
             return
         self._chat_busy = True
         self._rag_indexing = True
+        self._rag_state_revision += 1
         self._rag_target = document.document_id if document else None
         self._chat_cancel.clear()
         self._set_chat_controls_disabled(True)
@@ -918,6 +966,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self.app.call_from_thread(self._show_rag_index_progress, progress)
 
     def _show_rag_index_progress(self, progress: RagIndexProgress) -> None:
+        self._rag_state_revision += 1
         if not self.is_mounted:
             return
         self.documents = [
@@ -990,6 +1039,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
         await conversation.mount(ChatMessageView(user_message), response)
         conversation.scroll_end(animate=False)
         self._active_response = response
+        self._rag_state_revision += 1
         self._chat_sources = ()
         self._chat_busy = True
         self._chat_cancel.clear()
@@ -1344,7 +1394,37 @@ class InvestigationWorkspaceScreen(Screen[None]):
             if graph is not None:
                 self.app.call_from_thread(self._show_graph, graph)
 
-    def _start_graph_analysis(self) -> None:
+    def _open_variants(self):
+        from raven.tui.screens.graph_variants import GraphVariantsScreen
+
+        service = self._raven_app.graph_analysis
+        if service is None:
+            self.notify("Servizio grafo non disponibile", severity="error")
+            return
+        self.app.push_screen(
+            GraphVariantsScreen(
+                self.investigation,
+                service,
+                busy=self._graph_busy,
+                model=self._raven_app.settings.with_environment().ai.model,
+            ),
+            self._variant_selected,
+        )
+
+    def _variant_selected(self, result):
+        if result is None:
+            return
+        if result[0] == "generate":
+            self._start_graph_analysis(method_id=result[1], variant_name=result[2])
+        else:
+            self._show_graph(result[1])
+            self.notify(
+                "Variante attiva selezionata"
+                if result[0] == "active"
+                else "Variante aperta per consultazione; chat usa quella attiva"
+            )
+
+    def _start_graph_analysis(self, *, method_id=None, variant_name="") -> None:
         if self._graph_busy:
             return
         if not self.documents:
@@ -1354,12 +1434,17 @@ class InvestigationWorkspaceScreen(Screen[None]):
                 severity="warning",
             )
             return
+        if method_id is None:
+            self._open_variants()
+            return
         mode = EvidencePreparationMode(self.query_one("#graph-preparation-mode", Select).value)
         try:
             job = self._raven_app.enqueue_graph_analysis(
                 self.investigation,
                 tuple(self.documents),
                 mode,
+                method_id=method_id,
+                variant_name=variant_name,
             )
         except (GraphAnalysisError, InvestigationError) as error:
             self._graph_failed(str(error))
@@ -1417,18 +1502,6 @@ class InvestigationWorkspaceScreen(Screen[None]):
         if not self.is_mounted:
             return
         self._show_graph(result.graph)
-        states = dict(result.evidence_states)
-        if states:
-            self.documents = [
-                replace(
-                    document,
-                    ingestion_state=states.get(document.document_id, document.ingestion_state),
-                )
-                for document in self.documents
-            ]
-            for row in self.query(EvidenceRow):
-                if row.document.document_id in states:
-                    row.set_ingestion_state(states[row.document.document_id])
         state = "warning" if result.run.evidence_failed or result.run.last_error else "success"
         label = (
             f"● {result.run.status.value.replace('_', ' ').title()} · "
@@ -1452,7 +1525,15 @@ class InvestigationWorkspaceScreen(Screen[None]):
         if not self.is_mounted:
             return
         self.graph = graph
-        self.query_one("#graph-canvas", GraphCanvas).set_graph(graph)
+        displayed = (
+            replace(
+                graph,
+                entities=tuple(e for e in graph.entities if e.semantic_support == "supported"),
+            )
+            if graph.manifest
+            else graph
+        )
+        self.query_one("#graph-canvas", GraphCanvas).set_graph(displayed)
         self.query_one("#graph-statistics", Static).update(
             self._graph_statistics_label(graph, self.size.width)
         )

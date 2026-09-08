@@ -158,7 +158,9 @@ class EvidenceGraphExtractor:
         analysis_domain: str = DEFAULT_DOMAIN_CODE,
     ) -> ResolvedVocabulary:
         """Resolve one domain without including unrelated selectable domains."""
-        return self.vocabulary_catalog.resolve(analysis_domain)
+        # A run resolves one immutable vocabulary snapshot, but the next run must
+        # observe edits made to the configured dictionary folder while Raven is open.
+        return NamedEntityVocabularyCatalog(self.vocabulary_catalog.root).resolve(analysis_domain)
 
     def resolve_against(
         self,
@@ -457,6 +459,8 @@ _SCHEME_ALIASES = {
 _HARD_IDENTITY_SCHEMES = {
     "PERSON": {"passport", "national_id", "tax_id", "ssn"},
     "ORGANIZATION": {"vat", "tax_id", "registration_number", "lei"},
+    "GROUP": {"vat", "tax_id", "registration_number", "lei"},
+    "FACILITY": {"vat", "tax_id", "registration_number", "lei"},
     "VESSEL": {"imo", "mmsi"},
     "VEHICLE": {"vin"},
     "AIRCRAFT": {"aircraft_registration", "icao24"},

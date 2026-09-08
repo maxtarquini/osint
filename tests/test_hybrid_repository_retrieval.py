@@ -162,6 +162,8 @@ class ReadTransaction:
         assert not any(word in query for word in ("MERGE ", "CREATE ", "DELETE ", "SET "))
         if self.on_read:
             self.on_read()
+        if "MATCH (v:RavenVariant" in query:
+            return Rows([])
         if "latest_run_id" in query:
             self.head_reads += 1
             value = self.head if self.head_reads == 1 else self.final_head
@@ -260,9 +262,9 @@ def test_neo4j_read_is_run_scoped_parameterized_and_includes_denial_counterpart(
         for _, parameters in transaction.calls
     )
     assert all(injection not in query for query, _ in transaction.calls)
-    assert transaction.calls[1][1]["terms"] == [injection.casefold()]
-    assert transaction.calls[2][1]["page_keys"] == ["document:3"]
-    assert transaction.calls[2][1]["document_ids"] == ["legacy"]
+    assert transaction.calls[2][1]["terms"] == [injection.casefold()]
+    assert transaction.calls[3][1]["page_keys"] == ["document:3"]
+    assert transaction.calls[3][1]["document_ids"] == ["legacy"]
 
 
 @pytest.mark.parametrize("actual", [None, "another-run"])
@@ -273,7 +275,7 @@ def test_neo4j_stale_or_missing_run_cannot_return_any_ids(actual):
     assert not any(
         (result.entity_ids, result.claim_ids, result.relationship_ids, result.comparison_ids)
     )
-    assert len(transaction.calls) == 1
+    assert len(transaction.calls) == 2
 
 
 def test_neo4j_concurrent_publication_discards_selection_from_previous_active_run():
@@ -290,7 +292,7 @@ def test_neo4j_read_hard_caps_ids_and_reports_truncation():
         "case-a", "run", terms=("Ada",), source_pages=(), limit=10000
     )
     assert len(result.entity_ids) == 200 and result.truncated
-    assert all(parameters["limit"] == 201 for _, parameters in transaction.calls)
+    assert all(parameters.get("limit", 201) == 201 for _, parameters in transaction.calls)
 
 
 def test_neo4j_cancel_is_propagated_after_read_without_returning_partial_context():

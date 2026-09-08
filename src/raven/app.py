@@ -449,6 +449,11 @@ class RavenApp(App[None]):
             return None
         return self.graph_analysis.latest(investigation_id)
 
+    def evidence_index_states(self, investigation, documents):
+        if self.investigation_chat is None:
+            raise InvestigationPersistenceError("Investigation chat is not available")
+        return self.investigation_chat.index_states(investigation, documents)
+
     def index_investigation_knowledge_base(
         self,
         investigation: Investigation,
@@ -488,6 +493,8 @@ class RavenApp(App[None]):
     ) -> Iterator[ChatStreamEvent]:
         if self.investigation_chat is None:
             raise InvestigationPersistenceError("Investigation chat is not available")
+        if self.graph_analysis is not None:
+            graph = self.graph_analysis.latest(investigation.investigation_id)
         return self.investigation_chat.stream_answer(
             investigation,
             documents,
@@ -544,11 +551,20 @@ class RavenApp(App[None]):
         investigation: Investigation,
         documents: tuple[EvidenceDocument, ...],
         preparation_mode: EvidencePreparationMode,
+        *,
+        method_id: str = "document_claims",
+        variant_name: str = "",
     ) -> GraphAnalysisJob:
         """Queue graph work independently from the currently mounted screen."""
         if self.graph_jobs is None:
             raise InvestigationPersistenceError("Graph analysis is not available")
-        return self.graph_jobs.enqueue(investigation, documents, preparation_mode)
+        return self.graph_jobs.enqueue(
+            investigation,
+            documents,
+            preparation_mode,
+            method_id=method_id,
+            variant_name=variant_name,
+        )
 
     def graph_analysis_job(self, investigation_id: str) -> GraphAnalysisJob | None:
         """Return the latest queue snapshot for one investigation."""

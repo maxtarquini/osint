@@ -28,6 +28,7 @@ def test_cancel_at_final_stage_preserves_both_existing_snapshots(tmp_path, stage
     knowledge_base = KnowledgeBaseStore(tmp_path / "kb")
     document = knowledge_base.add(case.investigation_id, source)
     repository, graph_store = GraphRepository(), GraphStore()
+    repository.states[document.document_id] = EvidenceIngestionState.READY
     old_graph = InvestigationGraph(case.investigation_id, "old-run", (), (), datetime.now(UTC))
     repository.graph = graph_store.graph = old_graph
     service = GraphAnalysisService(repository, graph_store, SharedAiNode(), knowledge_base)
@@ -59,8 +60,7 @@ def test_cancel_at_final_stage_preserves_both_existing_snapshots(tmp_path, stage
     assert repository.graph is old_graph
     assert graph_store.graph is old_graph
     assert repository.runs[-1].status is GraphRunStatus.CANCELLED
-    if stage == "extraction":
-        assert repository.states[document.document_id] is EvidenceIngestionState.PENDING
+    assert repository.states[document.document_id] is EvidenceIngestionState.READY
 
 
 def test_identity_model_receives_cancellation_and_bounded_request_options():

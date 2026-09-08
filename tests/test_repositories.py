@@ -394,7 +394,7 @@ def test_neo4j_deletes_only_selected_investigation_subgraph() -> None:
     repository.delete_investigation("investigation-id")
 
     calls = driver.execute_query.call_args_list[calls_before:]
-    assert len(calls) == 3
+    assert len(calls) == 4
     assert all(call.kwargs["investigation_id"] == "investigation-id" for call in calls)
     assert all("DETACH DELETE" in call.args[0] for call in calls)
 

@@ -229,6 +229,9 @@ def test_snapshot_commit_preserves_other_cases_and_serializes_citation_coordinat
         "page_number": 2,
         "quote": "Rossi lavora per Alfa.",
         "verified_original": True,
+        "unit_id": "",
+        "start_offset": None,
+        "end_offset": None,
     }
     assert entity["resolution_notes"] == ["Distinct identifiers retained."]
     assert driver.state["entities"]["company"]["support"] == []

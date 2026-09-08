@@ -751,6 +751,8 @@ InvestigationCreateScreen.compact-investigation-form #investigation-form .questi
     padding-left: 1;
 }
 
+.evidence-state.outdated,
+.evidence-state.unverified,
 .evidence-state.pending,
 .evidence-state.processing {
     color: $warning;
@@ -1490,9 +1492,8 @@ GraphClaimsScreen.narrow-claims-reader #graph-coverage-detail {
 }
 
 #graph-details-panel {
-    width: 30;
+    width: 30%;
     height: 100%;
-    margin-left: 1;
     padding: 1 2;
     border: round $accent-dark;
     background: $surface-raised;
@@ -1598,7 +1599,6 @@ InvestigationWorkspaceScreen.compact-workspace #graph-provenance-hint {
 }
 
 InvestigationWorkspaceScreen.narrow-workspace #graph-details-panel {
-    width: 24;
     padding: 1;
 }
 
@@ -2025,3 +2025,50 @@ DocumentCatalogScreen { align: center middle; background: rgba(0, 0, 0, 0.65); }
 #saved-catalog-actions Button { height: 3; width: 1fr; }
 DocumentCatalogScreen.narrow-catalog-reader #saved-catalog-body { layout: vertical; }
 DocumentCatalogScreen.narrow-catalog-reader #saved-catalog-table { width: 100%; height: 5; }
+
+
+PaneDivider {
+    width: 3;
+    height: 100%;
+    color: $accent-dark;
+    background: $surface;
+}
+
+PaneDivider:hover,
+PaneDivider:focus,
+PaneDivider.dragging {
+    color: $accent;
+    background: $surface-raised;
+}
+
+
+#graph-visual-panel.compact-graph-pane #graph-navigation-hint {
+    display: none;
+}
+
+#graph-visual-panel.compact-graph-pane #open-graph-claims {
+    width: 1fr;
+    min-width: 12;
+}
+
+#graph-visual-panel.compact-graph-pane #graph-zoom-label {
+    width: 4;
+}
+
+GraphVariantsScreen { align: center middle; }
+#variants-dialog { width: 95%; height: 95%; padding: 0 1; background: $surface; border: round $accent; }
+#variants-title { height: 1; text-style: bold; }
+#variants-controls { height: 10; }
+#variants-controls Static { height: auto; }
+#variants-controls Select, #variant-name { width: 100%; }
+#variant-purpose { height: auto; }
+.variant-actions { height: 3; }
+.variant-actions Button { width: 1fr; min-width: 12; }
+#variant-status { height: 2; }
+#variant-report { height: 1fr; min-height: 3; }
+#variant-close { height: 3; }
+#graph-review-text { height: 1fr; }
+#graph-actions { width: 47; }
+#analyze-evidence { width: 16; min-width: 16; }
+#graph-variants { width: 19; min-width: 19; }
+InvestigationWorkspaceScreen.narrow-workspace #graph-mode-control { min-width: 12; }

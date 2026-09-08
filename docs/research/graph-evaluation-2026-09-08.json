@@ -1,0 +1,91 @@
+{
+  "status": "live_evaluation_in_progress",
+  "investigation_id": "e8891841-187b-4231-bcad-7fa351e413fa",
+  "baseline_run_id": "a8a71612-3a7f-4ca4-aa0f-e422e36170a2",
+  "baseline": {
+    "entities": 111,
+    "claims": 36,
+    "relationships": 28,
+    "comparisons": 0,
+    "analyzed_pages": 8,
+    "partial_pages": 9,
+    "failed_pages": 1,
+    "literally_grounded_claims": 34,
+    "ungrounded_projected_edges": 2
+  },
+  "discarded_prototype": {
+    "run_id": "03d0ff2f-318f-474b-8150-1118ad61d4e8",
+    "claims": 62,
+    "relationships": 0,
+    "failure": "All claims incorrectly not_documented; ordinary relations confused with operations and program IDs used as source names. Never activated.",
+    "correction": "Embed schema field meanings in the textual prompt; separate ordinary reported assertions from evidence gaps and operations; use whole contiguous sentence citation units.",
+    "cancelled_following_method": "cross_source_review"
+  },
+  "frozen_evaluation_contract": {
+    "method_version": "4",
+    "prompt_version": "raven-integrity-v5",
+    "model": "gpt-oss-120b",
+    "request_timeout_seconds": 120,
+    "claim_repair_calls_max": 1,
+    "max_output_tokens_per_call": 8192,
+    "effective_thinking": "medium",
+    "comparison_version": "raven-comparison-v3",
+    "semantic_pair_retrieval": "raven-source-candidates-v1"
+  },
+  "annotation_limits": "RX41 acceptance scenarios and separately authored civil fixture are manually specified. They are not exhaustive, not double annotated by independent humans, and do not establish general extraction accuracy.",
+  "runs": [],
+  "independent_runs": [],
+  "development_runs": [
+    {
+      "run_id": "1f38bff8-f825-4b90-9ee5-19272a4060b3",
+      "method": "document_claims",
+      "prompt_version": "raven-integrity-v3",
+      "entities": 135,
+      "claims": 81,
+      "relationships": 25,
+      "comparisons": 6,
+      "semantic_states": {
+        "uncertain": 28,
+        "supported": 51,
+        "unsupported": 2
+      },
+      "page_states": {
+        "analyzed": 8,
+        "partial": 10
+      },
+      "operations": 0,
+      "evidence_gaps": 0,
+      "known_failures": [
+        "Corrections, retractions and withdrawals flattened into ordinary relations/values",
+        "No evidence gaps or copy ancestry extracted",
+        "Reviewer lacked dictionary definitions and full endpoint map across batches",
+        "Missing entity review IDs caused uncertain endpoints; prototype not activated"
+      ],
+      "artifact": "docs/research/evaluation/rx41-development-v3.json.gz",
+      "artifact_sha256": "e2a4a563f147c81af4b4ea962f3e6c37cef5701b9cfb184d0277211ac128b604",
+      "following_method_cancelled": true
+    }
+  ],
+  "quality_gates": {
+    "pytest": "424 passed in 79.80s",
+    "lint": "passed",
+    "format": "passed",
+    "textual_sizes": [
+      "80x24",
+      "140x45"
+    ],
+    "real_terminal_smoke": {
+      "exit_code": 0,
+      "termios_restored": true,
+      "alternate_screen_restored": true
+    }
+  },
+  "dictionary_checks": [
+    "Reload definitions from configured folder at generation start without restarting the service",
+    "Freeze one resolved dictionary per run",
+    "Current dictionary definitions supplied to extraction and semantic review",
+    "Changing a custom domain changes the manifest/cache hash and rejects removed classifications",
+    "Prior immutable variants remain readable"
+  ],
+  "development_independent_artifact": "docs/research/evaluation/independent-development-v4.json.gz"
+}

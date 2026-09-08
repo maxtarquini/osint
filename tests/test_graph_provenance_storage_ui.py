@@ -62,6 +62,9 @@ def test_graph_snapshot_roundtrip_preserves_citations_and_identity_notes():
             "quote": "[RX41] Ada compare nel registro di Rete Levante.",
             "page_number": 2,
             "verified_original": True,
+            "unit_id": "",
+            "start_offset": None,
+            "end_offset": None,
         }
     ]
     assert payload["relationships"][0]["resolution_notes"] == [

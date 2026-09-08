@@ -51,6 +51,12 @@ class GraphClaimsScreen(ModalScreen[None]):
                             id="graph-claims-table", cursor_type="row", zebra_stripes=True
                         )
                         yield TextArea("", read_only=True, soft_wrap=True, id="graph-claim-detail")
+                with TabPane("Eventi / tempo", id="claims-events-tab"):
+                    yield TextArea(self._event_text(), read_only=True, soft_wrap=True)
+                with TabPane("Da revisionare", id="claims-review-tab"):
+                    yield TextArea(
+                        self._review_text(), read_only=True, soft_wrap=True, id="graph-review-text"
+                    )
                 with TabPane("Copertura", id="claims-coverage-tab"):
                     yield Input(
                         placeholder="Cerca documento, stato, catalogo o errore · /",
@@ -66,6 +72,72 @@ class GraphClaimsScreen(ModalScreen[None]):
             with Horizontal(id="graph-claims-actions"):
                 yield Button("Catalogo documento", id="claim-open-catalog", disabled=True)
                 yield Button("Chiudi", id="close-graph-claims", variant="primary")
+
+    def _event_text(self):
+        if not self.graph:
+            return "Nessun evento"
+        from raven.graph.events import temporal_relation
+
+        claims = {claim.claim_id: claim for claim in self.graph.claims}
+        rows = ["Eventi attribuiti alle fonti; record discordanti restano distinti."]
+        for event in self.graph.events:
+            statements = [claims[key] for key in event.claim_ids if key in claims]
+            rows.append(
+                f"\n{event.event_type} · {event.valid_from or '?'} → {event.valid_until or '?'}"
+                + "\n"
+                + " · ".join(
+                    f"{claim.polarity} / {claim.epistemic_status} / {claim.claim_kind} / "
+                    f"supporto {claim.semantic_support}"
+                    for claim in statements
+                )
+                + "\n"
+                + " · ".join(
+                    f"{role}: {self.details.entities.get(entity, entity)}"
+                    for role, entity in event.roles
+                )
+                + "\n"
+                + " · ".join(f"{key}: {value.value} {value.unit}" for key, value in event.values)
+                + f"\nFonte: {event.source.source_id}\nAffermazioni: {', '.join(event.claim_ids)}\n"
+                + self.details.source_text(event.support)
+            )
+        event_claims = {key for event in self.graph.events for key in event.claim_ids}
+        rows.append("\nCONFRONTI TEMPORALI TRA AFFERMAZIONI CANDIDATE")
+        for link in self.graph.claim_links:
+            first = claims.get(link.source_claim_id)
+            second = claims.get(link.target_claim_id)
+            if first and second and {first.claim_id, second.claim_id} & event_claims:
+                rows.append(
+                    f"\n{first.claim_id} → {second.claim_id}: {link.kind}"
+                    f"\nIntervalli espliciti: {temporal_relation(first, second)}"
+                    f" · revisione confronto: {link.review_state}"
+                    f"\n{link.review_rationale or link.rationale}"
+                )
+        rows.append(
+            "\nIntervallo unknown: estremi insufficienti; possibly_overlaps: date parziali "
+            "compatibili. La compatibilità temporale non dimostra identità dell'evento."
+        )
+        return "\n".join(rows)
+
+    def _review_text(self):
+        if not self.graph:
+            return "Nessun candidato"
+        rows = [
+            "Candidati conservati per revisione. Supporto semantico e attendibilità sono distinti."
+        ]
+        for entity in self.graph.entities:
+            if entity.semantic_support != "supported":
+                rows.append(
+                    f"\n{entity.canonical_name} · "
+                    f"{entity.entity_type}/{entity.subtype or ''} · "
+                    f"{entity.semantic_support}\n"
+                    + "\n".join(entity.resolution_notes)
+                    + "\n"
+                    + self.details.source_text(entity.support)
+                )
+        for claim in self.graph.claims:
+            if claim.semantic_support != "supported":
+                rows.append("\n" + self.details.claim_text(claim))
+        return "\n".join(rows)
 
     def _summary(self) -> str:
         if self.graph is None:
@@ -100,6 +172,8 @@ class GraphClaimsScreen(ModalScreen[None]):
         selector = (
             "#graph-coverage-search" if current == "claims-coverage-tab" else "#graph-claims-search"
         )
+        if current not in {"claims-browse-tab", "claims-coverage-tab"}:
+            self.query_one("#graph-claims-tabs", TabbedContent).active = "claims-browse-tab"
         self.query_one(selector, Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

@@ -203,6 +203,7 @@ class FakeGraphAnalysis:
         preparation_mode: EvidencePreparationMode,
         cancelled: Callable[[], bool] | None = None,
         progress: Callable | None = None,
+        **options,
     ) -> GraphAnalysisResult:
         self.mode = preparation_mode
         now = datetime.now(UTC)
@@ -257,6 +258,9 @@ class FakeChat:
         self.indexed_documents: list[str] = []
         self.removed_investigations: list[str] = []
         self.history_cleared = False
+
+    def index_states(self, investigation, documents):
+        return {document.document_id: document.ingestion_state for document in documents}
 
     def index_knowledge_base(self, investigation, documents, cancelled=None, progress=None) -> int:
         total = len(documents)
@@ -1000,7 +1004,7 @@ async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_pat
         await pilot.pause()
 
         assert app.screen.query_one("#graph-toolbar").outer_size.height >= 5
-        await pilot.click("#analyze-evidence")
+        app.screen._start_graph_analysis(method_id="document_claims")
         await app.workers.wait_for_complete()
         for _ in range(20):
             await pilot.pause(0.05)
@@ -1057,6 +1061,7 @@ async def test_graph_analysis_continues_after_leaving_and_reopening_case(tmp_pat
             preparation_mode,
             cancelled=None,
             progress=None,
+            **options,
         ) -> GraphAnalysisResult:
             if progress is not None:
                 progress(
@@ -1090,7 +1095,7 @@ async def test_graph_analysis_continues_after_leaving_and_reopening_case(tmp_pat
         await pilot.pause()
         app.screen.query_one("#workspace-tabs", TabbedContent).active = "workspace-graph-tab"
         await pilot.pause()
-        await pilot.click("#analyze-evidence")
+        app.screen._start_graph_analysis(method_id="document_claims")
         for _ in range(20):
             await pilot.pause(0.05)
             if graph_analysis.started.is_set():

@@ -50,11 +50,14 @@ def plan_pages(
     mode: EvidencePreparationMode,
     *,
     catalog_error: bool = False,
+    method_profile: object = None,
 ) -> tuple[PagePlan, ...]:
     """Use fresh per-page metadata only as hints; no catalog category can exclude a page."""
     settings = node.settings
     profile = {
         "version": PAGE_ANALYSIS_VERSION,
+        "method": method_profile,
+        "document_context": digest(pages) if method_profile else "",
         "entity_prompt": ENTITY_PROMPT_VERSION,
         "claim_prompt": CLAIM_PROMPT_VERSION,
         "dictionary": vocabulary.sha256,

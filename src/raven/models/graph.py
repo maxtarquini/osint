@@ -53,6 +53,47 @@ class EvidenceSpan:
     quote: str
     page_number: int | None = None
     verified_original: bool = False
+    unit_id: str = ""
+    start_offset: int | None = None
+    end_offset: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class LiteralValue:
+    value: str
+    datatype: str = "string"
+    unit: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class SourceAttribution:
+    source_id: str = ""
+    speaker: str = ""
+    derived_from: tuple[str, ...] = ()
+    reliability: str = "unassessed"
+
+
+@dataclass(frozen=True, slots=True)
+class ClaimReference:
+    source: str
+    predicate: str
+    subject_name: str
+    object_name: str = ""
+    claim_id: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class GraphManifest:
+    schema_version: int = 2
+    method_id: str = "document_claims"
+    method_version: str = "4"
+    prompt_version: str = "raven-integrity-v5"
+    documents: tuple[tuple[str, str], ...] = ()
+    catalogs: tuple[tuple[str, str], ...] = ()
+    dictionary_hash: str = ""
+    dictionary_versions: tuple[str, ...] = ()
+    model: str = ""
+    configuration: str = "{}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +110,8 @@ class GraphEntity:
     status: GraphItemStatus = GraphItemStatus.PROPOSED
     support: tuple[EvidenceSpan, ...] = ()
     resolution_notes: tuple[str, ...] = ()
+    semantic_support: str = "unreviewed"
+    mention_id: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +148,25 @@ class GraphClaim:
     confidence: float = 0.0
     status: GraphItemStatus = GraphItemStatus.PROPOSED
     resolution_notes: tuple[str, ...] = ()
+    schema_version: int = 1
+    epistemic_status: str = "reported"
+    claim_kind: str = "relation"
+    literal: LiteralValue | None = None
+    source: SourceAttribution = SourceAttribution()
+    references: tuple[ClaimReference, ...] = ()
+    semantic_support: str = "unreviewed"
+    review_rationale: str = ""
+    typed_qualifiers: tuple[tuple[str, LiteralValue], ...] = ()
+
+    @property
+    def allows_missing_object(self) -> bool:
+        """Unary event/cessation assertions need no invented second entity."""
+        return bool(
+            self.literal
+            or self.references
+            or self.claim_kind == "event"
+            or (self.claim_kind == "ceases" and (self.valid_from or self.valid_until))
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,6 +179,8 @@ class ClaimLink:
     kind: str
     rationale: str
     requires_identity_review: bool = False
+    review_state: str = "unreviewed"
+    review_rationale: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,6 +200,22 @@ class PageGraphAnalysis:
     claims: tuple[GraphClaim, ...] = ()
     model_name: str = ""
     error: str = ""
+    cache_origin: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class GraphEvent:
+    """Source-specific event representation; competing records are not silently merged."""
+
+    event_id: str
+    event_type: str
+    roles: tuple[tuple[str, str], ...]
+    claim_ids: tuple[str, ...]
+    valid_from: str | None = None
+    valid_until: str | None = None
+    values: tuple[tuple[str, LiteralValue], ...] = ()
+    source: SourceAttribution = SourceAttribution()
+    support: tuple[EvidenceSpan, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,6 +228,9 @@ class InvestigationGraph:
     claims: tuple[GraphClaim, ...] = ()
     claim_links: tuple[ClaimLink, ...] = ()
     pages: tuple[PageGraphAnalysis, ...] = ()
+    variant_name: str = ""
+    manifest: GraphManifest | None = None
+    events: tuple[GraphEvent, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,6 +255,9 @@ class GraphAnalysisRun:
     dictionary_hash: str = ""
     dictionary_versions: tuple[str, ...] = ()
     page_outcomes: tuple[PageGraphAnalysis, ...] = ()
+    method_id: str = "legacy"
+    variant_name: str = ""
+    manifest: GraphManifest | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,6 +272,7 @@ class GraphAnalysisProgress:
 class GraphAnalysisResult:
     run: GraphAnalysisRun
     graph: InvestigationGraph
+    # Graph extraction outcomes only; never overwrite the document RAG ingestion state.
     evidence_states: tuple[tuple[str, EvidenceIngestionState], ...] = ()
 
 
@@ -202,3 +289,5 @@ class GraphAnalysisJob:
     progress: GraphAnalysisProgress
     result: GraphAnalysisResult | None = None
     error: str | None = None
+    method_id: str | None = None
+    variant_name: str = ""
