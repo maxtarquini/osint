@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.metadata
 import json
+import platform
 import statistics
 from collections import defaultdict
 from dataclasses import asdict, dataclass, replace
@@ -549,6 +550,7 @@ def run_benchmark(fixture_path: Path, *, graphiti_result: Path | None = None) ->
         "fixture_sha256": hashlib.sha256(fixture_path.read_bytes()).hexdigest(),
         "seed": SEED,
         "synthetic": True,
+        "runtime": {"python": platform.python_version(), "platform": platform.platform()},
         "dataset": {
             "documents": len(case.all_documents),
             "active_documents": len(case.documents),
@@ -574,6 +576,7 @@ def run_benchmark(fixture_path: Path, *, graphiti_result: Path | None = None) ->
             "vector_baseline_k": 6,
             "vector_capacity_control_k": 12,
             "hybrid_vector_k": 12,
+            "hybrid_ranked_claim_seeds": 12,
             "hybrid_graph_claim_cap": 80,
             "hybrid_linked_page_cap": 24,
             "community_claim_cap": 80,
@@ -655,6 +658,9 @@ def markdown_report(report: dict) -> str:
             "La contaminazione conta documenti rimossi o appartenenti all'altra investigazione, "
             "non semplici risultati irrilevanti. Le citazioni vengono confrontate con il testo "
             "della fixture senza giudice LLM.",
+            "I valori sono medie per domanda: il recall esclude i due controlli senza "
+            "risultati attesi, mentre la precisione comprende tutte le sedici domande. "
+            "Una domanda ampia con sette fonti pesa quanto una domanda locale con una fonte.",
             "",
             "Separazione fra ranking e robustezza: i punti dei documenti rimossi vengono "
             "lasciati nell'indice appositamente per simulare una cancellazione incompleta. "
@@ -669,7 +675,8 @@ def markdown_report(report: dict) -> str:
             "",
             "Il limite comune sul contesto è 24.000 caratteri. Il controllo vettoriale a dodici "
             "risultati separa l'effetto del budget più ampio rispetto alla baseline a sei. Hybrid "
-            "può aggiungere fino a ottanta claim e ventiquattro pagine collegate; questi costi "
+            "parte da dodici claim ordinati e può includere fino a ottanta claim attraverso "
+            "i confronti, oltre a ventiquattro pagine collegate; questi costi sono "
             "riportati e non sono equiparati artificialmente a sei risultati Graphiti.",
             "I controlli hybrid_grouped_page_budget limitano a sei o dodici pagine dopo il "
             "recupero, preservando gruppi interi di affermazione/smentita. La loro latenza "
@@ -689,6 +696,14 @@ def markdown_report(report: dict) -> str:
             "",
             "```bash",
             "uv run python scripts/evaluate_retrieval.py",
+            "# Graphiti rimane in un ambiente temporaneo separato dall'app:",
+            "uv venv --python 3.12 /tmp/raven-graphiti-eval",
+            "uv pip install --python /tmp/raven-graphiti-eval/bin/python "
+            "'graphiti-core[kuzu]==0.30.1' 'httpx==0.28.1'",
+            "PYTHONPATH=src /tmp/raven-graphiti-eval/bin/python "
+            "-m raven.evaluation.graphiti_runner --fixture "
+            "fixtures/evaluation/rx41-retrieval.json --top-k 6 "
+            "--output /tmp/raven-graphiti-benchmark.json",
             "# Per includere un risultato Graphiti realmente eseguito:",
             "uv run python scripts/evaluate_retrieval.py --graphiti-result "
             "/tmp/raven-graphiti-benchmark.json",
@@ -697,6 +712,10 @@ def markdown_report(report: dict) -> str:
             "I risultati puntuali, le omissioni, le fonti restituite e le durate sono "
             "nel JSON accanto a questo rapporto. La fixture contiene i gold espliciti per "
             "negazioni, date, importi e valuta, omonimie, eliminazione e isolamento del caso.",
+            "Graphiti 0.30.1 usa qui il backend Kuzu 0.11.3 per un esperimento temporaneo. "
+            "Kuzu è deprecato: questa scelta non è una proposta per la produzione. "
+            "Il confronto delle opzioni e le fonti ufficiali sono nel documento "
+            "[Graphiti e recupero del grafo](graph-retrieval-options.md).",
             "",
             "Limiti: dataset piccolo e costruito per regressioni; nessuna validazione su indagini "
             "reali, nessuna misura di qualità semantica degli embedding e nessuna previsione "

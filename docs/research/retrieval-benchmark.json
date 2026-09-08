@@ -3,6 +3,10 @@
   "fixture_sha256": "ea0bb55a3fca945377bab6582beacbd47ec2a3941fa3deea341805d2b06509dd",
   "seed": "RX41-20260908",
   "synthetic": true,
+  "runtime": {
+    "python": "3.13.12",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O"
+  },
   "dataset": {
     "documents": 6,
     "active_documents": 4,
@@ -2505,6 +2509,7 @@
     "vector_baseline_k": 6,
     "vector_capacity_control_k": 12,
     "hybrid_vector_k": 12,
+    "hybrid_ranked_claim_seeds": 12,
     "hybrid_graph_claim_cap": 80,
     "hybrid_linked_page_cap": 24,
     "community_claim_cap": 80,
@@ -2518,12 +2523,15 @@
   "limitations": [
     "Manual fixture assertions and gold labels; extraction, answer correctness and LLM reasoning are not evaluated.",
     "Relevant entities deliberately occur after position 100: this is a regression stress fixture, not a representative investigation sample.",
+    "The first100 control deliberately excludes claims outside its entity cutoff; it is a modeled candidate-cutoff ablation, not a byte-for-byte replay of old chat formatting.",
     "Claim evidence recall counts an original page containing the claim as available evidence, not proof that a model will interpret it correctly.",
     "Different retrieval budgets are explicit; vector12 controls for the larger initial vector set used by hybrid retrieval.",
     "Deleted points retained in Qdrant are deliberate fault injection: ordinary successful index synchronization prunes them. Active-document vector controls use the same permitted corpus as Graphiti and hybrid.",
     "Hybrid equal-page-budget controls apply after retrieval, preserving complete comparison groups; their latency remains full hybrid retrieval latency.",
     "Community control expands connected components and quotes sources; it is not Microsoft GraphRAG, Leiden clustering or an AI summary.",
     "Latency measures local warmed process retrieval on a tiny dataset; no production network, scale or model-latency claim follows.",
+    "The fixture informed development adjustments; it is not an independent holdout.",
+    "Scoring uses retrieved evidence under a common cap, before the answer model. Production prompt formatting and answer correctness are tested separately.",
     "Temporal corrections and denials are seeded; Graphiti ingestion, identity decisions and contradiction invalidation are not evaluated."
   ],
   "methods": {
@@ -2538,9 +2546,10 @@
         "mean_returned_claims": 6,
         "mean_returned_pages": 6,
         "scope_contaminated_queries": 5,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 3440,
-        "latency_p50_ms": 0.364,
-        "latency_p95_ms": 1.552
+        "latency_p50_ms": 0.325,
+        "latency_p95_ms": 0.412
       },
       "queries": [
         {
@@ -2555,7 +2564,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.374,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.412,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -2593,7 +2604,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.377,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.361,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -2630,7 +2643,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.447,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.317,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -2667,7 +2682,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.334,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.311,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -2704,7 +2721,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.552,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.337,
           "missed_claim_ids": [],
           "claim_ids": [
             "c08",
@@ -2741,7 +2760,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.327,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.326,
           "missed_claim_ids": [],
           "claim_ids": [
             "c09",
@@ -2778,7 +2799,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.346,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.377,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -2815,7 +2838,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.392,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.348,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -2852,7 +2877,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.906,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.313,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -2889,7 +2916,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.393,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.296,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -2926,7 +2955,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.324,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.301,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -2965,7 +2996,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.355,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.324,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3005,7 +3038,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.34,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.298,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3045,7 +3080,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.333,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.33,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -3083,7 +3120,9 @@
           "denial_recall": 0.6666666666666666,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.335,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.325,
           "missed_claim_ids": [
             "c12"
           ],
@@ -3124,7 +3163,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.424,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.299,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -3165,9 +3206,10 @@
         "mean_returned_claims": 6,
         "mean_returned_pages": 6,
         "scope_contaminated_queries": 0,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 3468,
-        "latency_p50_ms": 0.415,
-        "latency_p95_ms": 1.095
+        "latency_p50_ms": 0.378,
+        "latency_p95_ms": 0.566
       },
       "queries": [
         {
@@ -3180,7 +3222,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.415,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.373,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3217,7 +3261,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.394,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.367,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3254,7 +3300,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.095,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.385,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -3291,7 +3339,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.408,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.38,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -3328,7 +3378,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.463,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.566,
           "missed_claim_ids": [],
           "claim_ids": [
             "c08",
@@ -3365,7 +3417,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.392,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.361,
           "missed_claim_ids": [],
           "claim_ids": [
             "c09",
@@ -3402,7 +3456,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.451,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.372,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -3439,7 +3495,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.415,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.375,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -3476,7 +3534,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.624,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.374,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -3513,7 +3573,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.478,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.393,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3550,7 +3612,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.666,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.361,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -3587,7 +3651,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.528,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.387,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3624,7 +3690,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.408,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.497,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3661,7 +3729,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.395,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.382,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -3698,7 +3768,9 @@
           "denial_recall": 0.6666666666666666,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.407,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.377,
           "missed_claim_ids": [
             "c12"
           ],
@@ -3737,7 +3809,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.411,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.378,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -3777,9 +3851,10 @@
         "mean_returned_claims": 12,
         "mean_returned_pages": 12,
         "scope_contaminated_queries": 10,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 6941,
-        "latency_p50_ms": 0.368,
-        "latency_p95_ms": 1.137
+        "latency_p50_ms": 0.337,
+        "latency_p95_ms": 0.432
       },
       "queries": [
         {
@@ -3794,7 +3869,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 1.137,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.336,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3847,7 +3924,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 1.017,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.333,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -3897,7 +3976,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.379,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.337,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -3948,7 +4029,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.345,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.334,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -3998,7 +4081,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.57,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.348,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4048,7 +4133,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.354,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.33,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4098,7 +4185,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.402,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.355,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4147,7 +4236,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.351,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.337,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4196,7 +4287,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.364,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.339,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4247,7 +4340,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.763,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.432,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -4299,7 +4394,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.378,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.325,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4351,7 +4448,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.362,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.341,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -4404,7 +4503,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.372,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.324,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -4456,7 +4557,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.359,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.356,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -4508,7 +4611,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.36,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.328,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -4560,7 +4665,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.362,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.327,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -4614,9 +4721,10 @@
         "mean_returned_claims": 12,
         "mean_returned_pages": 12,
         "scope_contaminated_queries": 0,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 6983,
-        "latency_p50_ms": 0.997,
-        "latency_p95_ms": 1.352
+        "latency_p50_ms": 0.407,
+        "latency_p95_ms": 0.613
       },
       "queries": [
         {
@@ -4629,7 +4737,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.134,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.407,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -4679,7 +4789,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.121,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.397,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -4728,7 +4840,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.352,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.403,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -4777,7 +4891,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.074,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.41,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4826,7 +4942,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.272,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.442,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4876,7 +4994,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.923,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.394,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4926,7 +5046,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.133,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.414,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -4975,7 +5097,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.07,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.417,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -5024,7 +5148,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.425,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.404,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -5073,7 +5199,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.584,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.402,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -5122,7 +5250,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.436,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.468,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -5171,7 +5301,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.153,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.405,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -5221,7 +5353,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.434,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.396,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -5270,7 +5404,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.424,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.416,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -5319,7 +5455,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.425,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.407,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -5368,7 +5506,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.427,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.613,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -5410,7 +5550,7 @@
         }
       ]
     },
-    "legacy_vector_6_first_100_entities": {
+    "modeled_vector_6_first_100_cutoff_control": {
       "aggregate": {
         "claim_evidence_recall": 0.9898,
         "claim_precision": 0.0972,
@@ -5421,9 +5561,10 @@
         "mean_returned_claims": 18,
         "mean_returned_pages": 18,
         "scope_contaminated_queries": 5,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 10898,
-        "latency_p50_ms": 0.455,
-        "latency_p95_ms": 2.688
+        "latency_p50_ms": 0.312,
+        "latency_p95_ms": 0.384
       },
       "queries": [
         {
@@ -5438,7 +5579,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.843,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.299,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -5514,7 +5657,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.801,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.294,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -5589,7 +5734,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.921,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.326,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -5664,7 +5811,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.813,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.318,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -5739,7 +5888,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.342,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.308,
           "missed_claim_ids": [],
           "claim_ids": [
             "c08",
@@ -5814,7 +5965,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.495,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.293,
           "missed_claim_ids": [],
           "claim_ids": [
             "c09",
@@ -5889,7 +6042,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.967,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.312,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -5964,7 +6119,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.688,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.316,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -6039,7 +6196,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.866,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.334,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -6114,7 +6273,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.414,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.312,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -6189,7 +6350,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.334,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.325,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -6266,7 +6429,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.328,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.296,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -6344,7 +6509,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.324,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.291,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -6422,7 +6589,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.323,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 0.314,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -6498,7 +6667,9 @@
           "denial_recall": 0.6666666666666666,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 0.329,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.302,
           "missed_claim_ids": [
             "c12"
           ],
@@ -6577,7 +6748,9 @@
             "deleted"
           ],
           "scope_contaminated": true,
-          "latency_ms": 0.323,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 0.384,
           "missed_claim_ids": [],
           "claim_ids": [
             "c02",
@@ -6648,17 +6821,18 @@
     "hybrid_snapshot": {
       "aggregate": {
         "claim_evidence_recall": 1.0,
-        "claim_precision": 0.1351,
+        "claim_precision": 0.1438,
         "structured_claim_recall": 1.0,
         "page_recall": 1.0,
         "denial_recall": 1.0,
         "quotation_match_rate": 1.0,
-        "mean_returned_claims": 14.06,
-        "mean_returned_pages": 14.06,
+        "mean_returned_claims": 12.62,
+        "mean_returned_pages": 12.62,
         "scope_contaminated_queries": 0,
-        "mean_context_characters": 16346,
-        "latency_p50_ms": 2.12,
-        "latency_p95_ms": 3.883
+        "negative_controls_returning_context": 2,
+        "mean_context_characters": 15273,
+        "latency_p50_ms": 1.639,
+        "latency_p95_ms": 2.148
       },
       "queries": [
         {
@@ -6671,7 +6845,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.82,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.744,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -6732,7 +6908,7 @@
             "graph_claims": 13,
             "graph_entities": 9,
             "linked_sources": 2,
-            "elapsed_ms": 1.8108339863829315,
+            "elapsed_ms": 1.733125012833625,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -6749,7 +6925,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.637,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.841,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -6809,7 +6987,7 @@
             "graph_claims": 13,
             "graph_entities": 8,
             "linked_sources": 2,
-            "elapsed_ms": 2.623958047479391,
+            "elapsed_ms": 1.8308750004507601,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -6826,7 +7004,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.382,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.611,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -6886,7 +7066,7 @@
             "graph_claims": 13,
             "graph_entities": 9,
             "linked_sources": 1,
-            "elapsed_ms": 1.55216600978747,
+            "elapsed_ms": 1.4449580339714885,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -6903,7 +7083,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.319,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.792,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -6933,7 +7115,6 @@
             "c13",
             "c15",
             "c16",
-            "c17",
             "noise-c09",
             "noise-c10"
           ],
@@ -6959,19 +7140,19 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 16986,
+          "context_characters": 16369,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+snapshot",
             "vector_hits": 11,
-            "graph_claims": 14,
+            "graph_claims": 13,
             "graph_entities": 14,
             "linked_sources": 3,
-            "elapsed_ms": 1.9094169838353992,
+            "elapsed_ms": 1.783000014256686,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -6984,7 +7165,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.278,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.486,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -7045,7 +7228,7 @@
             "graph_claims": 13,
             "graph_entities": 12,
             "linked_sources": 1,
-            "elapsed_ms": 3.040833049453795,
+            "elapsed_ms": 1.444334047846496,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7062,7 +7245,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.217,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.592,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -7123,7 +7308,7 @@
             "graph_claims": 13,
             "graph_entities": 12,
             "linked_sources": 1,
-            "elapsed_ms": 2.1829999750480056,
+            "elapsed_ms": 1.5922090387903154,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7134,59 +7319,52 @@
           "id": "q07",
           "category": "temporal_change",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.13333333333333333,
+          "claim_precision": 0.16666666666666666,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.024,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.348,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
             "c04",
-            "c05",
             "c06",
             "c07",
-            "c08",
             "c09",
             "c10",
             "c11",
             "c12",
             "c13",
             "c14",
-            "c15",
             "c16",
             "c17"
           ],
           "structured_claim_ids": [
             "c03",
             "c04",
-            "c05",
             "c06",
             "c07",
-            "c08",
             "c09",
             "c10",
             "c11",
             "c12",
             "c13",
             "c14",
-            "c15",
             "c16",
             "c17"
           ],
           "source_pages": [
             "connessioni:1",
-            "connessioni:2",
-            "connessioni:3",
             "connessioni:4",
             "connessioni:5",
             "connessioni:6",
             "dossier:2",
             "dossier:3",
             "dossier:4",
-            "dossier:5",
             "dossier:6",
             "rettifiche:2",
             "rettifiche:3",
@@ -7198,19 +7376,19 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 18087,
+          "context_characters": 14436,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+snapshot",
             "vector_hits": 12,
-            "graph_claims": 15,
-            "graph_entities": 12,
-            "linked_sources": 3,
-            "elapsed_ms": 1.7615839606150985,
+            "graph_claims": 12,
+            "graph_entities": 10,
+            "linked_sources": 0,
+            "elapsed_ms": 1.338499947451055,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -7223,7 +7401,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.337,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.667,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -7286,7 +7466,7 @@
             "graph_claims": 14,
             "graph_entities": 11,
             "linked_sources": 2,
-            "elapsed_ms": 2.32437503291294,
+            "elapsed_ms": 1.6581250238232315,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7303,7 +7483,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.868,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.148,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -7366,7 +7548,7 @@
             "graph_claims": 14,
             "graph_entities": 11,
             "linked_sources": 2,
-            "elapsed_ms": 1.6814169939607382,
+            "elapsed_ms": 2.13274999987334,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7377,13 +7559,15 @@
           "id": "q10",
           "category": "page_citation",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.034482758620689655,
+          "claim_precision": 0.08333333333333333,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.883,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.749,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -7391,30 +7575,13 @@
             "c03",
             "c04",
             "c05",
-            "c06",
-            "c07",
             "c08",
             "c09",
             "c10",
             "c11",
             "c12",
-            "c13",
             "c14",
-            "c15",
-            "c16",
-            "c17",
-            "noise-c00",
-            "noise-c01",
-            "noise-c02",
-            "noise-c03",
-            "noise-c04",
-            "noise-c05",
-            "noise-c06",
-            "noise-c07",
-            "noise-c08",
-            "noise-c09",
-            "noise-c10",
-            "noise-c11"
+            "c17"
           ],
           "structured_claim_ids": [
             "c01",
@@ -7422,81 +7589,46 @@
             "c03",
             "c04",
             "c05",
-            "c06",
-            "c07",
             "c08",
             "c09",
             "c10",
             "c11",
             "c12",
-            "c13",
             "c14",
-            "c15",
-            "c16",
-            "c17",
-            "noise-c00",
-            "noise-c01",
-            "noise-c02",
-            "noise-c03",
-            "noise-c04",
-            "noise-c05",
-            "noise-c06",
-            "noise-c07",
-            "noise-c08",
-            "noise-c09",
-            "noise-c10",
-            "noise-c11"
+            "c17"
           ],
           "source_pages": [
             "connessioni:1",
             "connessioni:2",
             "connessioni:3",
-            "connessioni:4",
             "connessioni:5",
-            "connessioni:6",
-            "distrattori:1",
-            "distrattori:10",
-            "distrattori:11",
-            "distrattori:12",
-            "distrattori:2",
-            "distrattori:3",
-            "distrattori:4",
-            "distrattori:5",
-            "distrattori:6",
-            "distrattori:7",
-            "distrattori:8",
-            "distrattori:9",
             "dossier:1",
-            "dossier:2",
             "dossier:3",
             "dossier:4",
-            "dossier:5",
             "dossier:6",
             "rettifiche:1",
             "rettifiche:2",
-            "rettifiche:3",
             "rettifiche:4",
             "rettifiche:5"
           ],
           "document_ids": [
             "connessioni",
-            "distrattori",
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 23872,
+          "context_characters": 14441,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+snapshot",
             "vector_hits": 11,
-            "graph_claims": 29,
-            "graph_entities": 36,
-            "linked_sources": 18,
-            "elapsed_ms": 5.69508399348706,
+            "graph_claims": 12,
+            "graph_entities": 9,
+            "linked_sources": 1,
+            "elapsed_ms": 1.7336669843643904,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -7509,7 +7641,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.43,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.323,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -7563,7 +7697,7 @@
             "graph_claims": 11,
             "graph_entities": 9,
             "linked_sources": 0,
-            "elapsed_ms": 1.4220000011846423,
+            "elapsed_ms": 1.216166012454778,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7574,13 +7708,15 @@
           "id": "q12",
           "category": "assertion_vs_event_date",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.07142857142857142,
+          "claim_precision": 0.08333333333333333,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.922,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.67,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -7591,8 +7727,6 @@
             "c06",
             "c07",
             "c10",
-            "c11",
-            "c12",
             "c14",
             "c16",
             "c17",
@@ -7607,8 +7741,6 @@
             "c06",
             "c07",
             "c10",
-            "c11",
-            "c12",
             "c14",
             "c16",
             "c17",
@@ -7623,12 +7755,10 @@
             "dossier:1",
             "dossier:2",
             "dossier:3",
-            "dossier:4",
             "dossier:6",
             "rettifiche:1",
             "rettifiche:2",
-            "rettifiche:3",
-            "rettifiche:5"
+            "rettifiche:3"
           ],
           "document_ids": [
             "connessioni",
@@ -7636,19 +7766,19 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 17069,
+          "context_characters": 14791,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+snapshot",
             "vector_hits": 11,
-            "graph_claims": 14,
+            "graph_claims": 12,
             "graph_entities": 10,
-            "linked_sources": 3,
-            "elapsed_ms": 1.9151250016875565,
+            "linked_sources": 2,
+            "elapsed_ms": 1.6613329644314945,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -7661,7 +7791,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.645,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.441,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -7718,7 +7850,7 @@
             "graph_claims": 12,
             "graph_entities": 7,
             "linked_sources": 1,
-            "elapsed_ms": 2.633500029332936,
+            "elapsed_ms": 1.4037920045666397,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7735,7 +7867,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.979,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.494,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -7792,7 +7926,7 @@
             "graph_claims": 12,
             "graph_entities": 10,
             "linked_sources": 1,
-            "elapsed_ms": 1.7604170134291053,
+            "elapsed_ms": 1.4408749993890524,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7803,13 +7937,15 @@
           "id": "q15",
           "category": "community_broad",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.5384615384615384,
+          "claim_precision": 0.5833333333333334,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.819,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.466,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -7818,7 +7954,6 @@
             "c04",
             "c05",
             "c08",
-            "c09",
             "c10",
             "c11",
             "c12",
@@ -7833,7 +7968,6 @@
             "c04",
             "c05",
             "c08",
-            "c09",
             "c10",
             "c11",
             "c12",
@@ -7853,7 +7987,6 @@
             "dossier:6",
             "rettifiche:1",
             "rettifiche:2",
-            "rettifiche:4",
             "rettifiche:5"
           ],
           "document_ids": [
@@ -7861,19 +7994,19 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 15624,
+          "context_characters": 14421,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+snapshot",
             "vector_hits": 11,
-            "graph_claims": 13,
-            "graph_entities": 9,
-            "linked_sources": 2,
-            "elapsed_ms": 3.26120899990201,
+            "graph_claims": 12,
+            "graph_entities": 8,
+            "linked_sources": 1,
+            "elapsed_ms": 1.4556249952875078,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -7886,7 +8019,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.956,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.666,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -7944,7 +8079,7 @@
             "graph_claims": 12,
             "graph_entities": 9,
             "linked_sources": 1,
-            "elapsed_ms": 1.6096250037662685,
+            "elapsed_ms": 1.8012080108746886,
             "warnings": [
               "neo4j_not_configured_snapshot_fallback"
             ],
@@ -7964,9 +8099,10 @@
         "mean_returned_claims": 6,
         "mean_returned_pages": 6,
         "scope_contaminated_queries": 0,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 3787,
-        "latency_p50_ms": 2.12,
-        "latency_p95_ms": 3.883
+        "latency_p50_ms": 1.639,
+        "latency_p95_ms": 2.148
       },
       "queries": [
         {
@@ -7979,7 +8115,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.82,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.744,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8023,7 +8161,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.637,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.841,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8067,7 +8207,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.382,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.611,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -8111,7 +8253,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.319,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.792,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -8155,7 +8299,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.278,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.486,
           "missed_claim_ids": [],
           "claim_ids": [
             "c08",
@@ -8199,7 +8345,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.217,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.592,
           "missed_claim_ids": [],
           "claim_ids": [
             "c08",
@@ -8243,7 +8391,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.024,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.348,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -8286,7 +8436,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.337,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.667,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -8330,7 +8482,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.868,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.148,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -8374,7 +8528,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.883,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.749,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8418,7 +8574,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.43,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.323,
           "missed_claim_ids": [],
           "claim_ids": [
             "c06",
@@ -8461,7 +8619,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.922,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.67,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8505,7 +8665,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.645,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.441,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8549,7 +8711,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.979,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.494,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -8593,7 +8757,9 @@
           "denial_recall": 0.6666666666666666,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.819,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.466,
           "missed_claim_ids": [
             "c11",
             "c12"
@@ -8640,7 +8806,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.956,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.666,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8687,9 +8855,10 @@
         "mean_returned_claims": 11.81,
         "mean_returned_pages": 11.81,
         "scope_contaminated_queries": 0,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 7452,
-        "latency_p50_ms": 2.12,
-        "latency_p95_ms": 3.883
+        "latency_p50_ms": 1.639,
+        "latency_p95_ms": 2.148
       },
       "queries": [
         {
@@ -8702,7 +8871,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.82,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.744,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8762,7 +8933,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.637,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.841,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -8824,7 +8997,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.382,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.611,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -8883,7 +9058,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.319,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.792,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -8946,7 +9123,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.278,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.486,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -9009,7 +9188,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.217,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.592,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -9072,7 +9253,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.024,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.348,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -9134,7 +9317,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.337,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.667,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -9196,7 +9381,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.868,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.148,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -9258,7 +9445,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.883,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.749,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9320,7 +9509,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.43,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.323,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -9379,7 +9570,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.922,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.67,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9442,7 +9635,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.645,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.441,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9504,7 +9699,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.979,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.494,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9566,7 +9763,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.819,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.466,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9628,7 +9827,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.956,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.666,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9686,17 +9887,18 @@
     "hybrid_plus_extractive_community": {
       "aggregate": {
         "claim_evidence_recall": 1.0,
-        "claim_precision": 0.1027,
+        "claim_precision": 0.1042,
         "structured_claim_recall": 1.0,
         "page_recall": 1.0,
         "denial_recall": 1.0,
         "quotation_match_rate": 1.0,
-        "mean_returned_claims": 18.19,
-        "mean_returned_pages": 18.19,
+        "mean_returned_claims": 17.44,
+        "mean_returned_pages": 17.44,
         "scope_contaminated_queries": 0,
-        "mean_context_characters": 18825,
-        "latency_p50_ms": 2.284,
-        "latency_p95_ms": 4.09
+        "negative_controls_returning_context": 2,
+        "mean_context_characters": 18217,
+        "latency_p50_ms": 1.738,
+        "latency_p95_ms": 2.248
       },
       "queries": [
         {
@@ -9709,7 +9911,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.933,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.854,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9792,7 +9996,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.738,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.941,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9871,7 +10077,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.651,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.712,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -9950,7 +10158,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.435,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.903,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10024,7 +10234,7 @@
           "context_characters": 19996,
           "quotation_match_rate": 1.0,
           "extractive_summary_characters": 3110,
-          "extractive_summary": "[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[noise-c09 | affirmed | distrattori p.10] L archivio fittizio 009 rinvia al fascicolo tecnico 029 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[noise-c10 | affirmed | distrattori p.11] L archivio fittizio 010 rinvia al fascicolo tecnico 030 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma."
+          "extractive_summary": "[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[noise-c09 | affirmed | distrattori p.10] L archivio fittizio 009 rinvia al fascicolo tecnico 029 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[noise-c10 | affirmed | distrattori p.11] L archivio fittizio 010 rinvia al fascicolo tecnico 030 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro."
         },
         {
           "id": "q05",
@@ -10036,7 +10246,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.6,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.59,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10119,7 +10331,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.586,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.695,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10202,7 +10416,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.132,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.46,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10266,10 +10482,10 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 19281,
+          "context_characters": 17534,
           "quotation_match_rate": 1.0,
           "extractive_summary_characters": 2738,
-          "extractive_summary": "[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente."
+          "extractive_summary": "[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante."
         },
         {
           "id": "q08",
@@ -10281,7 +10497,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.442,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.765,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10360,7 +10578,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.973,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.248,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10433,13 +10653,15 @@
           "id": "q10",
           "category": "page_citation",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.034482758620689655,
+          "claim_precision": 0.058823529411764705,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 4.09,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.857,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10458,19 +10680,7 @@
             "c14",
             "c15",
             "c16",
-            "c17",
-            "noise-c00",
-            "noise-c01",
-            "noise-c02",
-            "noise-c03",
-            "noise-c04",
-            "noise-c05",
-            "noise-c06",
-            "noise-c07",
-            "noise-c08",
-            "noise-c09",
-            "noise-c10",
-            "noise-c11"
+            "c17"
           ],
           "structured_claim_ids": [
             "c01",
@@ -10489,19 +10699,7 @@
             "c14",
             "c15",
             "c16",
-            "c17",
-            "noise-c00",
-            "noise-c01",
-            "noise-c02",
-            "noise-c03",
-            "noise-c04",
-            "noise-c05",
-            "noise-c06",
-            "noise-c07",
-            "noise-c08",
-            "noise-c09",
-            "noise-c10",
-            "noise-c11"
+            "c17"
           ],
           "source_pages": [
             "connessioni:1",
@@ -10510,18 +10708,6 @@
             "connessioni:4",
             "connessioni:5",
             "connessioni:6",
-            "distrattori:1",
-            "distrattori:10",
-            "distrattori:11",
-            "distrattori:12",
-            "distrattori:2",
-            "distrattori:3",
-            "distrattori:4",
-            "distrattori:5",
-            "distrattori:6",
-            "distrattori:7",
-            "distrattori:8",
-            "distrattori:9",
             "dossier:1",
             "dossier:2",
             "dossier:3",
@@ -10536,14 +10722,13 @@
           ],
           "document_ids": [
             "connessioni",
-            "distrattori",
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 23872,
+          "context_characters": 17558,
           "quotation_match_rate": 1.0,
-          "extractive_summary_characters": 4961,
-          "extractive_summary": "[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[noise-c00 | affirmed | distrattori p.1] L archivio fittizio 000 rinvia al fascicolo tecnico 020 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c01 | affirmed | distrattori p.2] L archivio fittizio 001 rinvia al fascicolo tecnico 021 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c02 | affirmed | distrattori p.3] L archivio fittizio 002 rinvia al fascicolo tecnico 022 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c03 | affirmed | distrattori p.4] L archivio fittizio 003 rinvia al fascicolo tecnico 023 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c04 | affirmed | distrattori p.5] L archivio fittizio 004 rinvia al fascicolo tecnico 024 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c05 | affirmed | distrattori p.6] L archivio fittizio 005 rinvia al fascicolo tecnico 025 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c06 | affirmed | distrattori p.7] L archivio fittizio 006 rinvia al fascicolo tecnico 026 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c07 | affirmed | distrattori p.8] L archivio fittizio 007 rinvia al fascicolo tecnico 027 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c08 | affirmed | distrattori p.9] L archivio fittizio 008 rinvia al fascicolo tecnico 028 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c09 | affirmed | distrattori p.10] L archivio fittizio 009 rinvia al fascicolo tecnico 029 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c10 | affirmed | distrattori p.11] L archivio fittizio 010 rinvia al fascicolo tecnico 030 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[noise-c11 | affirmed | distrattori p.12] L archivio fittizio 011 rinvia al fascicolo tecnico 031 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda."
+          "extractive_summary_characters": 2738,
+          "extractive_summary": "[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026."
         },
         {
           "id": "q11",
@@ -10555,7 +10740,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.531,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.418,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10634,7 +10821,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.032,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.772,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10702,10 +10891,10 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 19432,
+          "context_characters": 18344,
           "quotation_match_rate": 1.0,
           "extractive_summary_characters": 2923,
-          "extractive_summary": "[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[noise-c07 | affirmed | distrattori p.8] L archivio fittizio 007 rinvia al fascicolo tecnico 027 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante."
+          "extractive_summary": "[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[noise-c07 | affirmed | distrattori p.8] L archivio fittizio 007 rinvia al fascicolo tecnico 027 sulla manutenzione delle scaffalature. Materiale neutro senza connessioni alla vicenda.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante."
         },
         {
           "id": "q13",
@@ -10717,7 +10906,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.8,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.538,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10796,7 +10987,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.087,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 1.593,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10875,7 +11068,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.066,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.561,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -10939,10 +11134,10 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 18136,
+          "context_characters": 17549,
           "quotation_match_rate": 1.0,
           "extractive_summary_characters": 2738,
-          "extractive_summary": "[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante."
+          "extractive_summary": "[c01 | affirmed | dossier p.1] Una segnalazione sostiene che Fondazione Aurora finanzia Rete Passaggio; la fonte considera il finanziamento una ipotesi non verificata.\n[c02 | denied | rettifiche p.1] La rettifica nega che Fondazione Aurora finanzi Rete Passaggio. La smentita contesta il finanziamento indicato nella segnalazione precedente.\n[c03 | affirmed | connessioni p.1] Fondazione Aurora avrebbe trasferito 240 EUR a Rete Passaggio il 21 febbraio 2026, riferimento TX240.\n[c17 | affirmed | dossier p.6] Rete Passaggio offre supporto logistico a Canale Prisma per un incontro pubblico. Non vengono descritti trasferimenti di denaro.\n[c04 | denied | rettifiche p.2] La banca nega il trasferimento TX240 di 240 EUR da Fondazione Aurora a Rete Passaggio del 21 febbraio 2026.\n[c05 | affirmed | connessioni p.2] Un registro diverso riporta un trasferimento TXUSD di 240 USD da Fondazione Aurora a Rete Passaggio il 22 febbraio 2026. La valuta e il riferimento sono diversi da TX240.\n[c10 | affirmed | dossier p.3] Canale Prisma utilizza Laboratorio Prisma come sala di registrazione. Il canale e l edificio del laboratorio sono entita distinte.\n[c11 | affirmed | dossier p.4] Canale Prisma collaborava con Fronte Levante nel periodo dal 2025-01-01 al 2025-12-31.\n[c12 | denied | rettifiche p.5] Canale Prisma dichiara di non collaborare con Fronte Levante dal 2026-01-01. La cessazione successiva non cancella il rapporto storico del 2025.\n[c16 | affirmed | connessioni p.6] Il comunicato di Nodo Argine pubblicato il 4 marzo 2026 riferisce un incontro con Fondazione Aurora avvenuto il 20 febbraio 2026.\n[c14 | affirmed | connessioni p.5] Nodo Argine utilizza Deposito Zefiro per riunioni pubbliche. Zefiro e una localita distinta dal Laboratorio Prisma.\n[c08 | affirmed | connessioni p.3] Mario Rossi, passaporto AA1, lavora per Canale Prisma. Il passaporto distingue questa persona dall omonimo BB2.\n[c06 | affirmed | dossier p.2] Il primo rapporto colloca Evento Faro al 10 febbraio 2026 e associa Fronte Levante all evento senza attribuire responsabilita accertata.\n[c07 | affirmed | rettifiche p.3] La rettifica colloca Evento Faro al giorno 11 febbraio 2026. La data del 10 febbraio nel primo rapporto e indicata come errata; resta solo una associazione da verificare con Fronte Levante.\n[c09 | denied | rettifiche p.4] Mario Rossi, passaporto BB2, nega di lavorare per Canale Prisma. Questa dichiarazione riguarda BB2 e non la persona con passaporto AA1.\n[c13 | affirmed | connessioni p.4] Aldo Serra, alias Falco e passaporto CC3, ha visitato Deposito Zefiro il 18 febbraio 2026.\n[c15 | denied | dossier p.5] Cerchio Grigio opera in autonomia. Questa pagina non documenta alcuna affiliazione di Cerchio Grigio a Fronte Levante."
         },
         {
           "id": "q16",
@@ -10954,7 +11149,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.069,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.784,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -11032,17 +11229,18 @@
     "hybrid_controlled_graph_adapter": {
       "aggregate": {
         "claim_evidence_recall": 1.0,
-        "claim_precision": 0.1351,
+        "claim_precision": 0.1445,
         "structured_claim_recall": 1.0,
         "page_recall": 1.0,
         "denial_recall": 1.0,
         "quotation_match_rate": 1.0,
-        "mean_returned_claims": 14.06,
-        "mean_returned_pages": 14.06,
+        "mean_returned_claims": 12.56,
+        "mean_returned_pages": 12.56,
         "scope_contaminated_queries": 0,
-        "mean_context_characters": 16346,
-        "latency_p50_ms": 3.401,
-        "latency_p95_ms": 6.73
+        "negative_controls_returning_context": 2,
+        "mean_context_characters": 15234,
+        "latency_p50_ms": 2.367,
+        "latency_p95_ms": 2.674
       },
       "queries": [
         {
@@ -11055,7 +11253,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.709,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.449,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -11116,7 +11316,7 @@
             "graph_claims": 13,
             "graph_entities": 9,
             "linked_sources": 2,
-            "elapsed_ms": 2.6118329842574894,
+            "elapsed_ms": 2.246249991003424,
             "warnings": [],
             "truncated": false
           }
@@ -11131,7 +11331,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.052,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.421,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -11191,7 +11393,7 @@
             "graph_claims": 13,
             "graph_entities": 8,
             "linked_sources": 2,
-            "elapsed_ms": 3.0382080003619194,
+            "elapsed_ms": 2.354209020268172,
             "warnings": [],
             "truncated": false
           }
@@ -11206,7 +11408,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.63,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.204,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -11266,7 +11470,7 @@
             "graph_claims": 13,
             "graph_entities": 9,
             "linked_sources": 1,
-            "elapsed_ms": 4.6149169793352485,
+            "elapsed_ms": 2.182625001296401,
             "warnings": [],
             "truncated": false
           }
@@ -11275,13 +11479,15 @@
           "id": "q04",
           "category": "date_correction",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.14285714285714285,
+          "claim_precision": 0.15384615384615385,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.822,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.407,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -11296,8 +11502,7 @@
             "c15",
             "c16",
             "c17",
-            "noise-c09",
-            "noise-c10"
+            "noise-c09"
           ],
           "structured_claim_ids": [
             "c03",
@@ -11312,8 +11517,7 @@
             "c15",
             "c16",
             "c17",
-            "noise-c09",
-            "noise-c10"
+            "noise-c09"
           ],
           "source_pages": [
             "connessioni:1",
@@ -11321,7 +11525,6 @@
             "connessioni:4",
             "connessioni:6",
             "distrattori:10",
-            "distrattori:11",
             "dossier:2",
             "dossier:3",
             "dossier:4",
@@ -11337,17 +11540,17 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 16987,
+          "context_characters": 15756,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+neo4j",
             "vector_hits": 11,
-            "graph_claims": 14,
-            "graph_entities": 14,
-            "linked_sources": 3,
-            "elapsed_ms": 8.684042026288807,
+            "graph_claims": 13,
+            "graph_entities": 12,
+            "linked_sources": 2,
+            "elapsed_ms": 2.390290959738195,
             "warnings": [],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -11360,7 +11563,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.989,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.405,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -11421,7 +11626,7 @@
             "graph_claims": 13,
             "graph_entities": 12,
             "linked_sources": 1,
-            "elapsed_ms": 2.979166980367154,
+            "elapsed_ms": 2.3945830180309713,
             "warnings": [],
             "truncated": false
           }
@@ -11436,7 +11641,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 3.171,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.122,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -11497,7 +11704,7 @@
             "graph_claims": 13,
             "graph_entities": 12,
             "linked_sources": 1,
-            "elapsed_ms": 2.319500024896115,
+            "elapsed_ms": 2.112042042426765,
             "warnings": [],
             "truncated": false
           }
@@ -11506,59 +11713,52 @@
           "id": "q07",
           "category": "temporal_change",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.13333333333333333,
+          "claim_precision": 0.16666666666666666,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 5.003,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.104,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
             "c04",
-            "c05",
             "c06",
             "c07",
-            "c08",
             "c09",
             "c10",
             "c11",
             "c12",
             "c13",
             "c14",
-            "c15",
             "c16",
             "c17"
           ],
           "structured_claim_ids": [
             "c03",
             "c04",
-            "c05",
             "c06",
             "c07",
-            "c08",
             "c09",
             "c10",
             "c11",
             "c12",
             "c13",
             "c14",
-            "c15",
             "c16",
             "c17"
           ],
           "source_pages": [
             "connessioni:1",
-            "connessioni:2",
-            "connessioni:3",
             "connessioni:4",
             "connessioni:5",
             "connessioni:6",
             "dossier:2",
             "dossier:3",
             "dossier:4",
-            "dossier:5",
             "dossier:6",
             "rettifiche:2",
             "rettifiche:3",
@@ -11570,17 +11770,17 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 18087,
+          "context_characters": 14436,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+neo4j",
             "vector_hits": 12,
-            "graph_claims": 15,
-            "graph_entities": 12,
-            "linked_sources": 3,
-            "elapsed_ms": 2.7533750399015844,
+            "graph_claims": 12,
+            "graph_entities": 10,
+            "linked_sources": 0,
+            "elapsed_ms": 2.0955410436727107,
             "warnings": [],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -11593,7 +11793,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 6.73,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.33,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -11656,7 +11858,7 @@
             "graph_claims": 14,
             "graph_entities": 11,
             "linked_sources": 2,
-            "elapsed_ms": 6.698208977468312,
+            "elapsed_ms": 2.3209580103866756,
             "warnings": [],
             "truncated": false
           }
@@ -11671,7 +11873,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.328,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.162,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -11734,7 +11938,7 @@
             "graph_claims": 14,
             "graph_entities": 11,
             "linked_sources": 2,
-            "elapsed_ms": 2.3179169511422515,
+            "elapsed_ms": 2.1526250056922436,
             "warnings": [],
             "truncated": false
           }
@@ -11743,13 +11947,15 @@
           "id": "q10",
           "category": "page_citation",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.034482758620689655,
+          "claim_precision": 0.08333333333333333,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 5.464,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.432,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -11757,30 +11963,13 @@
             "c03",
             "c04",
             "c05",
-            "c06",
-            "c07",
             "c08",
             "c09",
             "c10",
             "c11",
             "c12",
-            "c13",
             "c14",
-            "c15",
-            "c16",
-            "c17",
-            "noise-c00",
-            "noise-c01",
-            "noise-c02",
-            "noise-c03",
-            "noise-c04",
-            "noise-c05",
-            "noise-c06",
-            "noise-c07",
-            "noise-c08",
-            "noise-c09",
-            "noise-c10",
-            "noise-c11"
+            "c17"
           ],
           "structured_claim_ids": [
             "c01",
@@ -11788,79 +11977,44 @@
             "c03",
             "c04",
             "c05",
-            "c06",
-            "c07",
             "c08",
             "c09",
             "c10",
             "c11",
             "c12",
-            "c13",
             "c14",
-            "c15",
-            "c16",
-            "c17",
-            "noise-c00",
-            "noise-c01",
-            "noise-c02",
-            "noise-c03",
-            "noise-c04",
-            "noise-c05",
-            "noise-c06",
-            "noise-c07",
-            "noise-c08",
-            "noise-c09",
-            "noise-c10",
-            "noise-c11"
+            "c17"
           ],
           "source_pages": [
             "connessioni:1",
             "connessioni:2",
             "connessioni:3",
-            "connessioni:4",
             "connessioni:5",
-            "connessioni:6",
-            "distrattori:1",
-            "distrattori:10",
-            "distrattori:11",
-            "distrattori:12",
-            "distrattori:2",
-            "distrattori:3",
-            "distrattori:4",
-            "distrattori:5",
-            "distrattori:6",
-            "distrattori:7",
-            "distrattori:8",
-            "distrattori:9",
             "dossier:1",
-            "dossier:2",
             "dossier:3",
             "dossier:4",
-            "dossier:5",
             "dossier:6",
             "rettifiche:1",
             "rettifiche:2",
-            "rettifiche:3",
             "rettifiche:4",
             "rettifiche:5"
           ],
           "document_ids": [
             "connessioni",
-            "distrattori",
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 23871,
+          "context_characters": 14440,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+neo4j",
             "vector_hits": 11,
-            "graph_claims": 29,
-            "graph_entities": 36,
-            "linked_sources": 18,
-            "elapsed_ms": 4.351833020336926,
+            "graph_claims": 12,
+            "graph_entities": 9,
+            "linked_sources": 1,
+            "elapsed_ms": 2.421957964543253,
             "warnings": [],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -11873,7 +12027,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 1.97,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 1.875,
           "missed_claim_ids": [],
           "claim_ids": [
             "c03",
@@ -11927,7 +12083,7 @@
             "graph_claims": 11,
             "graph_entities": 9,
             "linked_sources": 0,
-            "elapsed_ms": 1.963959017302841,
+            "elapsed_ms": 1.86616595601663,
             "warnings": [],
             "truncated": false
           }
@@ -11936,13 +12092,15 @@
           "id": "q12",
           "category": "assertion_vs_event_date",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.07142857142857142,
+          "claim_precision": 0.08333333333333333,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 4.054,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.473,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -11953,8 +12111,6 @@
             "c06",
             "c07",
             "c10",
-            "c11",
-            "c12",
             "c14",
             "c16",
             "c17",
@@ -11969,8 +12125,6 @@
             "c06",
             "c07",
             "c10",
-            "c11",
-            "c12",
             "c14",
             "c16",
             "c17",
@@ -11985,12 +12139,10 @@
             "dossier:1",
             "dossier:2",
             "dossier:3",
-            "dossier:4",
             "dossier:6",
             "rettifiche:1",
             "rettifiche:2",
-            "rettifiche:3",
-            "rettifiche:5"
+            "rettifiche:3"
           ],
           "document_ids": [
             "connessioni",
@@ -11998,17 +12150,17 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 17069,
+          "context_characters": 14791,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+neo4j",
             "vector_hits": 11,
-            "graph_claims": 14,
+            "graph_claims": 12,
             "graph_entities": 10,
-            "linked_sources": 3,
-            "elapsed_ms": 3.2398750190623105,
+            "linked_sources": 2,
+            "elapsed_ms": 2.423624973744154,
             "warnings": [],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -12021,7 +12173,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 2.65,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 2.159,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -12078,7 +12232,7 @@
             "graph_claims": 12,
             "graph_entities": 7,
             "linked_sources": 1,
-            "elapsed_ms": 2.6427090051583946,
+            "elapsed_ms": 2.041041967459023,
             "warnings": [],
             "truncated": false
           }
@@ -12093,7 +12247,9 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 4.271,
+          "negative_control": true,
+          "negative_control_returns_context": true,
+          "latency_ms": 2.123,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -12150,7 +12306,7 @@
             "graph_claims": 12,
             "graph_entities": 10,
             "linked_sources": 1,
-            "elapsed_ms": 3.7878340226598084,
+            "elapsed_ms": 2.126124978531152,
             "warnings": [],
             "truncated": false
           }
@@ -12159,13 +12315,15 @@
           "id": "q15",
           "category": "community_broad",
           "claim_evidence_recall": 1.0,
-          "claim_precision": 0.5384615384615384,
+          "claim_precision": 0.5833333333333334,
           "structured_claim_recall": 1.0,
           "page_recall": 1.0,
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 4.499,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.674,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -12174,7 +12332,6 @@
             "c04",
             "c05",
             "c08",
-            "c09",
             "c10",
             "c11",
             "c12",
@@ -12189,7 +12346,6 @@
             "c04",
             "c05",
             "c08",
-            "c09",
             "c10",
             "c11",
             "c12",
@@ -12209,7 +12365,6 @@
             "dossier:6",
             "rettifiche:1",
             "rettifiche:2",
-            "rettifiche:4",
             "rettifiche:5"
           ],
           "document_ids": [
@@ -12217,17 +12372,17 @@
             "dossier",
             "rettifiche"
           ],
-          "context_characters": 15624,
+          "context_characters": 14421,
           "quotation_match_rate": 1.0,
           "trace": {
             "strategy": "qdrant+neo4j",
             "vector_hits": 11,
-            "graph_claims": 13,
-            "graph_entities": 9,
-            "linked_sources": 2,
-            "elapsed_ms": 4.4875420280732214,
+            "graph_claims": 12,
+            "graph_entities": 8,
+            "linked_sources": 1,
+            "elapsed_ms": 2.6569580077193677,
             "warnings": [],
-            "truncated": false
+            "truncated": true
           }
         },
         {
@@ -12240,7 +12395,9 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
-          "latency_ms": 4.892,
+          "negative_control": false,
+          "negative_control_returns_context": false,
+          "latency_ms": 2.625,
           "missed_claim_ids": [],
           "claim_ids": [
             "c01",
@@ -12298,7 +12455,7 @@
             "graph_claims": 12,
             "graph_entities": 9,
             "linked_sources": 1,
-            "elapsed_ms": 2.6853750459849834,
+            "elapsed_ms": 2.6113750063814223,
             "warnings": [],
             "truncated": false
           }
@@ -12316,6 +12473,7 @@
         "mean_returned_claims": 5.62,
         "mean_returned_pages": 5.62,
         "scope_contaminated_queries": 0,
+        "negative_controls_returning_context": 2,
         "mean_context_characters": 3558,
         "latency_p50_ms": 4.276,
         "latency_p95_ms": 5.09
@@ -12331,6 +12489,8 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.511,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12375,6 +12535,8 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.299,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12419,6 +12581,8 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.182,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12457,6 +12621,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.173,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12501,6 +12667,8 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.301,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12545,6 +12713,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.252,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12589,6 +12759,8 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.475,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12632,6 +12804,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.242,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12676,6 +12850,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.138,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12710,6 +12886,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 5.003,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12754,6 +12932,8 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.928,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12794,6 +12974,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 5.09,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12837,6 +13019,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": true,
+          "negative_control_returns_context": true,
           "latency_ms": 4.568,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12881,6 +13065,8 @@
           "denial_recall": null,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": true,
+          "negative_control_returns_context": true,
           "latency_ms": 4.245,
           "missed_claim_ids": [],
           "claim_ids": [
@@ -12925,6 +13111,8 @@
           "denial_recall": 0.6666666666666666,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.105,
           "missed_claim_ids": [
             "c11",
@@ -12972,6 +13160,8 @@
           "denial_recall": 1.0,
           "forbidden_documents": [],
           "scope_contaminated": false,
+          "negative_control": false,
+          "negative_control_returns_context": false,
           "latency_ms": 4.101,
           "missed_claim_ids": [],
           "claim_ids": [

@@ -58,6 +58,14 @@ anche il costruttore automatico del grafo: le funzionalità sotto `experimental`
 sono dichiarate instabili dal progetto e sono distinte dai retriever pubblici.
 [Stato del namespace sperimentale](https://github.com/neo4j/neo4j-graphrag-python#-experimental-namespace).
 
+È stato tentato anche un controllo delle query su un container Neo4j 2026.06.0
+temporaneo, usando l'immagine già locale, archivi in memoria e una porta locale
+casuale. Bolt non è diventato disponibile entro il limite di avvio di 90 secondi:
+nessuna query applicativa è stata eseguita e il container è stato rimosso.
+I controlli automatizzati dei repository verificano contratti, parametri e
+gestione degli errori, ma questa sessione non dimostra ancora l'esecuzione delle
+query sul server Neo4j. Il benchmark usa l'adattatore controllato descritto sotto.
+
 ## Graphiti: recupero interessante, semantica da adattare
 
 Graphiti combina ricerca lessicale, vettoriale e percorsi del grafo. Nel codice

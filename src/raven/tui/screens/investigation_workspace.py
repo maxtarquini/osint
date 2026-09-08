@@ -48,6 +48,7 @@ from raven.models import (
     GraphEntity,
     GraphJobStatus,
     GraphRelationship,
+    GraphRunStatus,
     Investigation,
     InvestigationGraph,
     RagIndexProgress,
@@ -71,6 +72,7 @@ from raven.tui.widgets import (
     TopNavigation,
 )
 from raven.tui.widgets.claim_details import ClaimDetails
+from raven.tui.widgets.graph_activity import GraphBuildActivity
 
 if TYPE_CHECKING:
     from raven.app import RavenApp
@@ -323,6 +325,14 @@ class InvestigationWorkspaceScreen(Screen[None]):
                     id="graph-analysis-status",
                     classes="ready",
                 )
+                with Horizontal(id="graph-build-panel", classes="hidden"):
+                    yield GraphBuildActivity(id="graph-build-activity")
+                    with Vertical(id="graph-build-copy"):
+                        yield Static("FROM SOURCES TO CONNECTIONS", id="graph-build-title")
+                        yield Static("Waiting for analysis", id="graph-build-stage", markup=False)
+                        yield Static(
+                            "Every connection leads back to its sources.", id="graph-build-hint"
+                        )
                 with Horizontal(id="graph-body"):
                     with Vertical(id="graph-visual-panel"):
                         with Vertical(id="graph-panel-header"):
@@ -336,7 +346,15 @@ class InvestigationWorkspaceScreen(Screen[None]):
                                 )
                                 yield Button("Affermazioni / copertura", id="open-graph-claims")
                                 yield Static("FIT", id="graph-zoom-label")
-                                yield Button("Fit", id="fit-graph", classes="graph-view-button")
+                                yield Button(
+                                    "Fit",
+                                    id="fit-graph",
+                                    classes="graph-view-button",
+                                    tooltip=(
+                                        "Arrange groups at readable size. "
+                                        "Use arrows to pan large graphs."
+                                    ),
+                                )
                                 yield Button("−", id="zoom-out-graph", classes="graph-view-button")
                                 yield Button("+", id="zoom-in-graph", classes="graph-view-button")
                         yield GraphCanvas(id="graph-canvas")
@@ -444,6 +462,10 @@ class InvestigationWorkspaceScreen(Screen[None]):
     def _set_responsive_layout(self, width: int, height: int) -> None:
         self.set_class(height <= 26, "compact-workspace")
         self.set_class(width < 100, "narrow-workspace")
+        compact_activity = width < 100 or height < 40
+        self.set_class(compact_activity, "compact-graph-activity")
+        for activity in self.query(GraphBuildActivity):
+            activity.set_class(compact_activity, "compact")
         if self.graph is not None:
             for statistics in self.query("#graph-statistics"):
                 statistics.update(self._graph_statistics_label(self.graph, width))
@@ -1362,7 +1384,17 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self.query_one("#analyze-evidence", Button).disabled = active
         cancel = self.query_one("#cancel-graph-analysis", Button)
         cancel.set_class(not active, "hidden")
+        panel = self.query_one("#graph-build-panel")
+        activity = self.query_one("#graph-build-activity", GraphBuildActivity)
+        panel.set_class(not active, "hidden")
         if active:
+            activity.start(job.submitted_at)
+            stage = {
+                GraphRunStatus.QUEUED: "Waiting for the analysis slot",
+                GraphRunStatus.EXTRACTING: "Reading pages · extracting entities and claims",
+                GraphRunStatus.CONSOLIDATING: "Connecting entities · comparing sources",
+            }.get(job.progress.stage, "Preparing the investigation graph")
+            self.query_one("#graph-build-stage", Static).update(stage)
             queue_label = "Queued" if job.status is GraphJobStatus.QUEUED else "Running"
             progress = job.progress
             self._set_graph_status(
@@ -1370,6 +1402,7 @@ class InvestigationWorkspaceScreen(Screen[None]):
                 "running",
             )
             return
+        activity.stop()
         if self._applied_graph_job_id == job.job_id:
             return
         self._applied_graph_job_id = job.job_id
@@ -1583,6 +1616,8 @@ class InvestigationWorkspaceScreen(Screen[None]):
 
     def _finish_graph_operation(self, label: str, state: str) -> None:
         self._graph_busy = False
+        self.query_one("#graph-build-activity", GraphBuildActivity).stop()
+        self.query_one("#graph-build-panel").add_class("hidden")
         self.query_one("#analyze-evidence", Button).disabled = False
         self.query_one("#graph-preparation-mode", Select).disabled = False
         self.query_one("#cancel-graph-analysis", Button).add_class("hidden")

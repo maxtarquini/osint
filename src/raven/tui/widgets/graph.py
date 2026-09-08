@@ -10,24 +10,27 @@ from netext import (
     ArrowTip,
     AutoZoom,
     Box,
+    ConsoleGraph,
     EdgeProperties,
     EdgeRoutingMode,
     EdgeSegmentDrawingMode,
     JustContent,
     NodeProperties,
 )
-from netext.layout_engines import LayoutDirection, SugiyamaLayout
+from netext._core import Point
+from netext.console_graph import RenderState
 from netext.textual_widget.widget import GraphView
 from rich import box
 from rich.segment import Segment
 from rich.style import Style
 from rich.text import Text
 from textual.binding import Binding
-from textual.geometry import Region
+from textual.geometry import Offset, Region
 from textual.message import Message
 from textual.strip import Strip
 
 from raven.models import GraphEntity, GraphRelationship, InvestigationGraph
+from raven.tui.widgets.graph_layout import ComponentGraphLayout
 
 _EMPTY_NODE_ID = "__raven_empty_graph__"
 _MIN_ZOOM = 0.2
@@ -122,13 +125,14 @@ class GraphCanvas(GraphView):
         self._relationships_by_edge: dict[tuple[str, str], tuple[GraphRelationship, ...]] = {}
         self._node_data: dict[Hashable, dict[str, Any]] = {}
         self._edge_data: list[tuple[str, str, dict[str, Any]]] = []
+        self._component_layout = ComponentGraphLayout()
         nodes, edges = self._render_data(graph)
         super().__init__(
             nodes=nodes,
             edges=edges,
             zoom=AutoZoom.FIT_PROPORTIONAL,
             scroll_via_viewport=False,
-            layout_engine=SugiyamaLayout(LayoutDirection.LEFT_RIGHT),
+            layout_engine=self._component_layout,
             **kwargs,
         )
 
@@ -156,6 +160,7 @@ class GraphCanvas(GraphView):
 
     def fit(self) -> None:
         self.zoom = AutoZoom.FIT_PROPORTIONAL
+        self._graph_was_updated()
         self.scroll_home(animate=False)
         self.post_message(self.ViewChanged(self.zoom_label))
 
@@ -238,14 +243,79 @@ class GraphCanvas(GraphView):
         self.select_previous()
 
     def render_line(self, y: int) -> Strip:
-        """Normalize unstyled netext spacer segments for Textual color filters."""
+        """Give netext spacers the canvas background, preserving selected-node colors."""
         line = super().render_line(y)
-        if all(segment.style is not None for segment in line):
-            return line
+        _, _, background, _ = self.colors
+        base = Style(bgcolor=background.rich_color)
+
+        def styled(segment: Segment) -> Segment:
+            style = segment.style or Style()
+            if style.bgcolor is None or style.bgcolor.is_default:
+                style += base
+            return Segment(segment.text, style, segment.control)
+
         return Strip(
-            (Segment(segment.text, segment.style or Style(), segment.control) for segment in line),
+            (styled(segment) for segment in line),
             line.cell_length,
+        ).extend_cell_length(self.size.width, base)
+
+    def on_show(self) -> None:
+        # GraphView defers replacement at zero size, but its resize handler otherwise
+        # reuses the old ConsoleGraph. Rebuild from the latest data when made visible.
+        self._resized()
+
+    def _reset_console_graph(self) -> None:
+        # TabPane may keep zero size, or the previous size, while hidden. Always
+        # replace the renderer's data; visibility events are not a data-sync contract.
+        width = self.size.width or self._console_graph.max_width or 80
+        height = self.size.height or self._console_graph.max_height or 24
+        self._component_layout.available_width = max(1, width - 2)
+        self._console_graph = ConsoleGraph(
+            nodes=self._graph_nodes,
+            edges=self._graph_edges,
+            console=self.app.console,
+            max_width=width,
+            max_height=height,
+            zoom=self.zoom,
+            **self._console_graph_kwargs,
         )
+
+    def _resized(self) -> None:
+        if self.size.width <= 0 or self.size.height <= 0:
+            return
+        self._component_layout.available_width = max(1, self.size.width - 2)
+        self._reset_console_graph()
+        self._graph_was_updated()
+        self.post_message(self.ViewChanged(self.zoom_label))
+
+    def _graph_was_updated(self) -> None:
+        self._console_graph.max_width = self.size.width or self._console_graph.max_width or 80
+        self._console_graph.max_height = self.size.height or self._console_graph.max_height or 24
+        if self.zoom is AutoZoom.FIT_PROPORTIONAL:
+            # Fit must preserve readable labels. Large graphs remain pannable instead
+            # of silently switching every entity to an anonymous dot.
+            self._console_graph.zoom = AutoZoom.FIT_PROPORTIONAL
+            self._console_graph._require(RenderState.NODE_LAYOUT_COMPUTED)
+            zoom_x, zoom_y = self._console_graph._compute_current_zoom()
+            self._console_graph.zoom = max(1.0, min(_MAX_ZOOM, zoom_x, zoom_y))
+        super()._graph_was_updated()
+
+    def watch_zoom(self, old_zoom, new_zoom) -> None:
+        # Textual passes (old, new); GraphView's watcher currently names them in
+        # reverse order and sends the previous zoom to the renderer.
+        if new_zoom != old_zoom:
+            self._console_graph.zoom = new_zoom
+            self._graph_was_updated()
+
+    def widget_to_view_coordinates(self, offset: Offset) -> Point:
+        origin = self._console_graph.full_viewport
+        scroll_x, scroll_y = self.scroll_offset
+        return Point(origin.x + offset.x + scroll_x, origin.y + offset.y + scroll_y)
+
+    def view_to_widget_coordinates(self, point: Point) -> Offset:
+        origin = self._console_graph.full_viewport
+        scroll_x, scroll_y = self.scroll_offset
+        return Offset(point.x - origin.x - scroll_x, point.y - origin.y - scroll_y)
 
     def on_graph_view_element_click(self, event: GraphView.ElementClick) -> None:
         reference = event.element_reference
@@ -401,12 +471,12 @@ class GraphCanvas(GraphView):
             self.call_after_refresh(self._center_entity, self._selected_entity_id)
 
     def _effective_zoom(self) -> float:
+        if isinstance(self.zoom, (int, float)):
+            return float(self.zoom)
         zoom_x = getattr(self._console_graph, "zoom_x", None)
         zoom_y = getattr(self._console_graph, "zoom_y", None)
         if isinstance(zoom_x, (int, float)) and isinstance(zoom_y, (int, float)):
             return max(_MIN_ZOOM, min(float(zoom_x), float(zoom_y)))
-        if isinstance(self.zoom, (int, float)):
-            return float(self.zoom)
         return 1.0
 
     def _center_entity(self, entity_id: str) -> None:

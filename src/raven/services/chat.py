@@ -33,7 +33,13 @@ from raven.models import (
 )
 from raven.models.graph import EvidenceSpan, GraphClaim
 from raven.repositories import KnowledgeBaseStore, MongoRepository, QdrantRepository
-from raven.services.retrieval import HybridInvestigationRetriever, evidence_index_signature
+from raven.services.context_budget import budget_context
+from raven.services.retrieval import (
+    HybridInvestigationRetriever,
+    evidence_index_signature,
+    omitted_comparison_pages,
+    source_intersects,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -217,6 +223,11 @@ class InvestigationChatService:
             raise InvestigationChatError("Write a question before sending")
         if len(question) > 8000:
             raise InvestigationChatError("The chat message cannot exceed 8000 characters")
+        active_settings = getattr(self._ai_node, "settings", None)
+        context_size = getattr(active_settings, "context_size", 32768)
+        system_text = self._system_prompt(investigation)
+        # Reject an impossible request before any indexing or provider work.
+        budget_context(context_size, system_text, question, "", ())
 
         yield ChatStreamEvent(ChatEventKind.STATUS, "Synchronizing investigation KB...")
         index_warning = False
@@ -262,7 +273,9 @@ class InvestigationChatService:
                     "vector_search_unavailable": "Qdrant non disponibile",
                     "foreign_graph_rejected": "grafo di un'altra indagine escluso",
                     "neo4j_snapshot_mismatch": "Neo4j non allineato: uso istantanea salvata",
-                    "neo4j_unavailable_snapshot_fallback": "Neo4j non disponibile: uso istantanea salvata",
+                    "neo4j_unavailable_snapshot_fallback": (
+                        "Neo4j non disponibile: uso istantanea salvata"
+                    ),
                     "neo4j_not_configured_snapshot_fallback": "uso istantanea salvata",
                     "linked_source_fetch_unavailable": "alcune pagine collegate non disponibili",
                     "linked_source_limit": "limite delle pagine collegate raggiunto",
@@ -272,11 +285,19 @@ class InvestigationChatService:
                 retrieval_status += " · contesto parziale: alcuni gruppi omessi"
             yield ChatStreamEvent(ChatEventKind.STATUS, retrieval_status)
             history = self.load_history(investigation.investigation_id)
+            budget = budget_context(context_size, system_text, question, retrieval_status, history)
+            chunks, graph_context = self._bounded_context(
+                chunks, graph, context_size, budget=budget
+            )
+            if graph_context.startswith("{"):
+                context_state = json.loads(graph_context)
+                if context_state.get("truncated") or context_state.get("omitted") is True:
+                    yield ChatStreamEvent(
+                        ChatEventKind.STATUS,
+                        "Contesto limitato: alcuni gruppi di affermazioni sono stati omessi",
+                    )
             user_message = self._message(investigation, ChatRole.USER, question)
             self._repository.save_chat_message(user_message)
-            active_settings = getattr(self._ai_node, "settings", None)
-            context_size = getattr(active_settings, "context_size", 32768)
-            chunks, graph_context = self._bounded_context(chunks, graph, context_size)
             source_labels = self._source_labels(
                 chunks, graph_context, {doc.document_id: doc.original_name for doc in documents}
             )
@@ -298,9 +319,11 @@ class InvestigationChatService:
                 graph,
                 context_size=context_size,
                 retrieval_status=retrieval_status,
+                system_text=system_text,
+                prepared_context=(chunks, graph_context),
             )
             for fragment in self._ai_node.stream_chat(
-                self._system_prompt(investigation),
+                system_text,
                 messages,
                 on_usage=capture_usage,
             ):
@@ -494,8 +517,13 @@ class InvestigationChatService:
             if label not in labels:
                 labels.append(label)
         if graph_context.startswith("{"):
-            for claim in json.loads(graph_context).get("claims", []):
-                for source in claim.get("source_support", []):
+            parsed = json.loads(graph_context)
+            for item in (
+                item
+                for section in ("claims", "entities", "relationships")
+                for item in parsed.get(section, [])
+            ):
+                for source in item.get("source_support", []):
                     name = (document_names or {}).get(source["document_id"], source["document_id"])
                     label = f"[{source['citation']}] {name} · page {source['page']}"
                     if label not in labels:
@@ -503,14 +531,9 @@ class InvestigationChatService:
         return tuple(labels)
 
     @classmethod
-    def _bounded_context(cls, chunks, graph, context_size):
-        character_budget = max(1536, context_size * 3)
-        evidence_budget = max(512, character_budget * 3 // 7)
-        graph_budget = max(512, character_budget * 2 // 7)
-        selected = []
-        for chunk in chunks:
-            if len(cls._evidence_context(tuple((*selected, chunk)))) <= evidence_budget:
-                selected.append(chunk)
+    def _bounded_context(cls, chunks, graph, context_size, *, budget=None):
+        budget = budget or budget_context(context_size, "", "", "", ())
+        evidence_budget, graph_budget = budget.evidence_budget, budget.graph_budget
         # JSON and complete comparison groups must survive the actual conversation budget,
         # not just the stand-alone serializer's default budget.
         if graph is not None and graph_budget < 2000:
@@ -519,6 +542,18 @@ class InvestigationChatService:
             graph_context = cls._graph_context(
                 graph, max_chars=max(2000, min(24_000, graph_budget))
             )
+        included = (
+            {claim["id"] for claim in json.loads(graph_context).get("claims", [])}
+            if graph
+            else set()
+        )
+        blocked = omitted_comparison_pages(graph, included) if graph else set()
+        selected = []
+        for chunk in chunks:
+            if source_intersects(chunk.document_id, chunk.page_number, blocked):
+                continue
+            if len(cls._evidence_context(tuple((*selected, chunk)))) <= evidence_budget:
+                selected.append(chunk)
         return tuple(selected), graph_context
 
     @classmethod
@@ -531,19 +566,14 @@ class InvestigationChatService:
         *,
         context_size: int,
         retrieval_status: str = "",
+        system_text: str = "",
+        prepared_context=None,
     ) -> list[dict[str, str]]:
-        character_budget = max(1536, context_size * 3)
-        history_budget = max(256, character_budget // 6)
-        selected_history: list[dict[str, str]] = []
-        remaining = history_budget
-        for message in reversed(history[-12:]):
-            if remaining <= 0:
-                break
-            content = cls._truncate_context(message.content, remaining)
-            selected_history.append({"role": message.role.value, "content": content})
-            remaining -= len(content)
-        messages = list(reversed(selected_history))
-        chunks, graph_context = cls._bounded_context(chunks, graph, context_size)
+        budget = budget_context(context_size, system_text, question, retrieval_status, history)
+        messages = list(budget.selected_history)
+        chunks, graph_context = prepared_context or cls._bounded_context(
+            chunks, graph, context_size, budget=budget
+        )
         evidence_context = cls._evidence_context(chunks)
         messages.append(
             {
@@ -560,13 +590,6 @@ class InvestigationChatService:
             }
         )
         return messages
-
-    @staticmethod
-    def _truncate_context(text: str, limit: int) -> str:
-        if len(text) <= limit:
-            return text
-        marker = "\n[… context truncated by Raven …]"
-        return text[: max(0, limit - len(marker))].rstrip() + marker
 
     @staticmethod
     def _evidence_context(chunks: tuple[RetrievedEvidenceChunk, ...]) -> str:
@@ -598,7 +621,12 @@ class InvestigationChatService:
         citations = {
             span: f"G{index}"
             for index, span in enumerate(
-                dict.fromkeys(span for claim in graph.claims for span in claim.support), 1
+                dict.fromkeys(
+                    span
+                    for item in (*graph.claims, *graph.entities, *graph.relationships)
+                    for span in item.support
+                ),
+                1,
             )
         }
 
@@ -719,6 +747,7 @@ class InvestigationChatService:
                 del context["claim_links"][link_count:]
             else:
                 included_claims.update(group)
+        blocked = omitted_comparison_pages(graph, included_claims)
         entities = [
             {
                 "id": entity.entity_id,
@@ -728,7 +757,13 @@ class InvestigationChatService:
                 "evidence_ids": list(entity.evidence_ids),
                 "confidence": entity.confidence,
                 "status": entity.status.value,
-                "source_support": source_support(entity.support[:4]),
+                "source_support": source_support(
+                    tuple(
+                        span
+                        for span in entity.support[:4]
+                        if not source_intersects(span.evidence_id, span.page_number, blocked)
+                    )
+                ),
                 "resolution_notes": entity.resolution_notes,
             }
             for entity in graph.entities[:100]
@@ -750,7 +785,11 @@ class InvestigationChatService:
                 "legacy_without_claims": not bool(relationship.claim_ids),
             }
             for relationship in graph.relationships[:160]
-            if not relationship.claim_ids or set(relationship.claim_ids) <= included_claims
+            if (not relationship.claim_ids or set(relationship.claim_ids) <= included_claims)
+            and not any(
+                source_intersects(s.evidence_id, s.page_number, blocked)
+                for s in relationship.support
+            )
         ]
         for relationship in relationships:
             append_with_budget("relationships", relationship)

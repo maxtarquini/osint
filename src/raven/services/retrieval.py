@@ -118,6 +118,26 @@ def evidence_index_signature(document: EvidenceDocument, language: str) -> str:
     return f"{document.sha256}:{language}:pages-v2"
 
 
+def omitted_comparison_pages(graph, included_claim_ids):
+    """Pages whose linked assertions cannot be represented as a complete comparison."""
+    linked = {
+        key for link in graph.claim_links for key in (link.source_claim_id, link.target_claim_id)
+    }
+    return {
+        (span.evidence_id, span.page_number)
+        for claim in graph.claims
+        if claim.claim_id in linked and claim.claim_id not in included_claim_ids
+        for span in claim.support
+    }
+
+
+def source_intersects(document_id, page_number, blocked):
+    return any(
+        document_id == doc and (page_number is None or page is None or page_number == page)
+        for doc, page in blocked
+    )
+
+
 class HybridInvestigationRetriever:
     """Neo4j locates candidates; the current Mongo snapshot owns their complete meaning."""
 
@@ -199,7 +219,34 @@ class HybridInvestigationRetriever:
         else:
             warnings.append("neo4j_not_configured_snapshot_fallback")
         self._check(cancelled)
+        complete_graph = graph
         graph, truncated = self._select_graph(graph, terms, source_pages, selection, cancelled)
+        blocked = omitted_comparison_pages(complete_graph, {c.claim_id for c in graph.claims})
+        chunks = tuple(
+            c for c in chunks if not source_intersects(c.document_id, c.page_number, blocked)
+        )
+        # Do not reintroduce one side through legacy entity or relationship quotations.
+        graph = replace(
+            graph,
+            entities=tuple(
+                replace(
+                    entity,
+                    support=tuple(
+                        span
+                        for span in entity.support
+                        if not source_intersects(span.evidence_id, span.page_number, blocked)
+                    ),
+                )
+                for entity in graph.entities
+            ),
+            relationships=tuple(
+                edge
+                for edge in graph.relationships
+                if not any(
+                    source_intersects(s.evidence_id, s.page_number, blocked) for s in edge.support
+                )
+            ),
+        )
 
         # Fetch the original pages behind counterclaims even when their vector rank is low.
         requested = tuple(
@@ -222,6 +269,7 @@ class HybridInvestigationRetriever:
                     if (
                         self._valid_chunk(chunk, case, active)
                         and (chunk.document_id, chunk.page_number) in missing
+                        and not source_intersects(chunk.document_id, chunk.page_number, blocked)
                     )
                 )
             except InvestigationChatCancelledError:
@@ -390,7 +438,9 @@ class HybridInvestigationRetriever:
             neighbors[link.target_claim_id].add(link.source_claim_id)
         selected_claims, visited = set(), set()
         truncated = bool(selection and selection.truncated)
-        for claim_id in sorted(fused, key=lambda key: -fused[key]):
+        seeds = sorted(fused, key=lambda key: -fused[key])[:12]
+        truncated = truncated or len(fused) > len(seeds)
+        for claim_id in seeds:
             cls._check(cancelled)
             if claim_id in visited:
                 continue

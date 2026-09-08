@@ -102,9 +102,14 @@ Evidence-grounded pipeline derived from Hudiny's Link Intelligence flow:
 
 The graph view uses `netext`'s native Textual widget with a deterministic left-to-right
 Sugiyama layout. It supports mouse selection, arrow-key panning, `J/K` entity navigation,
-`+/-` zoom, `0`/`Fit` auto-fit, level-of-detail rendering for dense graphs, entity search,
+`+/-` zoom, `0`/`Fit` readable fit, level-of-detail rendering when zooming out, entity search,
 directed relationship labels, and an Evidence/provenance detail panel. Multiple relationships
 between the same pair are aggregated visually without discarding their underlying records.
+
+Disconnected components are arranged in rows while preserving the directed layout inside each
+group. `Fit` keeps entity names readable; larger graphs extend into the scrollable area rather
+than collapsing into anonymous dots. Use the arrows to pan, entity search or `J/K` to reach a
+node, and `+/-` for a manual overview. No relationships are added by this visual arrangement.
 
 If the AI node is unavailable, deterministic observables are still produced. Agent failures never
 turn unsupported statements into verified facts: extracted graph items are stored as `PROPOSED`.
@@ -124,16 +129,18 @@ facts.
 
 Every workspace has a `Chat` tab scoped to that investigation. On the first question, or with
 `Index RAG`, Raven extracts the immutable Evidence copies, creates overlapping paragraph-aware
-chunks, normalizes them into the investigation's reference language when one is selected, obtains
+chunks within each physical page, preserves the original text, normalizes a copy into the
+investigation's reference language when one is selected, obtains
 embeddings from the configured embedding model, and idempotently upserts them to Qdrant. A
 mandatory `investigation_id` payload filter isolates retrieval between cases. Documents are
-reindexed when either their SHA-256 or normalization language changes; deleted documents have
+reindexed when their SHA-256, normalization language, or page-index format changes; deleted documents have
 their vectors removed.
 
 Each chat request receives:
 
 - the most relevant Evidence chunks with stable `[E1]`, `[E2]`, … citation labels;
-- the latest graph snapshot, including entity/relationship provenance, confidence, and status;
+- a question-directed subset of the current graph, including complete comparison groups,
+  entity/relationship provenance, confidence, and status;
 - the investigation brief, questions, language, and dictionary domain;
 - up to twelve recent turns from the MongoDB-backed conversation history.
 
@@ -410,6 +417,12 @@ da qui puoi aprire il catalogo del documento. `Invio` porta al dettaglio, `/` al
 torna al grafo. I grafi precedenti rimangono consultabili e richiedono una nuova analisi per
 popolare queste informazioni.
 
+Durante la generazione compare una piccola rete animata con il tempo trascorso. La fase e il
+conteggio dei documenti rimangono visibili accanto ai controlli; nei terminali piccoli
+l'animazione occupa una sola riga. Il movimento indica attività, mentre l'avanzamento è quello
+comunicato dall'elaborazione. L'animazione si arresta alla conclusione, all'errore o
+all'annullamento e lascia disponibile il grafo precedente durante il lavoro.
+
 Il catalogo suggerisce candidati e priorità, dopo il controllo di indagine, documento, lingua,
 dizionario e impronta del testo della pagina. Non esclude pagine: anche quelle senza scheda,
 con catalogo obsoleto o catalogazione fallita vengono lette. Le sintesi dei cataloghi non
@@ -450,3 +463,43 @@ Questa fase non decide automaticamente rettifiche o ritrattazioni. Predicati o q
 formulati diversamente possono richiedere un confronto manuale; i riferimenti che dipendono da
 più pagine richiedono riesame delle fonti. L'esecuzione delle skill configurabili e le future
 orchestrazioni restano distinte da questo flusso di analisi.
+
+## Recupero combinato di pagine e grafo
+
+La scheda **Chat** combina automaticamente Qdrant e Neo4j. Qdrant trova i passaggi pertinenti;
+Neo4j individua entità, affermazioni e confronti collegati nella stessa indagine e nella stessa
+versione del grafo. Raven ricostruisce il contenuto dall'istantanea autorevole salvata in
+MongoDB e recupera anche le pagine delle smentite collegate. Il pannello di stato mostra la
+strategia utilizzata, il numero di passaggi e affermazioni e gli eventuali limiti del recupero.
+
+```mermaid
+flowchart LR
+    D[Domanda] --> Q[Qdrant: passaggi e pagine]
+    Q --> N[Neo4j: affermazioni e confronti]
+    N --> M[Istantanea corrente: contenuto e provenienza]
+    M --> P[Fonti originali e gruppi di confronto completi]
+    P --> R[Risposta con citazioni]
+```
+
+Le citazioni **[E1]** identificano i passaggi documentali e **[G1]** le fonti riportate dal grafo.
+L'elenco delle fonti mostra nome del documento e pagina, quando disponibili. Il testo originale
+è distinto dalla copia tradotta usata per la ricerca. I vecchi indici vengono aggiornati al
+formato per pagina alla successiva sincronizzazione; i cataloghi restano consultabili.
+
+> **Un confronto deve mantenere entrambe le fonti.** Se il gruppo non entra nel contesto,
+> Raven lo omette interamente e impedisce che una sua sola metà rientri attraverso i passaggi
+> vettoriali o le citazioni delle entità. Il budget considera anche domanda, istruzioni e
+> cronologia; usa una stima in caratteri e riserva spazio alla risposta. Non equivale al
+> conteggio esatto dei token del modello.
+
+Se Neo4j è indisponibile o non allineato, Raven cerca nell'istantanea corrente e lo segnala.
+Se Qdrant o gli embedding non sono disponibili, prova il contesto del grafo. Documenti rimossi,
+risultati di altre indagini e indici con impronta obsoleta vengono esclusi. Una modalità
+degradata può fornire meno fonti: l'assenza di un risultato non dimostra l'assenza del fatto.
+
+Il [confronto riproducibile RX41](docs/research/retrieval-benchmark.md) misura il recupero su
+un corpus sintetico con domande, riferimenti attesi, negazioni e documenti estranei.
+Graphiti è stato eseguito in un ambiente isolato su affermazioni inserite manualmente;
+la variante delle comunità usa estratti collegati alle fonti. Entrambe rimangono sperimentali
+e non sono attivate nella chat. La [valutazione delle alternative](docs/research/graph-retrieval-options.md)
+spiega risultati, licenze, limiti e condizioni per una prova successiva con modello e PDF.

@@ -3,6 +3,8 @@
 import json
 from dataclasses import replace
 from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 from test_chat import (
@@ -14,11 +16,18 @@ from test_chat import (
     _investigation,
 )
 
-from raven.exceptions import InvestigationChatCancelledError
-from raven.models import GraphEntity, InvestigationGraph, RetrievedEvidenceChunk
+from raven.exceptions import InvestigationChatCancelledError, InvestigationChatError
+from raven.models import (
+    ChatMessage,
+    ChatRole,
+    GraphEntity,
+    InvestigationGraph,
+    RetrievedEvidenceChunk,
+)
 from raven.models.graph import ClaimLink, EvidenceSpan, GraphClaim
 from raven.models.retrieval import GraphRetrievalSelection
 from raven.services.chat import InvestigationChatService
+from raven.services.context_budget import MESSAGE_ENVELOPE_CHARS, budget_context
 from raven.services.retrieval import HybridInvestigationRetriever, evidence_index_signature
 
 
@@ -188,16 +197,28 @@ def test_question_finds_entity_after_first_hundred_without_loading_unrelated_gra
     assert {entity.entity_id for entity in result.graph.entities} == {"acme", "beta"}
 
 
-def test_oversized_comparison_component_is_omitted_whole():
+@pytest.mark.parametrize("vector_page", [1, None])
+def test_oversized_comparison_component_cannot_leak_through_positive_vector_or_entity(vector_page):
     case, docs, graph, chunk = scenario()
     claims = tuple(replace(graph.claims[index % 2], claim_id=str(index)) for index in range(81))
     links = tuple(
         ClaimLink(str(index), str(index), str(index + 1), "contradicts", "Compare")
         for index in range(80)
     )
-    graph = replace(graph, claims=claims, claim_links=links, relationships=())
-    result = HybridInvestigationRetriever(Vectors()).retrieve(case, docs, graph, "Acme", None)
+    graph = replace(
+        graph,
+        claims=claims,
+        claim_links=links,
+        entities=(replace(graph.entities[0], support=graph.claims[0].support), graph.entities[1]),
+        relationships=(replace(graph.relationships[0], claim_ids=()),),
+    )
+    result = HybridInvestigationRetriever(
+        Vectors((replace(chunk, page_number=vector_page),))
+    ).retrieve(case, docs, graph, "Acme", (0.5,))
     assert result.graph.claims == () and result.graph.claim_links == ()
+    assert result.chunks == ()
+    assert all(not entity.support for entity in result.graph.entities)
+    assert result.graph.relationships == ()
     assert result.trace.truncated
 
 
@@ -228,10 +249,131 @@ def test_actual_chat_budget_never_slices_claim_json_or_leaves_half_conflict():
     payload = messages[-1]["content"].split("CURRENT INVESTIGATION GRAPH\n", 1)[1]
     parsed = json.loads(payload)
     assert {claim["id"] for claim in parsed["claims"]} in (set(), {"yes", "no"})
-    small = InvestigationChatService._conversation_messages(
-        (), "Acme?", (chunk,), graph, context_size=512
+    with pytest.raises(InvestigationChatError, match="Riduci la domanda o aumenta il contesto"):
+        InvestigationChatService._conversation_messages(
+            (), "Acme?", (chunk,), graph, context_size=512
+        )
+
+
+def test_graph_budget_omission_blocks_positive_text_in_every_source_route():
+    case, docs, graph, chunk = scenario()
+    positive = "POSITIVE ASSERTION: Acme controls Beta."
+    negative = "NEGATIVE ASSERTION: Acme does not control Beta."
+    yes = replace(
+        graph.claims[0],
+        support=(replace(graph.claims[0].support[0], quote=positive + " Detail." * 240),),
     )
-    assert json.loads(small[-1]["content"].split("CURRENT INVESTIGATION GRAPH\n", 1)[1])["omitted"]
+    no = replace(
+        graph.claims[1],
+        support=(replace(graph.claims[1].support[0], quote=negative + " Denial." * 240),),
+    )
+    brief_support = (replace(yes.support[0], quote=positive),)
+    graph = replace(
+        graph,
+        claims=(yes, no),
+        entities=(replace(graph.entities[0], support=brief_support), graph.entities[1]),
+        relationships=(replace(graph.relationships[0], support=brief_support, claim_ids=()),),
+    )
+    affirmative = replace(chunk, text=yes.support[0].quote, original_text=yes.support[0].quote)
+    denial = replace(
+        chunk,
+        document_id=docs[1].document_id,
+        document_name=docs[1].original_name,
+        page_number=2,
+        text=no.support[0].quote,
+        original_text=no.support[0].quote,
+    )
+    independent = replace(
+        chunk, page_number=3, text="Independent page remains available.", original_text=None
+    )
+    budget = budget_context(3000, "", "Acme?", "", ())
+    # The positive vector excerpt fits alone: its exclusion must follow the omitted
+    # comparison group, rather than merely failing the evidence length limit.
+    assert len(InvestigationChatService._evidence_context((affirmative,))) < budget.evidence_budget
+    messages = InvestigationChatService._conversation_messages(
+        (), "Acme?", (affirmative, denial, independent), graph, context_size=3000
+    )
+    content = messages[-1]["content"]
+    parsed = json.loads(content.split("CURRENT INVESTIGATION GRAPH\n", 1)[1])
+    assert parsed["claims"] == [] and parsed["claim_links"] == []
+    assert parsed["omitted"]["claims"] == 2
+    assert parsed["relationships"] == []
+    assert parsed["entities"] and all(not entity["source_support"] for entity in parsed["entities"])
+    assert positive not in content and negative not in content
+    assert "Independent page remains available." in content
+
+
+def test_complete_chat_input_including_system_question_status_and_history_fits_budget():
+    case, docs, graph, chunk = scenario()
+    system = InvestigationChatService._system_prompt(case)
+    question = "Who controls Beta? " * 16
+    status = "Retrieval was limited; consult both source documents."
+    history = tuple(
+        ChatMessage(
+            str(index),
+            case.investigation_id,
+            ChatRole.USER if index % 2 == 0 else ChatRole.ASSISTANT,
+            f"Earlier message {index}. " + "Context. " * 40,
+            datetime.now(UTC),
+        )
+        for index in range(20)
+    )
+    messages = InvestigationChatService._conversation_messages(
+        history,
+        question,
+        (chunk,),
+        graph,
+        context_size=4096,
+        retrieval_status=status,
+        system_text=system,
+    )
+    input_chars = (
+        len(system)
+        + MESSAGE_ENVELOPE_CHARS
+        + sum(len(message["content"]) + MESSAGE_ENVELOPE_CHARS for message in messages)
+    )
+    assert input_chars <= (4096 * 3 // 4) * 3
+    assert 0 < len(messages) - 1 < len(history)
+    assert [message["content"] for message in messages[:-1]] == [
+        message.content for message in history[-(len(messages) - 1) :]
+    ]
+    assert messages[-1]["content"].startswith("QUESTION\n" + question + "\n\n")
+    assert messages[-1]["content"].endswith("RETRIEVAL STATUS\n" + status)
+
+
+def test_complete_chat_input_rejects_oversized_question_instead_of_truncating_it():
+    case, docs, graph, chunk = scenario()
+    with pytest.raises(InvestigationChatError, match="Riduci la domanda o aumenta il contesto"):
+        InvestigationChatService._conversation_messages(
+            (),
+            "Who controls Beta? " * 500,
+            (chunk,),
+            graph,
+            context_size=3000,
+            system_text=InvestigationChatService._system_prompt(case),
+        )
+
+
+@pytest.mark.parametrize("context_size,question", [(512, "Acme?"), (3000, "Acme? " * 1000)])
+def test_stream_rejects_impossible_input_before_indexing_model_calls_or_saving(
+    context_size, question
+):
+    case, docs, graph, chunk = scenario()
+    repository = FakeRepository()
+    ai = FakeAiNode()
+    ai.settings = SimpleNamespace(context_size=context_size)
+    ai.embed = Mock()
+    ai.stream_chat = Mock()
+    service = InvestigationChatService(repository, FakeVectors(), ai, FakeKnowledgeBase())
+    service.index_knowledge_base = Mock()
+
+    with pytest.raises(InvestigationChatError, match="Riduci la domanda o aumenta il contesto"):
+        tuple(service.stream_answer(case, docs, graph, question))
+
+    service.index_knowledge_base.assert_not_called()
+    ai.embed.assert_not_called()
+    ai.stream_chat.assert_not_called()
+    assert repository.messages == []
 
 
 def test_indexing_retains_physical_pages_and_original_text_when_translated():
@@ -268,3 +410,28 @@ def test_chat_citations_name_graph_sources_and_keep_original_quotation():
     text = InvestigationChatService._evidence_context((translated,))
     assert "ORIGINAL SOURCE\nTesto originale." in text
     assert "may be translated" in text
+
+
+def test_legacy_entity_and_relationship_support_receive_resolvable_graph_citations():
+    case, docs, graph, chunk = scenario()
+    identity_source = EvidenceSpan(docs[0].document_id, "Acme is an organization.", 1, True)
+    edge_source = EvidenceSpan(docs[1].document_id, "Acme controls Beta.", 2, True)
+    graph = replace(
+        graph,
+        claims=(),
+        claim_links=(),
+        entities=(replace(graph.entities[0], support=(identity_source,)), graph.entities[1]),
+        relationships=(replace(graph.relationships[0], support=(edge_source,), claim_ids=()),),
+    )
+    context = InvestigationChatService._graph_context(graph)
+    parsed = json.loads(context)
+    assert parsed["legacy_without_claims"] and parsed["claims"] == []
+    entity_source = parsed["entities"][0]["source_support"][0]
+    relationship_source = parsed["relationships"][0]["source_support"][0]
+    assert entity_source["citation"] == "G1" and relationship_source["citation"] == "G2"
+    assert entity_source["quote"] == identity_source.quote
+    assert relationship_source["quote"] == edge_source.quote
+    labels = InvestigationChatService._source_labels(
+        (), context, {doc.document_id: doc.original_name for doc in docs}
+    )
+    assert labels == ("[G1] report.pdf · page 1", "[G2] denial.pdf · page 2")
