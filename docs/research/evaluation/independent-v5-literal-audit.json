@@ -1,0 +1,286 @@
+{
+  "interpretation": "Literal interval checks and descriptive counts, not semantic accuracy.",
+  "active_preserved": true,
+  "runs": [
+    {
+      "method": "document_claims",
+      "run_id": "f906ab84-39ae-4ed7-a8c3-292eebc6ba29",
+      "manifest": {
+        "schema_version": 2,
+        "method_id": "document_claims",
+        "method_version": "4",
+        "prompt_version": "raven-integrity-v5",
+        "documents": [
+          [
+            "dfbce37a-9bc7-42e6-bb20-fe29df0e1fe1",
+            "d0f22cbe21bd556adc3f77197c0ef54bcb7c1ceda30d9a331f1a77a181475c54"
+          ],
+          [
+            "977e60f5-71a3-4c02-ae34-882b0fa4711e",
+            "17ed507fa2b4a91e0eb02cc8a2c57611cdc0193251a5acdaa54d185018c001ad"
+          ]
+        ],
+        "catalogs": [
+          [
+            "dfbce37a-9bc7-42e6-bb20-fe29df0e1fe1",
+            "missing"
+          ],
+          [
+            "977e60f5-71a3-4c02-ae34-882b0fa4711e",
+            "missing"
+          ]
+        ],
+        "dictionary_hash": "c4a4876b18d8b33d2df6c8de2eae24d85550bb7b2eaa4c781cbec772674f7650",
+        "dictionary_versions": [
+          "CORE@2.0.0",
+          "GENERAL_OSINT@1.0.0"
+        ],
+        "model": "gpt-oss-120b",
+        "configuration": "{\"comparisons\": \"raven-comparison-v3\", \"context_size\": 128000, \"effective_thinking\": \"medium\", \"events\": \"raven-event-records-v1\", \"extraction_basis\": \"original\", \"language\": \"original\", \"max_output_tokens\": 8192, \"model\": \"gpt-oss-120b\", \"predicates\": \"raven-predicates-v1\", \"preparation_requested\": \"full_text\", \"provider\": \"llama.cpp\", \"random_seed\": 2345467, \"repair_budget\": 1, \"request_timeout\": 120, \"semantic_pair_retrieval\": \"raven-source-candidates-v1\", \"thinking\": \"high\", \"timeout_seconds\": 1200.0, \"top_k\": 40}"
+      },
+      "document_hashes_match": true,
+      "dictionary_snapshot_hash_matches": null,
+      "elapsed_seconds": 244.23791112500476,
+      "entities": 13,
+      "claims": 6,
+      "relationships": 2,
+      "comparisons": 0,
+      "events": 2,
+      "model_semantic_states": {
+        "supported": 4,
+        "uncertain": 1,
+        "unsupported": 1
+      },
+      "claim_kinds": {
+        "relation": 4,
+        "corrects": 1,
+        "event": 1
+      },
+      "epistemic_states": {
+        "reported": 5,
+        "not_documented": 1
+      },
+      "polarity": {
+        "affirmed": 5,
+        "denied": 1
+      },
+      "page_states": {
+        "partial": 2
+      },
+      "source_ids_missing": 4,
+      "copied_source_records": 0,
+      "literal_verification": {
+        "entities": {
+          "spans": 15,
+          "exact_original_intervals": 15,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "claims": {
+          "spans": 6,
+          "exact_original_intervals": 6,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "relationships": {
+          "spans": 2,
+          "exact_original_intervals": 2,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "events": {
+          "spans": 2,
+          "exact_original_intervals": 2,
+          "items_without_support": 0,
+          "failures": []
+        }
+      }
+    },
+    {
+      "method": "cross_source_review",
+      "run_id": "061d3ac4-4930-4103-b4ff-51e4287a2807",
+      "manifest": {
+        "schema_version": 2,
+        "method_id": "cross_source_review",
+        "method_version": "4",
+        "prompt_version": "raven-integrity-v5",
+        "documents": [
+          [
+            "dfbce37a-9bc7-42e6-bb20-fe29df0e1fe1",
+            "d0f22cbe21bd556adc3f77197c0ef54bcb7c1ceda30d9a331f1a77a181475c54"
+          ],
+          [
+            "977e60f5-71a3-4c02-ae34-882b0fa4711e",
+            "17ed507fa2b4a91e0eb02cc8a2c57611cdc0193251a5acdaa54d185018c001ad"
+          ]
+        ],
+        "catalogs": [
+          [
+            "dfbce37a-9bc7-42e6-bb20-fe29df0e1fe1",
+            "missing"
+          ],
+          [
+            "977e60f5-71a3-4c02-ae34-882b0fa4711e",
+            "missing"
+          ]
+        ],
+        "dictionary_hash": "c4a4876b18d8b33d2df6c8de2eae24d85550bb7b2eaa4c781cbec772674f7650",
+        "dictionary_versions": [
+          "CORE@2.0.0",
+          "GENERAL_OSINT@1.0.0"
+        ],
+        "model": "gpt-oss-120b",
+        "configuration": "{\"comparisons\": \"raven-comparison-v3\", \"context_size\": 128000, \"effective_thinking\": \"medium\", \"events\": \"raven-event-records-v1\", \"extraction_basis\": \"original\", \"language\": \"original\", \"max_output_tokens\": 8192, \"model\": \"gpt-oss-120b\", \"predicates\": \"raven-predicates-v1\", \"preparation_requested\": \"full_text\", \"provider\": \"llama.cpp\", \"random_seed\": 2345467, \"repair_budget\": 1, \"request_timeout\": 120, \"semantic_pair_retrieval\": \"raven-source-candidates-v1\", \"thinking\": \"high\", \"timeout_seconds\": 1200.0, \"top_k\": 40}"
+      },
+      "document_hashes_match": true,
+      "dictionary_snapshot_hash_matches": null,
+      "elapsed_seconds": 319.6042575419997,
+      "entities": 12,
+      "claims": 7,
+      "relationships": 4,
+      "comparisons": 3,
+      "events": 1,
+      "model_semantic_states": {
+        "supported": 7
+      },
+      "claim_kinds": {
+        "relation": 4,
+        "corrects": 1,
+        "event": 1,
+        "ceases": 1
+      },
+      "epistemic_states": {
+        "reported": 7
+      },
+      "polarity": {
+        "affirmed": 7
+      },
+      "page_states": {
+        "partial": 2
+      },
+      "source_ids_missing": 7,
+      "copied_source_records": 0,
+      "literal_verification": {
+        "entities": {
+          "spans": 16,
+          "exact_original_intervals": 16,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "claims": {
+          "spans": 7,
+          "exact_original_intervals": 7,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "relationships": {
+          "spans": 4,
+          "exact_original_intervals": 4,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "events": {
+          "spans": 1,
+          "exact_original_intervals": 1,
+          "items_without_support": 0,
+          "failures": []
+        }
+      }
+    },
+    {
+      "method": "event_temporal",
+      "run_id": "24743adf-49d7-4d5c-85c5-55bb2a082892",
+      "manifest": {
+        "schema_version": 2,
+        "method_id": "event_temporal",
+        "method_version": "4",
+        "prompt_version": "raven-integrity-v5",
+        "documents": [
+          [
+            "dfbce37a-9bc7-42e6-bb20-fe29df0e1fe1",
+            "d0f22cbe21bd556adc3f77197c0ef54bcb7c1ceda30d9a331f1a77a181475c54"
+          ],
+          [
+            "977e60f5-71a3-4c02-ae34-882b0fa4711e",
+            "17ed507fa2b4a91e0eb02cc8a2c57611cdc0193251a5acdaa54d185018c001ad"
+          ]
+        ],
+        "catalogs": [
+          [
+            "dfbce37a-9bc7-42e6-bb20-fe29df0e1fe1",
+            "missing"
+          ],
+          [
+            "977e60f5-71a3-4c02-ae34-882b0fa4711e",
+            "missing"
+          ]
+        ],
+        "dictionary_hash": "c4a4876b18d8b33d2df6c8de2eae24d85550bb7b2eaa4c781cbec772674f7650",
+        "dictionary_versions": [
+          "CORE@2.0.0",
+          "GENERAL_OSINT@1.0.0"
+        ],
+        "model": "gpt-oss-120b",
+        "configuration": "{\"comparisons\": \"raven-comparison-v3\", \"context_size\": 128000, \"effective_thinking\": \"medium\", \"events\": \"raven-event-records-v1\", \"extraction_basis\": \"original\", \"language\": \"original\", \"max_output_tokens\": 8192, \"model\": \"gpt-oss-120b\", \"predicates\": \"raven-predicates-v1\", \"preparation_requested\": \"full_text\", \"provider\": \"llama.cpp\", \"random_seed\": 2345467, \"repair_budget\": 1, \"request_timeout\": 120, \"semantic_pair_retrieval\": \"raven-source-candidates-v1\", \"thinking\": \"high\", \"timeout_seconds\": 1200.0, \"top_k\": 40}"
+      },
+      "document_hashes_match": true,
+      "dictionary_snapshot_hash_matches": null,
+      "elapsed_seconds": 455.09608058299636,
+      "entities": 12,
+      "claims": 17,
+      "relationships": 6,
+      "comparisons": 0,
+      "events": 1,
+      "model_semantic_states": {
+        "supported": 15,
+        "contradicted": 2
+      },
+      "claim_kinds": {
+        "relation": 11,
+        "value": 2,
+        "corrects": 2,
+        "event": 1,
+        "ceases": 1
+      },
+      "epistemic_states": {
+        "reported": 15,
+        "not_documented": 2
+      },
+      "polarity": {
+        "affirmed": 14,
+        "denied": 3
+      },
+      "page_states": {
+        "partial": 2
+      },
+      "source_ids_missing": 10,
+      "copied_source_records": 1,
+      "literal_verification": {
+        "entities": {
+          "spans": 16,
+          "exact_original_intervals": 16,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "claims": {
+          "spans": 17,
+          "exact_original_intervals": 17,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "relationships": {
+          "spans": 6,
+          "exact_original_intervals": 6,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "events": {
+          "spans": 1,
+          "exact_original_intervals": 1,
+          "items_without_support": 0,
+          "failures": []
+        }
+      }
+    }
+  ]
+}

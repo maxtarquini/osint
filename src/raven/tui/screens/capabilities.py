@@ -16,6 +16,7 @@ from textual.widgets import (
     DataTable,
     Footer,
     Input,
+    Select,
     Static,
     TabbedContent,
     TabPane,
@@ -24,6 +25,17 @@ from textual.widgets import (
 
 from raven.exceptions.capabilities import CapabilityCancelled, CapabilityError
 from raven.services.capability_tools import TOOLS
+from raven.services.catalog_presentation import skill_available, tool_details
+from raven.tui.widgets import TopNavigation
+from raven.tui.widgets.resizable_split import CatalogSplit, PaneDivider
+
+SKILL_STATE_LABELS = {
+    "ready": "Pronto",
+    "failed": "Errore",
+    "invalid": "File non valido",
+    "stale": "Da aggiornare",
+    "not_cataloged": "Da catalogare",
+}
 
 
 def skill_template():
@@ -121,11 +133,39 @@ class SkillEditor(ModalScreen[bool]):
         self.query_one("#skill-editor-status", Static).update(message)
 
 
+class CatalogDetailScreen(ModalScreen[None]):
+    """Readable catalog card even when the underlying split view is only 80×24."""
+
+    BINDINGS = [Binding("escape", "close", "Chiudi")]
+
+    def __init__(self, title, text):
+        super().__init__()
+        self.card_title = title
+        self.card_text = text
+
+    def compose(self):
+        with Vertical(id="catalog-detail-dialog"):
+            yield Static(self.card_title, id="catalog-detail-title", markup=False)
+            yield TextArea(self.card_text, read_only=True, soft_wrap=True, id="catalog-detail-text")
+            yield Button("Chiudi · Esc", id="close-catalog-detail")
+
+    def on_mount(self):
+        self.query_one("#catalog-detail-text", TextArea).focus()
+
+    def action_close(self):
+        self.dismiss()
+
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "close-catalog-detail":
+            self.dismiss()
+
+
 class CapabilitiesScreen(Screen[None]):
     BINDINGS = [
         Binding("escape", "back", "Back"),
         Binding("/", "search", "Search"),
         Binding("r", "refresh_registry", "Refresh"),
+        Binding("f3", "open_details", "Scheda"),
     ]
 
     def __init__(self, registry):
@@ -139,13 +179,15 @@ class CapabilitiesScreen(Screen[None]):
         self.cancelling = Event()
         self.started = 0.0
         self.progress_text = ""
+        self.related_skill = None
 
     def tr(self, en, it):
         return it
 
     def compose(self) -> ComposeResult:
+        yield TopNavigation(active="capabilities")
         yield Static(
-            self.tr("CAPABILITIES · Skill & Tool registry", "CAPACITÀ · Registro Skill e Tool"),
+            self.tr("CAPABILITIES · Skill & Tool registry", "CATALOGHI · Skills e Tools"),
             id="capabilities-title",
         )
         yield Static(str(self.registry.store.root), id="capabilities-root", markup=False)
@@ -167,17 +209,25 @@ class CapabilitiesScreen(Screen[None]):
             id="capabilities-status",
             markup=False,
         )
-        yield Input(
-            placeholder=self.tr(
-                "Search skills, catalog descriptions and tools",
-                "Cerca skill, descrizioni del catalogo e tool",
-            ),
-            id="capability-search",
-        )
+        with Horizontal(id="capability-filters"):
+            yield Input(placeholder="Cerca nei cataloghi · /", id="capability-search")
+            yield Select(
+                [
+                    ("Tutte", "all"),
+                    ("Disponibili", "available"),
+                    ("Disabilitate", "disabled"),
+                    ("Da verificare", "review"),
+                ],
+                value="all",
+                allow_blank=False,
+                id="capability-state",
+            )
         with TabbedContent():
             with TabPane("Skills", id="skills-pane"):
-                yield DataTable(id="skills-table", cursor_type="row", zebra_stripes=True)
-                yield TextArea("", read_only=True, id="skill-details", soft_wrap=True)
+                with CatalogSplit(id="skills-split"):
+                    yield DataTable(id="skills-table", cursor_type="row", zebra_stripes=True)
+                    yield PaneDivider(id="skills-divider")
+                    yield TextArea("", read_only=True, id="skill-details", soft_wrap=True)
                 with Horizontal(classes="capability-actions"):
                     yield Button(self.tr("New .SKILL", "Nuova .SKILL"), id="new-skill")
                     yield Button(self.tr("Edit", "Modifica"), id="edit-skill", disabled=True)
@@ -186,12 +236,16 @@ class CapabilitiesScreen(Screen[None]):
                         id="toggle-skill",
                         disabled=True,
                     )
-                    yield Button(self.tr("Add examples", "Aggiungi esempi"), id="seed-skills")
+                    yield Button("Tool usati", id="skill-tools", disabled=True)
+                    yield Button(self.tr("Examples", "Esempi"), id="seed-skills")
             with TabPane("Tools", id="tools-pane"):
-                yield DataTable(id="tools-table", cursor_type="row", zebra_stripes=True)
-                yield TextArea("", read_only=True, id="tool-details", soft_wrap=True)
+                with CatalogSplit(id="tools-split"):
+                    yield DataTable(id="tools-table", cursor_type="row", zebra_stripes=True)
+                    yield PaneDivider(id="tools-divider")
+                    yield TextArea("", read_only=True, id="tool-details", soft_wrap=True)
                 with Horizontal(classes="capability-actions"):
                     yield Button(self.tr("Enable", "Abilita"), id="toggle-tool")
+                    yield Button("Tutti i tool", id="all-tools")
         yield Footer()
 
     def on_mount(self):
@@ -201,6 +255,24 @@ class CapabilitiesScreen(Screen[None]):
         self.query_one("#tools-table", DataTable).add_columns("Tool", "Version", "Status")
         self.set_interval(1, self._elapsed)
         self.action_refresh_registry()
+
+    def action_open_details(self):
+        if self.query_one(TabbedContent).active == "skills-pane":
+            row = self._selected_row()
+            if row:
+                self.app.push_screen(
+                    CatalogDetailScreen(
+                        row["entry"].filename, self.query_one("#skill-details", TextArea).text
+                    )
+                )
+        else:
+            tool = self._selected_tool()
+            if tool:
+                self.app.push_screen(
+                    CatalogDetailScreen(
+                        tool.tool_id, self.query_one("#tool-details", TextArea).text
+                    )
+                )
 
     def action_search(self):
         self.query_one("#capability-search", Input).focus()
@@ -220,6 +292,10 @@ class CapabilitiesScreen(Screen[None]):
         if event.input.id == "capability-search":
             self._render_rows()
 
+    def on_select_changed(self, event: Select.Changed):
+        if event.select.id == "capability-state":
+            self._render_rows()
+
     def _selected_row(self):
         table = self.query_one("#skills-table", DataTable)
         return (
@@ -232,18 +308,12 @@ class CapabilitiesScreen(Screen[None]):
 
     def _render_rows(self):
         query = self.query_one("#capability-search", Input).value.casefold()
+        state_filter = self.query_one("#capability-state", Select).value
         table = self.query_one("#skills-table", DataTable)
         selected = self._selected_row()
         selected_name = selected["entry"].filename if selected else ""
         table.clear()
         self.skill_keys = []
-        labels = {
-            "ready": self.tr("Ready", "Pronto"),
-            "failed": self.tr("Failed", "Errore"),
-            "invalid": self.tr("Invalid file", "File non valido"),
-            "stale": self.tr("Outdated", "Da aggiornare"),
-            "not_cataloged": self.tr("Not cataloged", "Da catalogare"),
-        }
         for row in self.rows:
             skill = row["entry"].definition
             searchable = (
@@ -251,6 +321,16 @@ class CapabilitiesScreen(Screen[None]):
                 + (skill.source if skill else "")
                 + json.dumps(row["record"], ensure_ascii=False)
             )
+            available = skill_available(row)
+            if (
+                state_filter == "available"
+                and not available
+                or state_filter == "disabled"
+                and row["enabled"]
+                or state_filter == "review"
+                and available
+            ):
+                continue
             if query not in searchable.casefold():
                 continue
             self.skill_keys.append(row)
@@ -264,7 +344,7 @@ class CapabilitiesScreen(Screen[None]):
             table.add_row(
                 skill.name if skill else row["entry"].filename,
                 skill.version if skill else "—",
-                labels[row["state"]],
+                SKILL_STATE_LABELS[row["state"]],
                 selection,
             )
         for index, row in enumerate(self.skill_keys):
@@ -273,8 +353,22 @@ class CapabilitiesScreen(Screen[None]):
         tools_table = self.query_one("#tools-table", DataTable)
         tool = self._selected_tool()
         tools_table.clear()
+        related = next(
+            (r["entry"].definition for r in self.rows if r["entry"].filename == self.related_skill),
+            None,
+        )
         self.tool_keys = [
-            t for t in TOOLS if query in (t.tool_id + t.name + t.description).casefold()
+            t
+            for t in TOOLS
+            if query in (t.tool_id + t.name + t.description).casefold()
+            and (self.related_skill is None or related and t.tool_id in related.tools)
+            and (
+                state_filter == "all"
+                or state_filter == "available"
+                and t.tool_id not in self.metadata["disabled_tools"]
+                or state_filter in {"disabled", "review"}
+                and t.tool_id in self.metadata["disabled_tools"]
+            )
         ]
         for item in self.tool_keys:
             tools_table.add_row(
@@ -287,6 +381,12 @@ class CapabilitiesScreen(Screen[None]):
         if tool in self.tool_keys:
             tools_table.move_cursor(row=self.tool_keys.index(tool))
         self._show_details()
+        if not self.busy:
+            suffix = f" · Tool di {self.related_skill}" if self.related_skill else ""
+            self.query_one("#capabilities-status", Static).update(
+                f"{len(self.skill_keys)}/{len(self.rows)} skills · "
+                f"{len(self.tool_keys)}/{len(TOOLS)} tools{suffix}"
+            )
 
     def on_data_table_row_highlighted(self, event):
         self._show_details()
@@ -301,9 +401,17 @@ class CapabilitiesScreen(Screen[None]):
             "No skills. Add the examples or create a .SKILL file.",
             "Nessuna skill. Aggiungi gli esempi o crea un file .SKILL.",
         )
+        if self.rows and not row:
+            text = "Nessuna skill corrisponde ai filtri selezionati."
         if row:
             entry, record = row["entry"], row["record"]
-            text = entry.filename + "\n" + entry.error
+            skill = entry.definition
+            text = f"{skill.name} · {skill.version}\n" if skill else ""
+            text += entry.filename
+            text += "\nStato: " + ("Abilitata" if row["enabled"] else "Disabilitata")
+            text += "\nCatalogo: " + SKILL_STATE_LABELS[row["state"]]
+            if entry.error:
+                text += "\n" + entry.error
             if row["unavailable_tools"]:
                 text += "\nTool indisponibili: " + ", ".join(row["unavailable_tools"])
             if record:
@@ -332,6 +440,13 @@ class CapabilitiesScreen(Screen[None]):
                     + entry.definition.source
                 )
         self.query_one("#skill-details", TextArea).load_text(text)
+        self.query_one("#skill-tools", Button).disabled = (
+            self.busy
+            or row is None
+            or not row["entry"].definition
+            or bool(row["entry"].error)
+            or not row["entry"].definition.tools
+        )
         self.query_one("#edit-skill", Button).disabled = self.busy or row is None
         self.query_one("#toggle-skill", Button).disabled = (
             self.busy or row is None or bool(row["entry"].error)
@@ -347,17 +462,9 @@ class CapabilitiesScreen(Screen[None]):
             if tool and tool.tool_id not in self.metadata["disabled_tools"]
             else self.tr("Enable", "Abilita")
         )
-        text = ""
-        if tool:
-            text = (
-                f"{tool.name} · {tool.version}\n\n{tool.description}\n\n"
-                f"Scope: {tool.scope}\nTimeout: {tool.timeout_seconds}s · cancellable\n"
-                "Execution: local source snapshot. No network, filesystem or graph writes.\n\n"
-                "INPUT\n"
-                + json.dumps(tool.parameters, indent=2)
-                + "\n\nOUTPUT\n"
-                + json.dumps(tool.result, indent=2)
-            )
+        text = (
+            tool_details(tool, self.rows, self.metadata) if tool else "Nessun tool corrispondente."
+        )
         self.query_one("#tool-details", TextArea).load_text(text)
         self.query_one("#toggle-tool", Button).disabled = self.busy or tool is None
 
@@ -373,7 +480,19 @@ class CapabilitiesScreen(Screen[None]):
             self._elapsed()
         elif not self.busy:
             row, tool = self._selected_row(), self._selected_tool()
-            if action == "new-skill":
+            if action == "skill-tools" and row and row["entry"].definition:
+                self.related_skill = row["entry"].filename
+                self.query_one("#capability-search", Input).value = ""
+                self.query_one("#capability-state", Select).value = "all"
+                self.query_one(TabbedContent).active = "tools-pane"
+                self._render_rows()
+                self.query_one("#tools-table", DataTable).focus()
+            elif action == "all-tools":
+                self.related_skill = None
+                self.query_one("#capability-search", Input).value = ""
+                self.query_one("#capability-state", Select).value = "all"
+                self._render_rows()
+            elif action == "new-skill":
                 self.app.push_screen(
                     SkillEditor(self.registry), lambda _: self.action_refresh_registry()
                 )
@@ -403,7 +522,7 @@ class CapabilitiesScreen(Screen[None]):
         self.started = monotonic()
         self.progress_text = self.tr("Working", "Elaborazione")
         self.cancelling = Event()
-        for button in self.query(Button):
+        for button in self.query(".capability-actions Button"):
             button.disabled = button.id not in {"capabilities-back", "cancel-skill-catalog"}
         self.query_one("#cancel-skill-catalog", Button).disabled = operation != "catalog"
         self._operation(operation, argument, self.cancelling)
@@ -457,12 +576,11 @@ class CapabilitiesScreen(Screen[None]):
             return
         self.busy = False
         self.rows, self.metadata = rows, data
-        for button in self.query(Button):
+        for button in self.query(".capability-actions Button"):
             button.disabled = button.id == "cancel-skill-catalog"
         self._render_rows()
-        self.query_one("#capabilities-status", Static).update(
-            message or f"{len(rows)} skills · {len(TOOLS)} tools · Enter per consultare"
-        )
+        if message:
+            self.query_one("#capabilities-status", Static).update(message)
         if editor:
             self.app.push_screen(
                 SkillEditor(self.registry, *editor), lambda _: self.action_refresh_registry()

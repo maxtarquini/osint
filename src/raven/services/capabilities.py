@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class CapabilityRegistry:
-    def __init__(self, root, ai_node=None):
+    def __init__(self, root, ai_node=None, *, profile_settings=None):
         self.store = SkillStore(Path(root))
         self.ai_node = ai_node
+        self.profile_settings = profile_settings
         self._catalog_lock = Lock()
 
     def install_examples(self):
@@ -64,7 +65,7 @@ class CapabilityRegistry:
         )
 
     def _fingerprint(self, skill):
-        settings = getattr(self.ai_node, "settings", None)
+        settings = getattr(self.ai_node, "settings", None) or self.profile_settings
         profile = {
             "source": skill.digest,
             "agent": CATALOG_REVISION,

@@ -28,12 +28,16 @@ class TopNavigation(Horizontal):
             ("home", "Home"),
             ("investigations", "Investigations"),
             ("configuration", "Configuration"),
+            ("capabilities", "Cataloghi"),
         ):
             button = Button(label, id=f"nav-{target}", classes="navigation-item")
             if target == self.active:
                 button.add_class("active")
             yield button
         yield Static("GRAPH INTELLIGENCE", id="navigation-context")
+
+    def on_resize(self, event):
+        self.set_class(event.size.width < 100, "compact")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         target = event.button.id.removeprefix("nav-") if event.button.id else ""

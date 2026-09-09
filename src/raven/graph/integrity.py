@@ -160,8 +160,11 @@ class IntegrityPageAnalyzer:
                             review_rationale=c.review_rationale
                             + "; endpoint classification needs review",
                         )
-                        if c.subject_entity_id not in supported
-                        or (c.object_entity_id and c.object_entity_id not in supported)
+                        if c.semantic_support == "supported"
+                        and (
+                            c.subject_entity_id not in supported
+                            or (c.object_entity_id and c.object_entity_id not in supported)
+                        )
                         else c
                         for c in extracted
                     )

@@ -9,13 +9,14 @@ from raven.models.capabilities import (
     object_schema,
     text_value,
 )
+from raven.services.investigation_tool_definitions import INVESTIGATION_TOOLS
 
 STRING = {"type": "string", "minLength": 1, "maxLength": 1000}
 PAGE = {"type": "integer", "minimum": 1}
 IDENTITY = {"document_id": STRING, "page": PAGE}
 PROVENANCE = {"investigation_id": STRING, **IDENTITY}
 
-TOOLS = (
+SOURCE_TOOLS = (
     ToolDefinition(
         "read_page",
         "Read source page",
@@ -53,6 +54,9 @@ TOOLS = (
 )
 
 
+TOOLS = SOURCE_TOOLS + INVESTIGATION_TOOLS
+
+
 @dataclass(frozen=True)
 class SourcePage:
     investigation_id: str
@@ -70,7 +74,7 @@ class CapabilityToolExecutor:
     def execute(
         self, tool_id, arguments, *, investigation_id, pages, allowed_tools, cancelled=None
     ):
-        definition = next((tool for tool in TOOLS if tool.tool_id == tool_id), None)
+        definition = next((tool for tool in SOURCE_TOOLS if tool.tool_id == tool_id), None)
         if definition is None or tool_id not in allowed_tools:
             raise CapabilityError("Tool is not authorized")
         if not self.registry.tool_enabled(tool_id):

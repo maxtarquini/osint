@@ -398,7 +398,11 @@ def grouped_page_budget(graph: InvestigationGraph, limit: int) -> InvestigationG
     by_id = {claim.claim_id: claim for claim in graph.claims}
     neighbors = defaultdict(set)
     for link in graph.claim_links:
-        if link.source_claim_id in by_id and link.target_claim_id in by_id:
+        if (
+            link.requires_joint_context
+            and link.source_claim_id in by_id
+            and link.target_claim_id in by_id
+        ):
             neighbors[link.source_claim_id].add(link.target_claim_id)
             neighbors[link.target_claim_id].add(link.source_claim_id)
     selected, pages = set(), set()
@@ -418,7 +422,15 @@ def grouped_page_budget(graph: InvestigationGraph, limit: int) -> InvestigationG
             selected.update(group)
             pages.update(additions)
     return replace(
-        graph, claims=tuple(claim for claim in graph.claims if claim.claim_id in selected)
+        graph,
+        claims=tuple(claim for claim in graph.claims if claim.claim_id in selected),
+        claim_links=tuple(
+            link
+            for link in graph.claim_links
+            if link.requires_joint_context
+            and link.source_claim_id in selected
+            and link.target_claim_id in selected
+        ),
     )
 
 

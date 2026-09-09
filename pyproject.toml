@@ -22,10 +22,14 @@ dependencies = [
     "termaid[rich]>=0.8,<0.9",
     "textual>=3.0",
     "keyring>=25",
+    "mcp>=1.26,<2",
+    "jsonschema>=4.23,<5",
+    "pydantic>=2.11,<3",
 ]
 
 [project.scripts]
 raven = "raven.app:main"
+raven-mcp = "raven.mcp_server:main"
 
 [dependency-groups]
 dev = [

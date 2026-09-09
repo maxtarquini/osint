@@ -161,3 +161,30 @@ def test_graphiti_result_from_a_different_fixture_is_rejected(tmp_path) -> None:
     result.write_text(json.dumps({"status": "executed", "fixture_sha256": "wrong", "queries": []}))
     with pytest.raises(ValueError, match="different fixture"):
         run_benchmark(FIXTURE, graphiti_result=result)
+
+
+def test_page_budget_ignores_unrelated_review_pairs_without_severing_real_conflicts():
+    from raven.models.graph import ClaimLink, EvidenceSpan
+
+    case = load_case(FIXTURE)
+    pair = tuple(c for c in case.graph.claims if c.claim_id in {"c01", "c02"})
+    extra = replace(pair[0], claim_id="other", support=(EvidenceSpan("other", "Other.", 1, True),))
+    graph = replace(
+        case.graph,
+        claims=(*pair, extra),
+        claim_links=(
+            *case.graph.claim_links,
+            ClaimLink(
+                "irrelevant",
+                "c01",
+                "other",
+                "candidate_unrelated",
+                "Different events",
+                review_state="supported",
+            ),
+        ),
+    )
+    selected = grouped_page_budget(graph, 2)
+    assert {c.claim_id for c in selected.claims} == {"c01", "c02"}
+    assert "irrelevant" not in {link.link_id for link in selected.claim_links}
+    assert "irrelevant" in {link.link_id for link in graph.claim_links}

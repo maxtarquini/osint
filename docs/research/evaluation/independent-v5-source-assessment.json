@@ -1,0 +1,108 @@
+{
+  "evaluation_scope": "Source-grounded audit of all model-supported propositions in this small synthetic fixture. Clear proposition content is counted separately from missing attribution and expected-scenario completeness. Ambiguous records are excluded from the precision numerator. This is an assistant-conducted audit, not independent human annotation or general model accuracy.",
+  "artifact": "docs/research/evaluation/independent-v5.json.gz",
+  "artifact_sha256": "05977b259625a709aad3f0371a871bbcb3c38977fa8afacfc1020ff5a6312bb5",
+  "runs": [
+    {
+      "method": "document_claims",
+      "run_id": "f906ab84-39ae-4ed7-a8c3-292eebc6ba29",
+      "clear_propositions": 4,
+      "model_supported_propositions_reviewed": 4,
+      "clear_claim_ids": [
+        "00044ba6-428b-5423-8a47-28e743366f2b",
+        "9f4ec543-8828-5aee-b0b5-6c75bd7b6f0d",
+        "f4bc7dd5-52bb-5ea6-a162-277efb56c34b",
+        "67582383-3db3-5600-801a-095af69f6a25"
+      ],
+      "ambiguous_claim_ids": [],
+      "scenario_completeness": {
+        "price": "partial",
+        "end": "partial",
+        "absence": "partial",
+        "copy": "missing",
+        "classification": "pass"
+      },
+      "notes": "Correction to 39 CHF and dated termination retained; original 93 CHF source claims lost during validation. Evidence gap retained with problematic event-as-donor scope and rejected/uncertain review. No copied-source record.",
+      "expected_named_sources": [
+        "Q7",
+        "Q8",
+        "Q9"
+      ],
+      "structured_attribution_recovered": [
+        "Q9"
+      ]
+    },
+    {
+      "method": "cross_source_review",
+      "run_id": "061d3ac4-4930-4103-b4ff-51e4287a2807",
+      "clear_propositions": 6,
+      "model_supported_propositions_reviewed": 7,
+      "clear_claim_ids": [
+        "963c7f80-e486-50cc-a6e3-aac0945f26ef",
+        "dec4f9b4-51d1-5f0e-8aec-efa4f2d255d4",
+        "9ec5291b-4c79-5d00-9db9-77c558c01460",
+        "6d6b962e-c68b-56c5-839e-708e96aff07a",
+        "37348686-0445-5033-8266-7ba0dab3dd01",
+        "a995c474-7a85-5568-ac06-50b08d406cd2"
+      ],
+      "ambiguous_claim_ids": [
+        "5be3e186-5f55-569e-a93e-f26ad9beb908"
+      ],
+      "scenario_completeness": {
+        "price": "partial",
+        "end": "pass",
+        "absence": "missing",
+        "copy": "pass",
+        "classification": "pass"
+      },
+      "notes": "Dated cessation and Q8-to-Q7 copy recovered. No evidence gap retained; original price claims missing. Negative classification expressed through an ambiguous binary predicate. Named source attribution missing.",
+      "expected_named_sources": [
+        "Q7",
+        "Q8",
+        "Q9"
+      ],
+      "structured_attribution_recovered": []
+    },
+    {
+      "method": "event_temporal",
+      "run_id": "24743adf-49d7-4d5c-85c5-55bb2a082892",
+      "clear_propositions": 10,
+      "model_supported_propositions_reviewed": 15,
+      "clear_claim_ids": [
+        "9e13122c-56c4-5e8b-bcd7-ea0519711390",
+        "dec4f9b4-51d1-5f0e-8aec-efa4f2d255d4",
+        "9ec5291b-4c79-5d00-9db9-77c558c01460",
+        "37aa8584-bf0a-5469-bdcc-53dd3c0db3b3",
+        "05233edf-d2d5-5493-b4b3-49d980da5847",
+        "c3ad7b2d-c030-52b5-84c1-06cfb1693759",
+        "1d07ec4d-5436-5bae-bed4-45d82b030d2b",
+        "27c59d30-e7a1-51b5-a167-739928107650",
+        "28306dc1-414c-56b9-a20f-66f1e6824797",
+        "215b7424-040d-5067-9253-30ca4d43a1be"
+      ],
+      "ambiguous_claim_ids": [
+        "fa83df0e-da7c-5597-af94-9983c3f287e8",
+        "9b882a51-e81c-53c0-901b-66b468172312",
+        "21bb5e9c-8633-58b5-9b14-61e99ba8966f",
+        "47cbeb34-245a-5043-b6fc-bd1e954ecd55",
+        "a42c1040-1466-587a-b815-df08c25b1ff5"
+      ],
+      "scenario_completeness": {
+        "price": "pass",
+        "end": "pass",
+        "absence": "partial",
+        "copy": "pass",
+        "classification": "pass"
+      },
+      "notes": "Both prices retained in correction qualifiers and dated unary cessation recovered. Copy ancestry present. Evidence gaps retained but given incorrect/ambiguous donor or recipient scope and rejected by reviewer. Five model-supported propositions have ambiguous predicate/endpoint scope, including memo-as-value-owner and self-referential fraud-denial records.",
+      "expected_named_sources": [
+        "Q7",
+        "Q8",
+        "Q9"
+      ],
+      "structured_attribution_recovered": [
+        "Q9"
+      ]
+    }
+  ]
+}

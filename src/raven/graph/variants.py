@@ -1,8 +1,27 @@
 """Semantic A/B alignment with explicit identity ambiguity, never UUID matching."""
 
+import json
 from collections import Counter, defaultdict
 
-from raven.graph.predicates import canonical_predicate, name, qualifiers_scope, type_family
+from raven.graph.predicates import (
+    canonical_number,
+    canonical_predicate,
+    name,
+    qualifiers_scope,
+    type_family,
+)
+
+ALIGNMENT_VERSION = "raven-variant-alignment-v2"
+
+
+def literal_signature(literal):
+    """Compare numeric values exactly without rounding or conflating units/date precision."""
+    if literal is None:
+        return None
+    value = literal.value
+    if literal.datatype in {"decimal", "integer"}:
+        value = canonical_number(value)
+    return value, literal.datatype, literal.unit
 
 
 def compare_variants(first, second):
@@ -16,13 +35,39 @@ def compare_variants(first, second):
             tuple(sorted(entity.external_identifiers)),
         )
 
+    def definitions(graph):
+        if not graph.manifest or not graph.manifest.dictionary_snapshot:
+            return None
+        try:
+            return {
+                (item["type"], item.get("subtype")): item
+                for item in json.loads(graph.manifest.dictionary_snapshot)["entity_types"]
+            }
+        except (ValueError, TypeError, KeyError):
+            return None
+
+    da, db = definitions(first), definitions(second)
+    definition_changes = (
+        None
+        if da is None or db is None
+        else {
+            "added": [db[key] for key in db if key not in da],
+            "removed": [da[key] for key in da if key not in db],
+            "changed": [
+                {"a": da[key], "b": db[key]} for key in da if key in db and da[key] != db[key]
+            ],
+        }
+    )
+
     def claims(graph):
         by_id = {e.entity_id: e for e in graph.entities}
+        by_claim_id = {c.claim_id: c for c in graph.claims}
         rows = defaultdict(list)
-        for claim in graph.claims:
+
+        def core(claim):
             subject = by_id.get(claim.subject_entity_id)
             target = by_id.get(claim.object_entity_id)
-            key = (
+            return (
                 identity(subject) if subject else ("missing", claim.subject_entity_id),
                 identity(target) if target else ("literal", ""),
                 canonical_predicate(claim.predicate),
@@ -33,17 +78,66 @@ def compare_variants(first, second):
                 claim.claim_kind,
                 claim.valid_from,
                 claim.valid_until,
-                (claim.literal.value, claim.literal.datatype, claim.literal.unit)
-                if claim.literal
-                else None,
+                literal_signature(claim.literal),
                 name(claim.source.source_id or claim.attribution),
-                tuple(sorted((s.evidence_id, s.page_number) for s in claim.support)),
+                tuple(
+                    sorted(
+                        {(s.evidence_id, s.page_number) for s in claim.support},
+                        key=lambda page: (page[0], page[1] if page[1] is not None else -1),
+                    )
+                ),
+                (
+                    name(claim.source.speaker or claim.attribution),
+                    tuple(sorted({name(source) for source in claim.source.derived_from})),
+                    claim.source.reliability,
+                ),
             )
+
+        def reference_signature(reference):
+            description = (
+                name(reference.source),
+                canonical_predicate(reference.predicate),
+                name(reference.subject_name),
+                name(reference.object_name),
+            )
+            if reference.claim_id:
+                target = by_claim_id.get(reference.claim_id)
+                if target:
+                    # One-hop proposition resolution avoids both random-ID comparison
+                    # and recursion through cyclic reference chains.
+                    return "resolved", core(target)
+                return "unresolved", reference.claim_id, description
+            return "described", description
+
+        for claim in graph.claims:
+            references = tuple(sorted({reference_signature(r) for r in claim.references}, key=repr))
+            key = (*core(claim), references)
             rows[key].append(claim.claim_id)
         return rows
 
     a, b = claims(first), claims(second)
     lost, gained = [key for key in a if key not in b], [key for key in b if key not in a]
+    first_claims = {c.claim_id: c for c in first.claims}
+    second_claims = {c.claim_id: c for c in second.claims}
+    review_differences = []
+    for key in a.keys() & b.keys():
+        left = [first_claims[claim_id] for claim_id in a[key]]
+        right = [second_claims[claim_id] for claim_id in b[key]]
+        states_a = sorted({(c.semantic_support, str(c.status)) for c in left})
+        states_b = sorted({(c.semantic_support, str(c.status)) for c in right})
+        if states_a != states_b:
+            review_differences.append(
+                {
+                    "proposition": key,
+                    "a": states_a,
+                    "b": states_b,
+                    "claim_ids_a": a[key],
+                    "claim_ids_b": b[key],
+                    "rationales_a": [c.review_rationale for c in left],
+                    "rationales_b": [c.review_rationale for c in right],
+                }
+            )
+    review_differences.sort(key=lambda row: repr(row["proposition"]))
     classifications = []
     ea, eb = defaultdict(set), defaultdict(set)
     for graph, output in ((first, ea), (second, eb)):
@@ -75,10 +169,12 @@ def compare_variants(first, second):
             "source_designations": sorted(
                 {c.source.source_id for c in graph.claims if c.source.source_id}
             ),
+            "copied_source_records": sum(bool(c.source.derived_from) for c in graph.claims),
             "comparisons": len(graph.claim_links),
         }
 
     return {
+        "alignment_version": ALIGNMENT_VERSION,
         "a": first.run_id,
         "b": second.run_id,
         "same_input": bool(
@@ -87,22 +183,30 @@ def compare_variants(first, second):
             and first.manifest.documents == second.manifest.documents
         ),
         "same_dictionary": bool(
-            first.manifest and second.manifest
+            first.manifest
+            and second.manifest
+            and first.manifest.dictionary_hash
             and first.manifest.dictionary_hash == second.manifest.dictionary_hash
             and first.manifest.dictionary_versions == second.manifest.dictionary_versions
         ),
+        "dictionary_definition_changes": definition_changes,
         "dictionary_a": {
             "hash": first.manifest.dictionary_hash,
             "versions": first.manifest.dictionary_versions,
-        } if first.manifest else None,
+        }
+        if first.manifest
+        else None,
         "dictionary_b": {
             "hash": second.manifest.dictionary_hash,
             "versions": second.manifest.dictionary_versions,
-        } if second.manifest else None,
+        }
+        if second.manifest
+        else None,
         "matched": len(a.keys() & b.keys()),
         "lost": [{"proposition": key, "claim_ids": a[key]} for key in lost],
         "gained": [{"proposition": key, "claim_ids": b[key]} for key in gained],
         "classification_differences": classifications,
+        "review_differences": review_differences,
         "metrics_a": metrics(first),
         "metrics_b": metrics(second),
         "alignment": (
@@ -117,8 +221,12 @@ def comparison_text(report):
         "Input identici"
         if report["same_input"]
         else "Manifest/input diversi o legacy: verificare comparabilità",
-        "Dizionario identico" if report.get("same_dictionary") else
-        "Dizionari diversi o legacy: i codici di classificazione richiedono confronto delle definizioni",
+        "Dizionario identico"
+        if report.get("same_dictionary")
+        else (
+            "Dizionari diversi o legacy: i codici di classificazione "
+            "richiedono confronto delle definizioni"
+        ),
         f"Proposizioni allineate: {report['matched']} · recuperate in B: "
         f"{len(report['gained'])} · assenti in B: {len(report['lost'])}",
         "Allineamento candidato per nomi e tipi compatibili; identità da revisionare.",
@@ -126,7 +234,24 @@ def comparison_text(report):
     if not report.get("same_dictionary"):
         for label, key in (("A", "dictionary_a"), ("B", "dictionary_b")):
             dictionary = report.get(key) or {}
-            lines.append(f"Dizionario {label}: {dictionary.get('versions', '?')} · hash {dictionary.get('hash', '?')}")
+            lines.append(
+                f"Dizionario {label}: {dictionary.get('versions', '?')} · "
+                f"hash {dictionary.get('hash', '?')}"
+            )
+        changes = report.get("dictionary_definition_changes")
+        if changes is None:
+            lines.append("Definizioni storiche non disponibili per almeno una variante legacy.")
+        else:
+            for label, key in (
+                ("Aggiunte", "added"),
+                ("Rimosse", "removed"),
+                ("Modificate", "changed"),
+            ):
+                if changes[key]:
+                    lines.append(
+                        f"Definizioni {label.lower()}:\n"
+                        + json.dumps(changes[key], ensure_ascii=False, indent=2)
+                    )
     labels = {
         "claims": "Affermazioni",
         "supported_claims": "Supporto semantico",
@@ -151,6 +276,20 @@ def comparison_text(report):
                 f"{p[0][1]} · {p[2]} · {p[1][1] or p[10]} | {p[4]}/{p[5]}/{p[6]} | "
                 f"{p[7]} | {p[8]} → {p[9]} | {p[3]} | fonte {p[11]} | pagine "
                 f"{p[12]} | claim {', '.join(row['claim_ids'])}"
+            )
+            if len(p) > 13:
+                lines.append(f"Attribuzione e dipendenza delle fonti: {p[13]}")
+            if len(p) > 14 and p[14]:
+                lines.append(f"Riferimenti alle affermazioni precedenti: {p[14]}")
+    if report.get("review_differences"):
+        lines.append("\nESITI DELLA REVISIONE DISCORDANTI")
+        for row in report["review_differences"]:
+            p = row["proposition"]
+            lines.append(
+                f"{p[0][1]} · {p[2]} · {p[1][1] or p[10]} | "
+                f"A {row['a']} → B {row['b']}\n"
+                f"A ({', '.join(row['claim_ids_a'])}): {'; '.join(row['rationales_a'])}\n"
+                f"B ({', '.join(row['claim_ids_b'])}): {'; '.join(row['rationales_b'])}"
             )
     lines.append("\nCLASSIFICAZIONI DISCORDANTI")
     for row in report["classification_differences"]:

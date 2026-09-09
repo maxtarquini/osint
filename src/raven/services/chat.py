@@ -6,7 +6,7 @@ import json
 import logging
 from collections import Counter
 from collections.abc import Callable, Iterator
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -710,6 +710,11 @@ class InvestigationChatService:
                 "resolution_notes": claim.resolution_notes,
             }
 
+        review_only_comparisons = sum(not link.requires_joint_context for link in graph.claim_links)
+        graph = replace(
+            graph,
+            claim_links=tuple(link for link in graph.claim_links if link.requires_joint_context),
+        )
         totals = {
             "entities": len(graph.entities),
             "relationships": len(graph.relationships),
@@ -718,10 +723,13 @@ class InvestigationChatService:
         }
         context = {
             "run_id": graph.run_id,
+            "review_only_comparisons_omitted": review_only_comparisons,
             "semantics": (
                 "Claims report source assertions, including denials. Neither comparisons nor "
                 "quotation verification determine truth. Event validity and statement time differ. "
-                "Missing comparisons in truncated context are not evidence of agreement."
+                "Missing comparisons in truncated context are not evidence of agreement. "
+                "Rejected, unrelated or unresolved comparison candidates do not form context "
+                "groups; their reviews remain available in the stored variant."
             ),
             "entities": [],
             "relationships": [],
@@ -778,6 +786,8 @@ class InvestigationChatService:
                     "kind": link.kind,
                     "rationale": link.rationale,
                     "requires_identity_review": link.requires_identity_review,
+                    "review_state": link.review_state,
+                    "review_rationale": link.review_rationale,
                 }
                 for link in graph.claim_links
                 if link.source_claim_id in group and link.target_claim_id in group

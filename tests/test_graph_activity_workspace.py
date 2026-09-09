@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from test_app import FakeGraphAnalysis, FakeInfrastructure, FakeInvestigations, make_app
 from test_graph_jobs import _investigation
-from textual.widgets import Button, Select, Static, TabbedContent
+from textual.widgets import Button, Static, TabbedContent
 
 from raven.models import (
     EvidencePreparationMode,
@@ -103,7 +103,10 @@ async def test_graph_activity_tracks_jobs_without_resetting_existing_graph(
             assert activity.running and activity.elapsed_seconds >= 15
             assert cancel.display and not cancel.disabled
             assert screen.query_one("#analyze-evidence", Button).disabled
-            assert screen.query_one("#graph-preparation-mode", Select).disabled
+            assert (
+                screen.query_one("#graph-extraction-basis", Static).render().plain
+                == "Originali con contesto documentale"
+            )
             assert f"({completed}/6)" in screen.query_one("#graph-analysis-status").render().plain
             assert expected_stage.casefold() in (
                 screen.query_one("#graph-build-stage", Static).render().plain.casefold()
@@ -127,7 +130,7 @@ async def test_graph_activity_tracks_jobs_without_resetting_existing_graph(
         assert not activity.running
         assert not cancel.display
         assert not screen.query_one("#analyze-evidence", Button).disabled
-        assert not screen.query_one("#graph-preparation-mode", Select).disabled
+        assert not screen.query("#graph-preparation-mode")
         assert status_label in screen.query_one("#graph-analysis-status").render().plain
         assert canvas.graph is (
             next_graph if terminal_status is GraphJobStatus.COMPLETED else previous.graph

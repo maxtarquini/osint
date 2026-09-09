@@ -1,0 +1,118 @@
+{
+  "checked_at": "2026-09-09T12:07:36.685348+00:00",
+  "investigation_id": "e8891841-187b-4231-bcad-7fa351e413fa",
+  "server": {
+    "name": "raven-investigation",
+    "title": null,
+    "version": "1.0.0",
+    "websiteUrl": null,
+    "icons": null
+  },
+  "discovered_tools": 18,
+  "outcomes": {
+    "list_investigations": {
+      "ok": true,
+      "total": 1,
+      "run_id": null
+    },
+    "get_investigation": {
+      "ok": true,
+      "total": null,
+      "run_id": null
+    },
+    "list_documents": {
+      "ok": true,
+      "total": 3,
+      "run_id": null
+    },
+    "read_page": {
+      "ok": true,
+      "total": null,
+      "run_id": null
+    },
+    "verify_quote": {
+      "ok": true,
+      "total": null,
+      "run_id": null
+    },
+    "search_evidence": {
+      "ok": true,
+      "total": null,
+      "run_id": null
+    },
+    "list_graph_methods": {
+      "ok": true,
+      "total": 3,
+      "run_id": null
+    },
+    "list_graph_variants": {
+      "ok": true,
+      "total": 6,
+      "run_id": null
+    },
+    "open_graph_variant": {
+      "ok": true,
+      "total": null,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475"
+    },
+    "list_graph_entities": {
+      "ok": true,
+      "total": 173,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475"
+    },
+    "list_graph_claims": {
+      "ok": true,
+      "total": 170,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475"
+    },
+    "list_graph_relationships": {
+      "ok": true,
+      "total": 62,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475"
+    },
+    "list_graph_events": {
+      "ok": true,
+      "total": 37,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475"
+    },
+    "list_graph_comparisons": {
+      "ok": true,
+      "total": 14,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475"
+    },
+    "read_page_coverage": {
+      "ok": true,
+      "total": 18,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475"
+    },
+    "read_dictionary": {
+      "ok": true,
+      "total": null,
+      "run_id": null
+    },
+    "compare_graph_variants": {
+      "ok": true,
+      "total": 0,
+      "run_id": null
+    },
+    "retrieve_evidence": {
+      "ok": true,
+      "total": null,
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475",
+      "trace": {
+        "strategy": "qdrant+neo4j",
+        "vector_hits": 12,
+        "graph_claims": 15,
+        "graph_entities": 140,
+        "linked_sources": 0,
+        "elapsed_ms": 43.77358395140618,
+        "warnings": [],
+        "truncated": true
+      }
+    }
+  },
+  "foreign_scope_rejected": true,
+  "persistence_unchanged": true,
+  "before_sha256": "987563bb1841a4218806b2b86325f6cb375abbd2c0cfe19083db53f987df7b72",
+  "after_sha256": "987563bb1841a4218806b2b86325f6cb375abbd2c0cfe19083db53f987df7b72"
+}

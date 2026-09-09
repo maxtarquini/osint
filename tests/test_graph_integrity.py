@@ -82,6 +82,15 @@ def test_program_ids_and_offsets_never_verify_fuzzy_or_unknown_units():
     assert parse(claim_payload()).predicate == "TRANSFER"
 
 
+def test_integrity_requests_honor_configured_deadline_instead_of_a_short_fixed_cap():
+    node = SimpleNamespace(
+        settings=SimpleNamespace(timeout_seconds=1200), chat=MagicMock(return_value='{"claims":[]}')
+    )
+    agent = IntegrityAgent(node)
+    assert agent.request("case", "TestStage", "Source", {"type": "object"}, None) == {"claims": []}
+    assert node.chat.call_args.kwargs["timeout_seconds"] == 1200
+
+
 def test_absence_of_evidence_and_retractions_never_project_as_positive_facts():
     reported = replace(parse(claim_payload()), semantic_support="supported")
     gap = replace(reported, claim_id="gap", epistemic_status="not_documented")
@@ -216,6 +225,11 @@ def test_unary_cessation_preserves_effective_date_without_invented_endpoint():
     )
     assert cessation.allows_missing_object and cessation.object_entity_id == ""
     assert cessation.valid_from == "2025-07-12" and not project_claims((cessation,))
+    from raven.tui.screens.graph_claims import GraphClaimsScreen
+
+    graph = InvestigationGraph("case", "run", entities(), (), datetime.now(UTC), (cessation,))
+    displayed = GraphClaimsScreen(investigation("case"), graph, ())._event_text()
+    assert "CONTRACT_ENDED" in displayed and "2025-07-12" in displayed
     with pytest.raises(ValueError, match="object missing"):
         parse(claim_payload(object_entity_id="", claim_kind="ceases", qualifiers=[]))
 
@@ -295,6 +309,48 @@ def test_variant_alignment_ignores_random_ids_and_blocks_foreign_case():
         ),
     )
     report = compare_variants(first, second)
+    dictionary_a = replace(
+        first,
+        manifest=GraphManifest(
+            dictionary_hash="old-definition", dictionary_versions=("CUSTOM@1.0.0",)
+        ),
+    )
+    dictionary_b = replace(
+        second,
+        manifest=GraphManifest(
+            dictionary_hash="new-definition", dictionary_versions=("CUSTOM@1.0.0",)
+        ),
+    )
+    changed = compare_variants(dictionary_a, dictionary_b)
+    assert changed["same_input"] and not changed["same_dictionary"]
+    from raven.graph.variants import comparison_text
+
+    assert "Dizionari diversi" in comparison_text(changed)
+    old_definition = {
+        "type": "ORGANIZATION",
+        "subtype": "ARCHIVE",
+        "include_when": ["Private ownership"],
+    }
+    new_definition = {**old_definition, "include_when": ["Public ownership"]}
+    dictionary_a = replace(
+        dictionary_a,
+        manifest=replace(
+            dictionary_a.manifest,
+            dictionary_snapshot=json.dumps({"entity_types": [old_definition]}),
+        ),
+    )
+    dictionary_b = replace(
+        dictionary_b,
+        manifest=replace(
+            dictionary_b.manifest,
+            dictionary_snapshot=json.dumps({"entity_types": [new_definition]}),
+        ),
+    )
+    changed = compare_variants(dictionary_a, dictionary_b)
+    assert changed["dictionary_definition_changes"]["changed"] == [
+        {"a": old_definition, "b": new_definition}
+    ]
+    assert "Private ownership" in comparison_text(changed)
     assert report["matched"] == 1 and not report["gained"] and not report["lost"]
     with pytest.raises(ValueError):
         compare_variants(first, replace(second, investigation_id="foreign"))
@@ -387,11 +443,78 @@ def test_methods_preserve_original_and_run_distinct_stages(tmp_path, method):
     service = GraphAnalysisService(repo, GraphStore(), node, kb)
     result = service.analyze(case, (document,), method_id=method.method_id)
     assert result.graph.manifest.method_id == method.method_id
+    import hashlib
+
+    assert (
+        hashlib.sha256(result.graph.manifest.dictionary_snapshot.encode()).hexdigest()
+        == result.graph.manifest.dictionary_hash
+    )
     assert result.graph.claims and result.graph.relationships
     assert ("temporal" in node.stages) == method.event_pass
     assert node.stages[:2] == ["entities", "claims"]
     with pytest.raises(GraphAnalysisCancelledError):
         service.analyze(case, (document,), cancelled=lambda: True, method_id=method.method_id)
+
+
+def test_cancellation_during_semantic_candidate_request_persists_cancelled_run(tmp_path):
+    from raven.exceptions import InvestigationChatCancelledError
+    from raven.models.graph import GraphRunStatus
+
+    class CancelReviewNode(MethodNode):
+        def chat(self, system, user, **options):
+            if "Retrieve pairs that MAY" in user:
+                raise InvestigationChatCancelledError("Cancelled during comparison")
+            if "Extract every atomic" in user:
+                return json.dumps(
+                    {
+                        "claims": [
+                            claim_payload(source_id="Ledger A"),
+                            claim_payload(source_id="Ledger B"),
+                        ]
+                    }
+                )
+            return super().chat(system, user, **options)
+
+    case = investigation("00000000-0000-0000-0000-000000000001")
+    source = tmp_path / "source.md"
+    source.write_text("Ledger A and Ledger B report a transfer of 240 EUR.")
+    kb = KnowledgeBaseStore(tmp_path / "kb")
+    document = kb.add(case.investigation_id, source)
+    repo = GraphRepository()
+    service = GraphAnalysisService(repo, GraphStore(), CancelReviewNode(), kb)
+    with pytest.raises(GraphAnalysisCancelledError):
+        service.analyze(case, (document,), method_id="cross_source_review")
+    assert repo.runs[-1].status is GraphRunStatus.CANCELLED
+
+
+def test_contradicted_claim_stays_contradicted_when_its_endpoint_is_uncertain(tmp_path):
+    class ReviewNode(MethodNode):
+        def chat(self, system, user, **options):
+            if "Check each candidate" in user:
+                return json.dumps(
+                    {
+                        "reviews": [
+                            {"id": "e0", "support": "uncertain", "rationale": "Unclear type"},
+                            {"id": "e1", "support": "supported", "rationale": "Explicit name"},
+                            {
+                                "id": "c0",
+                                "support": "contradicted",
+                                "rationale": "Opposite statement",
+                            },
+                        ]
+                    }
+                )
+            return super().chat(system, user, **options)
+
+    case = investigation("00000000-0000-0000-0000-000000000001")
+    source = tmp_path / "source.md"
+    source.write_text("The source denies the transfer of 240 EUR.")
+    kb = KnowledgeBaseStore(tmp_path / "kb")
+    doc = kb.add(case.investigation_id, source)
+    service = GraphAnalysisService(GraphRepository(), GraphStore(), ReviewNode(), kb)
+    result = service.analyze(case, (doc,), method_id="document_claims")
+    assert result.graph.claims[0].semantic_support == "contradicted"
+    assert not result.graph.relationships
 
 
 def test_partial_dates_do_not_invent_temporal_overlap_and_event_records_keep_sources():
@@ -447,6 +570,46 @@ def test_common_extraction_cache_is_versioned_and_temporal_pass_is_distinct():
     assert extraction_profile(manifest) != extraction_profile(
         replace(manifest, prompt_version="next")
     )
+
+
+@pytest.mark.parametrize("method", METHODS)
+def test_original_methods_reuse_across_legacy_modes_without_changing_manifests(tmp_path, method):
+    from raven.models import AnalysisLanguage, EvidencePreparationMode
+
+    case = investigation("00000000-0000-0000-0000-000000000001")
+    source = tmp_path / "source.md"
+    source.write_text("A source reports a transfer of 240 EUR.")
+    kb = KnowledgeBaseStore(tmp_path / "kb")
+    document = kb.add(case.investigation_id, source)
+    node, repo = MethodNode(), GraphRepository()
+    service = GraphAnalysisService(repo, GraphStore(), node, kb)
+    first = None
+    for mode in EvidencePreparationMode:
+        node.stages.clear()
+        result = service.analyze(case, (document,), mode, method_id=method.method_id)
+        assert result.run.preparation_mode is mode
+        config = json.loads(result.graph.manifest.configuration)
+        assert config["preparation_requested"] == mode.value
+        assert config["extraction_basis"] == "original"
+        if first is None:
+            first = result
+            assert result.graph.pages[0].state == "analyzed"
+        else:
+            assert result.graph.pages[0].state == "reused"
+            assert result.graph.pages[0].cache_origin
+            assert not node.stages
+            assert result.graph.claims == first.graph.claims
+    assert first.run.preparation_mode is EvidencePreparationMode.COMPRESS
+    assert json.loads(first.graph.manifest.configuration)["preparation_requested"] == "compress"
+    # An effective input change must still invalidate the page, even after mode-neutral reuse.
+    node.stages.clear()
+    result = service.analyze(
+        replace(case, analysis_language=AnalysisLanguage.ITALIAN),
+        (document,),
+        method_id=method.method_id,
+    )
+    assert result.graph.pages[0].state == "analyzed"
+    assert node.stages[:2] == ["entities", "claims"]
 
 
 def test_dictionary_edits_are_observed_by_existing_extractor_and_restrict_new_output(tmp_path):
@@ -654,3 +817,185 @@ def test_immutable_snapshot_rejects_same_id_with_changed_content():
     with pytest.raises(InvestigationPersistenceError):
         repo.save_graph_snapshot(replace(graph, variant_name="replacement"))
     assert checkpoints.update_one.call_count == 1
+
+
+@pytest.mark.parametrize(
+    ("first_literal", "second_literal", "matched"),
+    [
+        (LiteralValue("39", "decimal", "CHF"), LiteralValue("39.00", "decimal", "CHF"), True),
+        (LiteralValue("3.9E+2", "decimal", "m"), LiteralValue("390.00", "decimal", "m"), True),
+        (LiteralValue("-0.00", "decimal", "m"), LiteralValue("0", "decimal", "m"), True),
+        (LiteralValue("39", "decimal", "m"), LiteralValue("39", "decimal", "M"), False),
+        (LiteralValue("2026-02", "date"), LiteralValue("2026-02-01", "date"), False),
+        (
+            LiteralValue("1234567890123456789012345678901", "integer"),
+            LiteralValue("1234567890123456789012345678902", "integer"),
+            False,
+        ),
+    ],
+)
+def test_variant_literal_alignment_preserves_precision_and_unit_meaning(
+    first_literal, second_literal, matched
+):
+    entity = GraphEntity("observation", "OBSERVATION", "Measurement A")
+    claim = replace(
+        parse(claim_payload()),
+        subject_entity_id=entity.entity_id,
+        object_entity_id="",
+        claim_kind="value",
+        predicate="HAS_VALUE",
+        qualifiers=(("property", "reading"),),
+        literal=first_literal,
+    )
+    first = InvestigationGraph("case", "first", (entity,), (), datetime.now(UTC), (claim,))
+    second = replace(
+        first,
+        run_id="second",
+        claims=(replace(claim, claim_id="second-value", literal=second_literal),),
+    )
+    report = compare_variants(first, second)
+    assert report["alignment_version"] == "raven-variant-alignment-v2"
+    assert report["matched"] == int(matched)
+    assert len(report["lost"]) == len(report["gained"]) == int(not matched)
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "equal"),
+    [
+        ("240", "240.00", True),
+        ("1234567890123456789012345678901", "1234567890123456789012345678902", False),
+        ("1E+1000000", "10E+999999", True),
+    ],
+)
+def test_amount_scope_does_not_round_or_expand_large_numeric_values(left, right, equal):
+    from raven.graph.predicates import qualifiers_scope
+
+    first = qualifiers_scope((("amount", left), ("currency", "EUR")))
+    second = qualifiers_scope((("amount", right), ("currency", "EUR")))
+    assert (first == second) is equal
+    if "E" in left:
+        assert len(str(first)) < 100
+
+
+def test_variant_alignment_exposes_source_ancestry_and_reference_changes():
+    from raven.graph.variants import comparison_text
+
+    claim = replace(
+        parse(claim_payload()),
+        claim_kind="corrects",
+        references=(ClaimReference("Prior note", "TRANSFER", "Payer", "Recipient"),),
+    )
+    first = InvestigationGraph("case", "first", entities(), (), datetime.now(UTC), (claim,))
+    copied = replace(
+        first,
+        run_id="copy",
+        claims=(replace(claim, source=replace(claim.source, derived_from=("Original note",))),),
+    )
+    report = compare_variants(first, copied)
+    assert report["matched"] == 0 and len(report["gained"]) == len(report["lost"]) == 1
+    assert report["metrics_b"]["copied_source_records"] == 1
+    assert "original note" in comparison_text(report)
+    different_target = replace(
+        first,
+        run_id="other-target",
+        claims=(
+            replace(
+                claim,
+                references=(ClaimReference("Prior note", "TRANSFER", "Payer", "Other recipient"),),
+            ),
+        ),
+    )
+    report = compare_variants(first, different_target)
+    assert report["matched"] == 0
+    assert "other recipient" in comparison_text(report)
+
+
+def test_variant_alignment_resolves_reference_ids_semantically():
+    prior = replace(parse(claim_payload()), claim_id="prior")
+    correction = replace(
+        prior,
+        claim_id="correction",
+        claim_kind="corrects",
+        references=(ClaimReference("", "", "", claim_id="prior"),),
+    )
+    a, b = entities()
+    first = InvestigationGraph("case", "first", (a, b), (), datetime.now(UTC), (prior, correction))
+    second = replace(
+        first,
+        run_id="second",
+        entities=(replace(a, entity_id="other-a"), replace(b, entity_id="other-b")),
+        claims=(
+            replace(
+                prior,
+                claim_id="other-prior",
+                subject_entity_id="other-a",
+                object_entity_id="other-b",
+            ),
+            replace(
+                correction,
+                claim_id="other-correction",
+                subject_entity_id="other-a",
+                object_entity_id="other-b",
+                references=(ClaimReference("", "", "", claim_id="other-prior"),),
+            ),
+        ),
+    )
+    report = compare_variants(first, second)
+    assert report["matched"] == 2 and not report["lost"] and not report["gained"]
+
+
+def test_variant_alignment_exposes_review_disagreement_without_losing_the_proposition():
+    from raven.graph.variants import comparison_text
+
+    claim = replace(
+        parse(claim_payload()),
+        semantic_support="supported",
+        review_rationale="The source supports this reading.",
+    )
+    first = InvestigationGraph("case", "first", entities(), (), datetime.now(UTC), (claim,))
+    second = replace(
+        first,
+        run_id="second",
+        claims=(
+            replace(
+                claim,
+                claim_id="reviewed",
+                semantic_support="contradicted",
+                review_rationale="The source instead reports the opposite.",
+            ),
+        ),
+    )
+    report = compare_variants(first, second)
+    assert report["matched"] == 1 and not report["lost"] and not report["gained"]
+    assert len(report["review_differences"]) == 1
+    assert report["review_differences"][0]["a"] == [("supported", "proposed")]
+    assert report["review_differences"][0]["b"] == [("contradicted", "proposed")]
+    text = comparison_text(report)
+    assert "ESITI DELLA REVISIONE DISCORDANTI" in text and "instead reports the opposite" in text
+
+
+def test_variant_alignment_compares_unique_source_pages_with_legacy_unknowns():
+    claim = replace(
+        parse(claim_payload()),
+        support=(
+            EvidenceSpan("doc", "Legacy quotation", None),
+            EvidenceSpan("doc", "Quoted sentence", 1),
+        ),
+    )
+    first = InvestigationGraph("case", "first", entities(), (), datetime.now(UTC), (claim,))
+    second = replace(
+        first,
+        run_id="second",
+        claims=(
+            replace(
+                claim,
+                support=(
+                    claim.support[1],
+                    claim.support[0],
+                    EvidenceSpan("doc", "Another sentence on the same page", 1),
+                ),
+            ),
+        ),
+    )
+    report = compare_variants(first, second)
+    assert report["matched"] == 1 and not report["lost"] and not report["gained"]

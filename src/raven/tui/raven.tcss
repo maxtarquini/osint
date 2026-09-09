@@ -1197,16 +1197,10 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
 
 #graph-toolbar {
     width: 100%;
-    height: 10;
-    padding: 1 2;
+    height: 4;
+    padding: 0 1;
     background: $surface-raised;
-    border: round $accent-dark;
-}
-
-#graph-mode-control {
-    width: 1fr;
-    height: 6;
-    padding: 0;
+    border-bottom: solid $accent-dark;
 }
 
 .field-label {
@@ -1216,14 +1210,19 @@ MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
     text-style: bold;
 }
 
-#graph-preparation-mode {
-    width: 100%;
+#graph-extraction-basis {
+    width: 1fr;
+    min-width: 0;
+    height: 3;
+    padding: 0 1 0 0;
+    content-align: left middle;
+    color: $muted;
 }
 
 #graph-actions {
-    width: 31;
-    height: 5;
-    padding: 1 0;
+    width: auto;
+    height: 3;
+    padding: 0;
 }
 
 #analyze-evidence {
@@ -1557,18 +1556,6 @@ InvestigationWorkspaceScreen.compact-workspace .field-label {
     display: none;
 }
 
-InvestigationWorkspaceScreen.compact-workspace #graph-mode-control,
-InvestigationWorkspaceScreen.compact-workspace #graph-actions {
-    height: 5;
-}
-
-InvestigationWorkspaceScreen.compact-workspace #graph-toolbar {
-    height: 6;
-    padding: 0 1;
-    border: none;
-    border-bottom: solid $accent-dark;
-}
-
 InvestigationWorkspaceScreen.compact-workspace #graph-panel-header {
     height: 4;
 }
@@ -1604,10 +1591,6 @@ InvestigationWorkspaceScreen.narrow-workspace #graph-details-panel {
 
 InvestigationWorkspaceScreen.narrow-workspace #graph-navigation-hint {
     display: none;
-}
-
-InvestigationWorkspaceScreen.compact-workspace #graph-actions {
-    padding: 1 0;
 }
 
 #chat-toolbar {
@@ -1981,8 +1964,9 @@ ConfirmInvestigationDelete {
 .capability-actions { height: 3; }
 .capability-actions Button { width: 1fr; min-width: 12; height: 3; margin: 0; }
 #capability-search { height: 3; margin: 0; }
-#skills-table, #tools-table { height: 5; min-height: 3; }
-#skill-details, #tool-details { height: 1fr; min-height: 3; }
+CatalogSplit { height: 1fr; min-height: 3; }
+#skills-table, #tools-table { width: 1fr; min-width: 0; height: 100%; }
+#skill-details, #tool-details { height: 100%; min-width: 0; }
 CapabilitiesScreen TabPane { padding: 0 1; }
 SkillEditor { align: center middle; background: rgba(0, 0, 0, 0.65); }
 #skill-editor-dialog { width: 95%; height: 95%; border: round $accent; background: $surface; padding: 0 1; }
@@ -2058,7 +2042,7 @@ PaneDivider.dragging {
 GraphVariantsScreen { align: center middle; }
 #variants-dialog { width: 95%; height: 95%; padding: 0 1; background: $surface; border: round $accent; }
 #variants-title { height: 1; text-style: bold; }
-#variants-controls { height: 10; }
+#variants-controls { height: auto; max-height: 50%; }
 #variants-controls Static { height: auto; }
 #variants-controls Select, #variant-name { width: 100%; }
 #variant-purpose { height: auto; }
@@ -2066,9 +2050,20 @@ GraphVariantsScreen { align: center middle; }
 .variant-actions Button { width: 1fr; min-width: 12; }
 #variant-status { height: 2; }
 #variant-report { height: 1fr; min-height: 3; }
-#variant-close { height: 3; }
+#variant-footer { dock: bottom; height: 3; min-height: 3; }
+#variant-generate { width: 1fr; height: 3; }
+#variant-close { width: 16; height: 3; }
 #graph-review-text { height: 1fr; }
-#graph-actions { width: 47; }
 #analyze-evidence { width: 16; min-width: 16; }
-#graph-variants { width: 19; min-width: 19; }
-InvestigationWorkspaceScreen.narrow-workspace #graph-mode-control { min-width: 12; }
+#graph-variants { width: 23; min-width: 23; }
+
+/* Catalog search and state filters share one row at the minimum terminal size. */
+#capability-filters { height: 3; }
+#capability-filters #capability-search { width: 1fr; }
+#capability-state { width: 22; }
+TopNavigation.compact #navigation-context { display: none; }
+CatalogDetailScreen { align: center middle; background: rgba(0, 0, 0, 0.65); }
+#catalog-detail-dialog { width: 100%; height: 100%; border: round $accent; padding: 0 1; }
+#catalog-detail-title { height: 1; color: $accent; text-style: bold; }
+#catalog-detail-text { height: 1fr; }
+#close-catalog-detail { height: 3; width: 100%; }

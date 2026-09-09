@@ -956,25 +956,33 @@ async def test_evidence_header_action_bar_is_not_clipped(tmp_path: Path) -> None
             assert button.region.bottom <= header.content_region.bottom
 
 
-async def test_graph_toolbar_controls_are_not_clipped(tmp_path: Path) -> None:
+@pytest.mark.parametrize("size", [(80, 24), (160, 32)])
+async def test_graph_toolbar_controls_are_not_clipped(tmp_path: Path, size) -> None:
     investigations = FakeInvestigations()
     investigation = investigations.create(
         InvestigationDraft(name="Readable graph", questions=("Who?",))
     )
     app = make_app(tmp_path, investigations=investigations)
 
-    async with app.run_test(size=(160, 32)) as pilot:
+    async with app.run_test(size=size) as pilot:
         app.open_investigation(investigation)
         await pilot.pause()
         app.screen.query_one("#workspace-tabs", TabbedContent).active = "workspace-graph-tab"
         await pilot.pause()
 
         toolbar = app.screen.query_one("#graph-toolbar")
-        assert toolbar.content_size.height >= 5
-        for selector in ("#graph-preparation-mode", "#analyze-evidence"):
+        assert not app.screen.query("#graph-preparation-mode")
+        basis = app.screen.query_one("#graph-extraction-basis")
+        assert basis.render().plain == "Originali con contesto documentale"
+        assert not basis.can_focus
+        for selector in ("#graph-extraction-basis", "#analyze-evidence", "#graph-variants"):
             control = app.screen.query_one(selector)
             assert control.region.y >= toolbar.content_region.y
             assert control.region.bottom <= toolbar.content_region.bottom
+            assert control.region.right <= toolbar.content_region.right
+        app.screen.query_one("#analyze-evidence").focus()
+        await pilot.press("tab")
+        assert app.focused.id == "graph-variants"
 
 
 async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_path: Path) -> None:
@@ -1003,7 +1011,7 @@ async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_pat
         app.screen.query_one("#workspace-tabs", TabbedContent).active = "workspace-graph-tab"
         await pilot.pause()
 
-        assert app.screen.query_one("#graph-toolbar").outer_size.height >= 5
+        assert app.screen.query_one("#graph-toolbar").outer_size.height <= 4
         app.screen._start_graph_analysis(method_id="document_claims")
         await app.workers.wait_for_complete()
         for _ in range(20):
@@ -1016,7 +1024,7 @@ async def test_workspace_analyzes_evidence_and_visualizes_proposed_graph(tmp_pat
         assert canvas.size.width >= 40
         assert canvas.size.height >= 4
         assert app.screen.has_class("narrow-workspace")
-        assert graph_analysis.mode is EvidencePreparationMode.COMPRESS
+        assert graph_analysis.mode is EvidencePreparationMode.FULL_TEXT
         assert "Mario Rossi" in rendered
         assert "WORKS_FOR" in rendered
         assert (

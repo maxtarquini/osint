@@ -121,7 +121,10 @@ def evidence_index_signature(document: EvidenceDocument, language: str) -> str:
 def omitted_comparison_pages(graph, included_claim_ids):
     """Pages whose linked assertions cannot be represented as a complete comparison."""
     linked = {
-        key for link in graph.claim_links for key in (link.source_claim_id, link.target_claim_id)
+        key
+        for link in graph.claim_links
+        if link.requires_joint_context
+        for key in (link.source_claim_id, link.target_claim_id)
     }
     return {
         (span.evidence_id, span.page_number)
@@ -380,6 +383,13 @@ class HybridInvestigationRetriever:
 
     @classmethod
     def _select_graph(cls, graph, terms, pages, selection, cancelled):
+        # Review-only pairs remain in the immutable variant. They must not build large
+        # artificial components that suppress otherwise retrievable source assertions.
+        graph = replace(
+            graph,
+            claim_links=tuple(link for link in graph.claim_links if link.requires_joint_context),
+        )
+
         def lexical(text):
             words = set(re.findall(r"[^\W_]+(?:[.@/-][^\W_]+)*", text.casefold(), re.UNICODE))
             return sum(term in words for term in terms)

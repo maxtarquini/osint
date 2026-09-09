@@ -173,6 +173,7 @@ class RavenApp(App[None]):
         self.capabilities = CapabilityRegistry(
             self.settings.with_environment().skills.path,
             getattr(self.infrastructure, "ai_node", None),
+            profile_settings=self.settings.with_environment().ai,
         )
         self.graph_analysis = graph_analysis
         self.investigation_chat = investigation_chat
@@ -237,9 +238,11 @@ class RavenApp(App[None]):
                     InvestigationCatalogScreen,
                     InvestigationCreateScreen,
                     InvestigationWorkspaceScreen,
+                    CapabilitiesScreen,
                 ),
             ):
-                self.pop_screen()
+                while len(self.screen_stack) > 1 and not isinstance(self.screen, HomeScreen):
+                    self.pop_screen()
             return
         if target == "capabilities":
             if not isinstance(self.screen, CapabilitiesScreen):
@@ -317,7 +320,9 @@ class RavenApp(App[None]):
             raise ConfigurationError(str(error)) from error
         self.settings = settings
         self.capabilities = CapabilityRegistry(
-            settings.with_environment().skills.path, getattr(self.infrastructure, "ai_node", None)
+            settings.with_environment().skills.path,
+            getattr(self.infrastructure, "ai_node", None),
+            profile_settings=settings.with_environment().ai,
         )
         self.infrastructure.configure(settings)
         self.navigate("home")

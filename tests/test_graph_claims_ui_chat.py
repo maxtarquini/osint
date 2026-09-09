@@ -152,6 +152,16 @@ def test_non_pdf_claim_source_and_coverage_use_logical_text_position(tmp_path):
 
 def test_chat_serializes_denial_comparison_time_and_attribution(tmp_path):
     _, case, graph = case_and_claim_graph(tmp_path)
+    graph = replace(
+        graph,
+        claim_links=(
+            replace(
+                graph.claim_links[0],
+                review_state="supported",
+                review_rationale="The two attributed assertions concern the same period.",
+            ),
+        ),
+    )
     context = json.loads(InvestigationChatService._graph_context(graph))
     claims = {claim["id"]: claim for claim in context["claims"]}
     assert claims["no"]["polarity"] == "denied"
@@ -161,6 +171,8 @@ def test_chat_serializes_denial_comparison_time_and_attribution(tmp_path):
     assert claims["no"]["attribution"] == "Portavoce B"
     assert claims["yes"]["qualifiers"] == {"ambito": "locale"}
     assert context["claim_links"][0]["requires_identity_review"] is True
+    assert context["claim_links"][0]["review_state"] == "supported"
+    assert context["claim_links"][0]["review_rationale"] == graph.claim_links[0].review_rationale
     assert context["relationships"][0]["claim_ids"] == ["yes"]
     assert context["coverage"] == {"reused": 1, "partial": 1}
     assert context["truncated"] is False

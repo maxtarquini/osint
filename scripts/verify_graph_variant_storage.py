@@ -93,7 +93,10 @@ def main():
                 claims,
                 (ClaimLink("conflict", "claim", "denial", "contradicts", "Synthetic fixture"),),
                 variant_name="Synthetic A",
-                manifest=GraphManifest(documents=(("doc", "hash"),)),
+                manifest=GraphManifest(
+                    documents=(("doc", "hash"),),
+                    dictionary_snapshot='{"domain_code":"STORAGE_CHECK","entity_types":[]}',
+                ),
                 events=event_records(claims, entities),
             )
             second = replace(

@@ -435,3 +435,61 @@ def test_legacy_entity_and_relationship_support_receive_resolvable_graph_citatio
         (), context, {doc.document_id: doc.original_name for doc in docs}
     )
     assert labels == ("[G1] report.pdf · page 1", "[G2] denial.pdf · page 2")
+
+
+@pytest.mark.parametrize(
+    ("kind", "review_state"),
+    [
+        ("candidate_unrelated", "supported"),
+        ("unrelated", "unreviewed"),
+        ("candidate_contradicts", "unsupported"),
+        ("candidate_contradicts", "contradicted"),
+        ("candidate_scope_review", "uncertain"),
+        ("candidate_semantic_review", "unreviewed"),
+        ("candidate_uncertain", "supported"),
+    ],
+)
+def test_review_only_pairs_do_not_swallow_a_real_counterclaim_group(kind, review_state):
+    from raven.services.retrieval import omitted_comparison_pages
+
+    _, _, graph, _ = scenario()
+    unrelated = tuple(
+        replace(
+            graph.claims[0],
+            claim_id=f"noise-{number}",
+            subject_entity_id="other",
+            object_entity_id="other",
+            attribution="Unrelated discussion " * 100,
+            support=(EvidenceSpan("other-document", "Unrelated discussion.", number + 1, True),),
+        )
+        for number in range(100)
+    )
+    review_pairs = tuple(
+        ClaimLink(
+            f"review-{number}",
+            "yes",
+            claim.claim_id,
+            kind,
+            "Candidate retrieved for review",
+            review_state=review_state,
+            review_rationale="The pair does not establish a usable comparison.",
+        )
+        for number, claim in enumerate(unrelated)
+    )
+    graph = replace(
+        graph,
+        claims=(*graph.claims, *unrelated),
+        claim_links=(*graph.claim_links, *review_pairs),
+        entities=(*graph.entities, GraphEntity("other", "ORGANIZATION", "Other")),
+    )
+    selected, _ = HybridInvestigationRetriever._select_graph(graph, ("acme",), (), None, None)
+    assert {c.claim_id for c in selected.claims} == {"yes", "no"}
+    context = json.loads(InvestigationChatService._graph_context(selected, max_chars=5000))
+    assert {c["id"] for c in context["claims"]} == {"yes", "no"}
+    assert [link["id"] for link in context["claim_links"]] == ["opposition"]
+    # Neither retrieval nor serialization may mutate the persisted review record.
+    assert len(graph.claims) == 102 and len(graph.claim_links) == 101
+    assert omitted_comparison_pages(graph, {"yes", "no"}) == set()
+    direct = json.loads(InvestigationChatService._graph_context(graph, max_chars=5000))
+    assert {"yes", "no"} <= {c["id"] for c in direct["claims"]}
+    assert direct["review_only_comparisons_omitted"] == 100

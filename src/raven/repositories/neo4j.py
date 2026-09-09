@@ -49,24 +49,30 @@ class Neo4jRepository:
         self._driver: Any | None = None
         self._database: str | None = None
 
-    def initialize(self, settings: Neo4jSettings) -> None:
+    def initialize(self, settings: Neo4jSettings, *, bootstrap: bool = True) -> None:
         auth = (settings.username, settings.password) if settings.password is not None else None
         candidate = self._driver_factory(
             settings.uri,
             auth=auth,
             connection_timeout=2.5,
+            **(
+                {"max_transaction_retry_time": 5, "connection_acquisition_timeout": 5}
+                if not bootstrap
+                else {}
+            ),
         )
         try:
             candidate.verify_connectivity()
-            for query in SCHEMA_QUERIES:
-                candidate.execute_query(query, database_=settings.database)
-            candidate.execute_query(
-                "MERGE (metadata:RavenMetadata {key: $key}) "
-                "SET metadata.version = $version, metadata.updated_at = datetime()",
-                key="schema",
-                version=NEO4J_SCHEMA_VERSION,
-                database_=settings.database,
-            )
+            if bootstrap:
+                for query in SCHEMA_QUERIES:
+                    candidate.execute_query(query, database_=settings.database)
+                candidate.execute_query(
+                    "MERGE (metadata:RavenMetadata {key: $key}) "
+                    "SET metadata.version = $version, metadata.updated_at = datetime()",
+                    key="schema",
+                    version=NEO4J_SCHEMA_VERSION,
+                    database_=settings.database,
+                )
         except AuthError as error:
             candidate.close()
             raise InfrastructureAuthenticationError("Neo4j authentication failed") from error

@@ -1,5 +1,13 @@
 # Hudiny Evidence-to-Graph port
 
+> **Scope, updated 2026-09-09.** This document describes the historical port and its
+> compatibility pipeline. The selectable investigative methods and named variants now use
+> a different extraction and persistence flow. See the
+> [current graph analysis manual](graph-analysis-methods.md) for their actual behavior,
+> dictionary handling, variant activation, comparison and verified limitations. In particular,
+> the preparation menu has been replaced by **Originali con contesto documentale** for the
+> three selectable methods.
+
 ## Source analysis
 
 The Raven implementation was mapped from the local Hudiny Link Intelligence implementation,
@@ -7,7 +15,7 @@ especially its investigation workflow, Evidence graph guide, extraction pipeline
 observable extractor, word chunker, agent prompts, consolidation component, run lifecycle, MongoDB
 artifacts, and Neo4j synchronization boundary.
 
-The behavioral sequence retained in Raven is:
+The behavioral sequence of the compatibility pipeline is:
 
 ```text
 Evidence files
@@ -67,15 +75,24 @@ bundled defaults.
 
 ## Language and preparation
 
+For the three selectable methods, extraction uses original citation units and document
+context. The analysis language requests the language of explanations; it does not trigger
+pretranslation. The legacy preparation value is still stored for traceability, but no longer
+participates in the selectable methods' extraction cache signatures. Historical snapshots
+remain unchanged. The following describes only the compatibility path, called without a method ID.
+
 The investigation stores one default `analysis_language`. `Original` is the default and preserves
 the language of every Evidence. A graph run freezes that value together with its preparation mode.
 
 - `Compress Evidence`: Hudiny-compatible default; compression can also translate operational prose
   to the investigation language.
-- `Full text`: uses original text, or detects and losslessly translates it when the investigation
-  has a target language.
-- `Translate + overlapping chunks`: applies the same language rule and then splits at 1,000 words
-  with a 100-word overlap before per-chunk extraction and deterministic consolidation.
+- `Full text`: uses original text, or detects and translates it when the investigation
+  has a different target language. The translation prompt requests fidelity; this is not a
+  guarantee of lossless model output.
+- `Translate + overlapping chunks`: currently follows the same preparation branch as
+  `Full text`. The compatibility page analyzer splits text into 1,000-word chunks with a
+  100-word overlap before preparation for every mode, including compression. Chunking is
+  therefore not an exclusive behavior of this option.
 
 ## Persistence and provenance
 

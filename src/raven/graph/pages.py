@@ -63,7 +63,7 @@ def plan_pages(
         "dictionary": vocabulary.sha256,
         "domain": vocabulary.domain_code,
         "language": case.analysis_language.value,
-        "preparation": mode.value,
+        "preparation": "original" if method_profile else mode.value,
         "available": node.available,
         # Hash endpoint identity without persisting credentials or endpoint URLs.
         "model": {

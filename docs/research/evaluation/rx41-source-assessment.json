@@ -1,0 +1,665 @@
+{
+  "annotation": "Assistant review against the pre-existing RX41 source fixture and acceptance scenarios. Not an exhaustive or independently double-annotated accuracy benchmark. Recovery and precision are assessed separately; model support labels are not ground truth.",
+  "runs": [
+    {
+      "method": "document_claims",
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475",
+      "reviewed_source_pages": {
+        "D1": [
+          1,
+          6
+        ],
+        "D2": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "D3": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "scenarios": [
+        {
+          "scenario": "civil_group",
+          "recovery": "pass",
+          "precision": "pass",
+          "claim_ids": [],
+          "notes": "All three Cellula Verde mentions remain GROUP with no terrorist subtype; no identity merge into another organization."
+        },
+        {
+          "scenario": "absence",
+          "recovery": "partial",
+          "precision": "partial",
+          "claim_ids": [
+            "e0084db3-b943-526d-ae54-94bee3026b5b",
+            "24bfdeb3-a728-5a4c-a414-a5eee7f1940d",
+            "fb9b11b8-9127-5d29-b1a5-c84f20bc6b3c",
+            "0233eb61-fad2-56a8-8d04-4425473e324e"
+          ],
+          "notes": "A-01 affiliation and F-06 transfer gaps retained as not_documented. Reviewer wrongly rejects the correctly encoded A-01 gap. D2 affiliation denial is correctly rejected, but other absence statements still become supported denials."
+        },
+        {
+          "scenario": "dependence",
+          "recovery": "pass",
+          "precision": "pass",
+          "claim_ids": [
+            "0f49f63d-07b4-5872-8bb4-ae6f98b311e9",
+            "17e5c9e2-4b6c-5cf8-afd1-bbe773892142"
+          ],
+          "notes": "SA-02 allegation and CG-01 denial are separately attributed and joined by candidate_contradicts with identity review required. No source is adjudicated true."
+        },
+        {
+          "scenario": "transfer",
+          "recovery": "partial",
+          "precision": "partial",
+          "claim_ids": [
+            "5815d982-04e4-58d8-861a-fe18958300a0",
+            "15478e9f-086d-5820-973f-f873df6b30bc",
+            "76a0096d-ff26-580c-a875-795f83fa1e66",
+            "80a69bae-4ff3-5fa4-9145-a4f153cb6a4b"
+          ],
+          "notes": "ST-05 and EC-03 claims retain 240 EUR and EC-03 interval in qualifiers. Document-to-document CONTRADICTS is extracted, but no claim comparison connects this pair because qualification sets differ. A separate unsupported-by-source denial from an evidence-gap sentence is wrongly marked supported."
+        },
+        {
+          "scenario": "identity",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "cd10b735-dada-5d73-9fa8-c35eb8a62fee",
+            "cc010d5a-3f66-5173-b6a2-630b002e689b",
+            "5f593ed4-9a70-5834-96b2-8d2680ec20ac",
+            "b04818ff-2c06-58ea-ba96-8494f86837b1"
+          ],
+          "notes": "RE-02 retraction is explicit, identities remain separate and original CE-03 editorial relations survive. A later editorial statement is also misrepresented as the channel publishing the catalog; the original uncertainty statement is incorrectly represented as withdrawal of certainty."
+        },
+        {
+          "scenario": "date",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "84440d2b-b2f8-57c2-8465-fe43761d1e15",
+            "9894727a-7d55-5bf2-9aac-e58a9c3f898c"
+          ],
+          "notes": "Correction stores 10 February in new_date and references RT-04 11 February for the same attack. Distinct hostage event retains 11 February. Earlier dates use malformed document-as-event endpoints, preventing resolved correction comparison."
+        },
+        {
+          "scenario": "location",
+          "recovery": "partial",
+          "precision": "fail",
+          "claim_ids": [
+            "93ba3553-4c0c-52d1-9fab-ca40a69b6bd2"
+          ],
+          "notes": "No alternative location invented, but BL-08 withdrawal is encoded and endorsed as ceases rather than retracts; that changes the historical meaning."
+        },
+        {
+          "scenario": "certainty",
+          "recovery": "partial",
+          "precision": "pass",
+          "claim_ids": [
+            "46ec5687-91cb-5a66-884c-f0f8d471b423",
+            "fd0e22a9-ced2-5c2c-b6e5-0d0c65fb4f58"
+          ],
+          "notes": "Withdrawal of attributed certainty is retained and references RT-04, with a candidate link to prior responsibility. It is not an acquittal. The affected event endpoint is omitted and UT-09 is not retained as a separate structured source."
+        },
+        {
+          "scenario": "support",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "836b8611-22ac-591f-bf8d-72bc80fabd6d",
+            "98119085-774a-5a60-bb89-eb787b711f10",
+            "99b57e4f-32d0-5a4b-af09-11b29b0e4a48",
+            "87a49133-bbf1-536e-9402-06eac3740229"
+          ],
+          "notes": "March 1 activity, February 21-March 2 history and March 3 cessation survive. An additional false cessation involving the library is wrongly endorsed; its existence prevents a clean precision pass."
+        },
+        {
+          "scenario": "copies",
+          "recovery": "missing",
+          "precision": "not_established",
+          "claim_ids": [],
+          "notes": "No derived_from records or dependent_source comparison. Original CE-03 and Scheda source names are retained, but NI-01/RI-02 transcription ancestry is not reconstructed and RE-02 retransmission is not recognized as dependent."
+        }
+      ],
+      "confirmed_precision_defects": [
+        {
+          "claim_id": "93ba3553-4c0c-52d1-9fab-ca40a69b6bd2",
+          "problem": "Retraction of a location assertion becomes cessation of a real location relationship."
+        },
+        {
+          "claim_id": "295decec-e5ae-5385-a28b-c5004b31089e",
+          "problem": "Channel publishes catalog instead of distributing bulletin."
+        },
+        {
+          "claim_id": "87a49133-bbf1-536e-9402-06eac3740229",
+          "problem": "Non-extension of cessation to library collaboration becomes a graphic-support cessation involving the wrong participant."
+        },
+        {
+          "claim_id": "80a69bae-4ff3-5fa4-9145-a4f153cb6a4b",
+          "problem": "Lack of evidence for transfer becomes a transfer denial."
+        },
+        {
+          "claim_id": "c03d51a2-bea1-52fc-9e63-876a511153da",
+          "problem": "Not evidence of financing becomes a denial of financing with a specific beneficiary."
+        },
+        {
+          "claim_id": "2448d878-c67a-5d0f-8c8b-ef54eca8873f",
+          "problem": "No recurring operations mentioned becomes denial of recurring transfer to a specific beneficiary."
+        },
+        {
+          "claim_id": "ce267185-0ce4-501d-a78f-5bb62859914e",
+          "problem": "Hypothesis concerning a payment is assigned to the association as subject."
+        },
+        {
+          "claim_id": "e569ebd6-bc97-59f0-b560-8d0e69e5d660",
+          "problem": "Source document is used as collaboration participant."
+        },
+        {
+          "claim_id": "ae196253-59bb-59ce-8dc0-e21a73f657c4",
+          "problem": "Register is subject of OCCURRED_ON and attack is its object, instead of attack plus date value."
+        },
+        {
+          "claim_id": "8856cd17-5ee1-5b09-adbb-ebc5406e9276",
+          "problem": "Document is subject of OCCURRED_ON and attack is its object."
+        },
+        {
+          "claim_id": "f3e7f6bf-3f43-58a6-a4f0-ee18e21044ad",
+          "problem": "An identity hypothesis remaining uncertain is represented as an explicit withdrawal."
+        },
+        {
+          "claim_id": "6d934e14-c80c-571a-a56d-a4577f58f05f",
+          "problem": "No attribution of campaign management becomes a management denial."
+        },
+        {
+          "claim_id": "5deea93b-9d69-56ae-9b6e-ab9007aaf3dc",
+          "problem": "No attribution of campaign management becomes a management denial."
+        }
+      ],
+      "review_false_negative_examples": [
+        "e0084db3-b943-526d-ae54-94bee3026b5b",
+        "5d3faf9e-548c-5b3d-b364-7c1b88b66a2c",
+        "1a7b006a-e123-5958-92cb-ce0347ddf0e1"
+      ],
+      "precision_scope_note": "Listed defects were individually checked and are model-supported claims; the count is not an exhaustive false-positive count or a precision estimate. Generic HAS_VALUE booleans without property names introduce additional ambiguity."
+    },
+    {
+      "method": "cross_source_review",
+      "run_id": "34b9bb64-d8c6-4b9b-957e-3e936291ee08",
+      "reviewed_source_pages": {
+        "D1": [
+          1,
+          6
+        ],
+        "D2": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "D3": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "scenarios": [
+        {
+          "scenario": "civil_group",
+          "recovery": "pass",
+          "precision": "pass",
+          "claim_ids": [
+            "7eee480c-88f0-570a-9532-ce1932aac6fb"
+          ],
+          "comparison_ids": [],
+          "notes": "All three Cellula Verde mentions are GROUP, no terrorist subtype. The awkward self-referential terrorist-classification claim is denied, not a positive accusation."
+        },
+        {
+          "scenario": "absence",
+          "recovery": "partial",
+          "precision": "partial",
+          "claim_ids": [
+            "09fe30cf-90fd-5efc-9701-eb16e3f999b7",
+            "24bfdeb3-a728-5a4c-a414-a5eee7f1940d",
+            "fb9b11b8-9127-5d29-b1a5-c84f20bc6b3c",
+            "24c247a6-5e00-5706-9b49-c5b4559536dc"
+          ],
+          "comparison_ids": [],
+          "notes": "A-01 affiliation gap and F-06 transfer gaps are correctly retained and supported. Other gaps still become denials. One additional affiliation-gap/withdrawal claim cites only a generic note about unverified relationships and does not support its named subject."
+        },
+        {
+          "scenario": "dependence",
+          "recovery": "pass",
+          "precision": "pass",
+          "claim_ids": [
+            "0f49f63d-07b4-5872-8bb4-ae6f98b311e9",
+            "17e5c9e2-4b6c-5cf8-afd1-bbe773892142"
+          ],
+          "comparison_ids": [
+            "c265c0bb-7bdf-5c58-9872-846ea5f1da56"
+          ],
+          "notes": "SA-02 allegation and CG-01 denial are linked as a candidate contradiction with identity review required and both attributions preserved."
+        },
+        {
+          "scenario": "transfer",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "5815d982-04e4-58d8-861a-fe18958300a0",
+            "15478e9f-086d-5820-973f-f873df6b30bc",
+            "34aa59da-5dc5-5019-a2c6-eb57efe35325"
+          ],
+          "comparison_ids": [
+            "ef1593f9-20dd-5088-91a8-44bd0e642971",
+            "3e21c545-6295-5b00-b54c-41afb34c0c1a"
+          ],
+          "notes": "Cross-source review connects ST-05 and EC-03 despite differing qualification sets and currency labels. EC-03 retains its exact interval; the allegation remains undated. A duplicate allegation is also compared. The additional evidence-gap-as-denial defect remains."
+        },
+        {
+          "scenario": "identity",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "5873cfea-7c2e-5aa7-b655-8d4755b0d321",
+            "cd10b735-dada-5d73-9fa8-c35eb8a62fee",
+            "295decec-e5ae-5385-a28b-c5004b31089e"
+          ],
+          "comparison_ids": [
+            "21b2c589-4458-5ab5-99df-5c9988cd7b19"
+          ],
+          "notes": "Explicit RE-02 retraction is linked to the earlier hypothesis. Identities and original CE-03 editorial relations remain separate. Wrong catalog-publication and uncertainty-as-withdrawal assertions remain."
+        },
+        {
+          "scenario": "date",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "84440d2b-b2f8-57c2-8465-fe43761d1e15",
+            "ae196253-59bb-59ce-8dc0-e21a73f657c4",
+            "9894727a-7d55-5bf2-9aac-e58a9c3f898c"
+          ],
+          "comparison_ids": [
+            "fc4b78d2-5c1d-5792-a030-d467dfda1d0c"
+          ],
+          "notes": "The 10 February correction now links to the prior 11 February claim for the same attack. The hostage event remains distinct. Earlier document-as-event endpoint errors persist, and another comparison incorrectly calls the original date disagreement a correction."
+        },
+        {
+          "scenario": "location",
+          "recovery": "partial",
+          "precision": "fail",
+          "claim_ids": [
+            "93ba3553-4c0c-52d1-9fab-ca40a69b6bd2",
+            "30b7b8d3-9eed-515f-8e56-57c963ab3c6c"
+          ],
+          "comparison_ids": [
+            "6adc867e-f433-5293-8f80-0e19bcf09275"
+          ],
+          "notes": "The withdrawn location is connected to the prior statement, but both extraction and review call this ceases instead of retracts. No replacement location is invented."
+        },
+        {
+          "scenario": "certainty",
+          "recovery": "partial",
+          "precision": "pass",
+          "claim_ids": [
+            "46ec5687-91cb-5a66-884c-f0f8d471b423",
+            "fd0e22a9-ced2-5c2c-b6e5-0d0c65fb4f58"
+          ],
+          "comparison_ids": [
+            "685db40f-484e-5be5-9155-0984d188f24b"
+          ],
+          "notes": "Withdrawal of attributed certainty is linked to the RT-04 assertion without acquittal. The operation still omits its event endpoint and distinct UT-09 structured source."
+        },
+        {
+          "scenario": "support",
+          "recovery": "partial",
+          "precision": "partial",
+          "claim_ids": [
+            "1c429ede-7c61-5d36-add9-f9001da5ef36",
+            "a8206f2c-a9e1-5059-bdc0-408264953704",
+            "3ab6bdeb-b8a5-5cb0-a8e1-558467221da7"
+          ],
+          "comparison_ids": [],
+          "notes": "CC-05 support from 21 February and AC-05 cessation from 3 March survive. D3 page 5 yields only two cessation claims, losing the explicit historical interval through 2 March and the educational collaboration confirmation at 5 March. One CEASES claim uses the reporting center as acting subject, introducing agency ambiguity."
+        },
+        {
+          "scenario": "copies",
+          "recovery": "missing",
+          "precision": "not_established",
+          "claim_ids": [],
+          "comparison_ids": [],
+          "notes": "NI-01 and RI-02 transcription ancestry is still absent: no derived_from records. Three dependent_source links concern other pairs and do not satisfy this scenario; one contains a false explanation that two different relations have the same endpoints. The system does not compute an independent-confirmation score."
+        }
+      ],
+      "comparison_states": {
+        "candidate_evidence_gap/supported": 3,
+        "candidate_agrees/supported": 38,
+        "candidate_contradicts/supported": 23,
+        "candidate_withdraws_certainty/supported": 7,
+        "candidate_scope_review/uncertain": 3,
+        "candidate_retracts/supported": 1,
+        "candidate_scope_review/contradicted": 1,
+        "candidate_scope_review/unsupported": 1,
+        "candidate_ceases/supported": 2,
+        "candidate_semantic_review/unsupported": 46,
+        "candidate_unrelated/supported": 266,
+        "candidate_corrects/supported": 3,
+        "candidate_dependent_source/supported": 3,
+        "candidate_uncertain/supported": 5,
+        "candidate_semantic_review/contradicted": 3,
+        "candidate_temporal_change/supported": 4,
+        "candidate_semantic_review/uncertain": 8
+      },
+      "confirmed_precision_defects": [
+        {
+          "claim_id": "93ba3553-4c0c-52d1-9fab-ca40a69b6bd2",
+          "problem": "Retraction of a location assertion becomes cessation of a real location relationship."
+        },
+        {
+          "claim_id": "295decec-e5ae-5385-a28b-c5004b31089e",
+          "problem": "Channel publishes catalog instead of distributing bulletin."
+        },
+        {
+          "claim_id": "80a69bae-4ff3-5fa4-9145-a4f153cb6a4b",
+          "problem": "Lack of evidence for transfer becomes a transfer denial."
+        },
+        {
+          "claim_id": "c03d51a2-bea1-52fc-9e63-876a511153da",
+          "problem": "Not evidence of financing becomes a denial of financing with a specific beneficiary."
+        },
+        {
+          "claim_id": "2448d878-c67a-5d0f-8c8b-ef54eca8873f",
+          "problem": "No recurring operations mentioned becomes denial of recurring transfer to a specific beneficiary."
+        },
+        {
+          "claim_id": "ce267185-0ce4-501d-a78f-5bb62859914e",
+          "problem": "Hypothesis concerning a payment is assigned to the association as subject."
+        },
+        {
+          "claim_id": "ae196253-59bb-59ce-8dc0-e21a73f657c4",
+          "problem": "Register is subject of OCCURRED_ON and attack is its object, instead of attack plus date value."
+        },
+        {
+          "claim_id": "8856cd17-5ee1-5b09-adbb-ebc5406e9276",
+          "problem": "Document is subject of OCCURRED_ON and attack is its object."
+        },
+        {
+          "claim_id": "f3e7f6bf-3f43-58a6-a4f0-ee18e21044ad",
+          "problem": "An identity hypothesis remaining uncertain is represented as an explicit withdrawal."
+        },
+        {
+          "claim_id": "6d934e14-c80c-571a-a56d-a4577f58f05f",
+          "problem": "No attribution of campaign management becomes a management denial."
+        },
+        {
+          "claim_id": "5deea93b-9d69-56ae-9b6e-ab9007aaf3dc",
+          "problem": "No attribution of campaign management becomes a management denial."
+        },
+        {
+          "claim_id": "2f87683c-7659-50aa-90b1-33171b4569ee",
+          "problem": "Non-implication of extremist affiliation becomes a denial of affiliation to the archive, which is not the stated beneficiary."
+        },
+        {
+          "claim_id": "b59c2b7a-43bf-53ba-a03b-7a522a7d2167",
+          "problem": "Non-implication of extremist affiliation becomes a denial of affiliation to the archive for the cultural association."
+        },
+        {
+          "claim_id": "9e7ae14a-50c3-534d-a928-475932e1b1bf",
+          "problem": "No participant is linked to violent events becomes a denial about the program with the archive as object."
+        },
+        {
+          "claim_id": "24c247a6-5e00-5706-9b49-c5b4559536dc",
+          "problem": "A generic source note about unverified relationships is used to assert a specific affiliation evidence gap/withdrawal without identifying that subject in the selected quotation."
+        }
+      ],
+      "confirmed_comparison_defects": [
+        {
+          "comparison_id": "85c61dfe-0ae7-59a7-b3f7-2e6a6d3dcfcb",
+          "problem": "The pair only contains the two original conflicting date reports; disagreement alone is incorrectly described as an explicit correction."
+        },
+        {
+          "comparison_id": "8d196503-51f5-5ee3-b72d-592385ed9422",
+          "problem": "The same-source conclusion is plausible, but the rationale falsely says the relations are reciprocal and concern the same two entities: Nucleo Bruma/Ramo Est and Ramo Est/Fronte Vela are different pairs."
+        },
+        {
+          "comparison_id": "6adc867e-f433-5293-8f80-0e19bcf09275",
+          "problem": "The reviewer propagates the incorrect cessation interpretation of an assertion retraction."
+        }
+      ],
+      "review_false_negative_examples": [
+        "5d3faf9e-548c-5b3d-b364-7c1b88b66a2c",
+        "1a7b006a-e123-5958-92cb-ce0347ddf0e1"
+      ],
+      "precision_scope_note": "Targeted source review, not an exhaustive false-positive count. Repeated defects were checked for identical propositions and supporting intervals against the first run; newly changed pages and selected comparisons were examined separately. Counts of supported or unrelated links are model judgments."
+    },
+    {
+      "method": "event_temporal",
+      "run_id": "b2d11b05-3e2c-4a7d-bcdd-cd908b8e349c",
+      "reviewed_source_pages": {
+        "D1": [
+          1,
+          6
+        ],
+        "D2": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "D3": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "scenarios": [
+        {
+          "scenario": "civil_group",
+          "recovery": "pass",
+          "precision": "pass",
+          "claim_ids": [],
+          "comparison_ids": [],
+          "notes": "All three Cellula Verde mentions remain GROUP with no terrorist subtype and supported classification."
+        },
+        {
+          "scenario": "absence",
+          "recovery": "partial",
+          "precision": "partial",
+          "claim_ids": [
+            "e0084db3-b943-526d-ae54-94bee3026b5b",
+            "0e4eb3fb-246a-5218-99e3-d84dee1bd6fc",
+            "24bfdeb3-a728-5a4c-a414-a5eee7f1940d",
+            "fb9b11b8-9127-5d29-b1a5-c84f20bc6b3c",
+            "5d3faf9e-548c-5b3d-b364-7c1b88b66a2c",
+            "1a7b006a-e123-5958-92cb-ce0347ddf0e1"
+          ],
+          "comparison_ids": [],
+          "notes": "A-01 and F-06 evidence gaps are correctly represented but wrongly rejected by the reviewer. RE-02 campaign-management gaps are now correctly supported. Several other absence statements still become endorsed denials."
+        },
+        {
+          "scenario": "dependence",
+          "recovery": "pass",
+          "precision": "pass",
+          "claim_ids": [
+            "0f49f63d-07b4-5872-8bb4-ae6f98b311e9",
+            "17e5c9e2-4b6c-5cf8-afd1-bbe773892142"
+          ],
+          "comparison_ids": [
+            "c265c0bb-7bdf-5c58-9872-846ea5f1da56"
+          ],
+          "notes": "SA-02 allegation and CG-01 denial remain separately attributed and linked as a candidate contradiction, requiring identity review."
+        },
+        {
+          "scenario": "transfer",
+          "recovery": "partial",
+          "precision": "partial",
+          "claim_ids": [
+            "5815d982-04e4-58d8-861a-fe18958300a0",
+            "15478e9f-086d-5820-973f-f873df6b30bc",
+            "8bdd0dfa-e241-510a-8e73-ef43e2bfd921"
+          ],
+          "comparison_ids": [
+            "728960eb-06ab-5e61-bd8f-4571ccded875"
+          ],
+          "notes": "The original EC-03 denial preserves the 16 February-4 March interval but is not linked to ST-05. A second denial is linked to the allegation only after its temporal interval has been omitted. This is not a clean recovery of the scoped comparison."
+        },
+        {
+          "scenario": "identity",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "cd10b735-dada-5d73-9fa8-c35eb8a62fee",
+            "cc010d5a-3f66-5173-b6a2-630b002e689b",
+            "5f593ed4-9a70-5834-96b2-8d2680ec20ac",
+            "b04818ff-2c06-58ea-ba96-8494f86837b1",
+            "295decec-e5ae-5385-a28b-c5004b31089e",
+            "f3e7f6bf-3f43-58a6-a4f0-ee18e21044ad"
+          ],
+          "comparison_ids": [],
+          "notes": "The explicit identity retraction and all three original editorial relations survive. The wrong catalog-publication assertion is now rejected. The initial uncertainty is still also misrepresented as a withdrawal; the identity-retraction claim has no resolved prior-claim link."
+        },
+        {
+          "scenario": "date",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "84440d2b-b2f8-57c2-8465-fe43761d1e15",
+            "72addf80-a055-5234-aed1-15618ddec4e3",
+            "1ab0c82a-6920-5dcc-9abc-e56f6dc5f67b",
+            "9894727a-7d55-5bf2-9aac-e58a9c3f898c"
+          ],
+          "comparison_ids": [
+            "f957cffa-8244-5900-8c3a-90542ca2f461"
+          ],
+          "notes": "The temporal pass adds correctly oriented event/date literals. The 10 February correction links to the prior 11 February value for the same attack; the hostage event stays distinct. Earlier malformed document-as-event assertions remain supported."
+        },
+        {
+          "scenario": "location",
+          "recovery": "partial",
+          "precision": "fail",
+          "claim_ids": [
+            "93ba3553-4c0c-52d1-9fab-ca40a69b6bd2",
+            "746debd3-a54e-5429-836b-e9a86900bc7e"
+          ],
+          "comparison_ids": [],
+          "notes": "Both extraction passes encode the assertion retraction as cessation. A reference to BL-08 is added, but it does not fix the operation kind. No alternative location is invented."
+        },
+        {
+          "scenario": "certainty",
+          "recovery": "partial",
+          "precision": "partial",
+          "claim_ids": [
+            "46ec5687-91cb-5a66-884c-f0f8d471b423",
+            "9e0d1678-b4be-5681-afe7-2a1c0c638aa2",
+            "b577ebfe-63fc-5643-9008-581d5380ae4c",
+            "fd0e22a9-ced2-5c2c-b6e5-0d0c65fb4f58"
+          ],
+          "comparison_ids": [
+            "685db40f-484e-5be5-9155-0984d188f24b"
+          ],
+          "notes": "The original withdrawal-of-certainty claim and its RT-04 comparison survive without acquittal. UT-09 is now named as a source, but its new claim puts the speaker in the RESPONSIBLE_FOR subject position. A further generic retraction makes the scope less explicit."
+        },
+        {
+          "scenario": "support",
+          "recovery": "pass",
+          "precision": "partial",
+          "claim_ids": [
+            "836b8611-22ac-591f-bf8d-72bc80fabd6d",
+            "98119085-774a-5a60-bb89-eb787b711f10",
+            "99b57e4f-32d0-5a4b-af09-11b29b0e4a48",
+            "1c7d6789-d9a7-5494-bd83-a29bbd582a26",
+            "6efd25fa-15c3-5294-857c-a727fc97b12c",
+            "87a49133-bbf1-536e-9402-06eac3740229"
+          ],
+          "comparison_ids": [],
+          "notes": "Activity at 1 March, the 21 February-2 March history, cessation from 3 March and continuing educational collaboration are retained. The false library-related cessation is now rejected. A separate earlier document-as-participant error remains; duplicate formulations and differing source designations persist."
+        },
+        {
+          "scenario": "copies",
+          "recovery": "missing",
+          "precision": "not_established",
+          "claim_ids": [
+            "2482ec46-b4af-55e7-b037-79739e28df57",
+            "c6e69127-c9d0-579a-a97d-acbf4b32079d",
+            "16c66dbb-82ec-5022-8002-059b1b7c1537"
+          ],
+          "comparison_ids": [],
+          "notes": "Three derived_from records concern other sources, not NI-01/RI-02. RT-04 citing BL-08 is represented correctly; copying the hostage date from Documento 1 is inferred without source support. A further ancestry record belongs to a contradicted, misattributed correction. The nine dependent_source links do not establish the required transcription ancestry."
+        }
+      ],
+      "confirmed_precision_defects": [
+        {
+          "claim_id": "93ba3553-4c0c-52d1-9fab-ca40a69b6bd2",
+          "problem": "Retraction of a location assertion becomes cessation of a real location relationship."
+        },
+        {
+          "claim_id": "c03d51a2-bea1-52fc-9e63-876a511153da",
+          "problem": "Not evidence of financing becomes a denial of financing with a specific beneficiary."
+        },
+        {
+          "claim_id": "2448d878-c67a-5d0f-8c8b-ef54eca8873f",
+          "problem": "No recurring operations mentioned becomes denial of recurring transfer to a specific beneficiary."
+        },
+        {
+          "claim_id": "ce267185-0ce4-501d-a78f-5bb62859914e",
+          "problem": "Hypothesis concerning a payment is assigned to the association as subject."
+        },
+        {
+          "claim_id": "e569ebd6-bc97-59f0-b560-8d0e69e5d660",
+          "problem": "Source document is used as collaboration participant."
+        },
+        {
+          "claim_id": "ae196253-59bb-59ce-8dc0-e21a73f657c4",
+          "problem": "Register is subject of OCCURRED_ON and attack is its object, instead of attack plus date value."
+        },
+        {
+          "claim_id": "8856cd17-5ee1-5b09-adbb-ebc5406e9276",
+          "problem": "Document is subject of OCCURRED_ON and attack is its object."
+        },
+        {
+          "claim_id": "f3e7f6bf-3f43-58a6-a4f0-ee18e21044ad",
+          "problem": "An identity hypothesis remaining uncertain is represented as an explicit withdrawal."
+        },
+        {
+          "claim_id": "6d934e14-c80c-571a-a56d-a4577f58f05f",
+          "problem": "No attribution of campaign management becomes a management denial."
+        },
+        {
+          "claim_id": "8bdd0dfa-e241-510a-8e73-ef43e2bfd921",
+          "problem": "The additional EC-03 denial drops the explicit temporal interval, broadening its structured scope and enabling an otherwise unmatched comparison."
+        },
+        {
+          "claim_id": "746debd3-a54e-5429-836b-e9a86900bc7e",
+          "problem": "The temporal pass duplicates the wrong cessation interpretation of an assertion retraction."
+        },
+        {
+          "claim_id": "9e0d1678-b4be-5681-afe7-2a1c0c638aa2",
+          "problem": "The speaker Unita Tutela is used as subject of RESPONSIBLE_FOR with Nucleo Bruma as object, rather than preserving the subject and event of the attribution whose certainty is withdrawn."
+        },
+        {
+          "claim_id": "c6e69127-c9d0-579a-a97d-acbf4b32079d",
+          "problem": "Matching event dates in two sources is treated as proof that RT-04 copied Documento 1; the source only says both dates agree."
+        }
+      ],
+      "review_false_negative_examples": [
+        "e0084db3-b943-526d-ae54-94bee3026b5b",
+        "0e4eb3fb-246a-5218-99e3-d84dee1bd6fc",
+        "24bfdeb3-a728-5a4c-a414-a5eee7f1940d",
+        "fb9b11b8-9127-5d29-b1a5-c84f20bc6b3c",
+        "bbb58af4-b6a4-5032-b569-1e95c4b25f07",
+        "df21ac70-2628-5ffb-8e7a-5761c3dbdd1d"
+      ],
+      "precision_scope_note": "Targeted source review, not an exhaustive precision count. Repeated defects were checked for identical propositions and quotation spans; the dedicated temporal additions were examined separately. Source attribution is part of precision. Rejected bad candidates remain in the variant and are not counted as model-supported defects."
+    }
+  ]
+}

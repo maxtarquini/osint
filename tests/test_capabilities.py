@@ -225,3 +225,13 @@ def test_provider_timeout_preserves_reason_and_leaves_remaining_skills_pending(t
     assert service.catalog() == (2, 0)
     exported = json.loads(service.export_catalog().read_text())
     assert len(exported["skills"]) == 2
+
+
+def test_saved_catalog_remains_current_without_connecting_the_ai_node(tmp_path):
+    online = registry(tmp_path)
+    assert online.catalog() == (1, 0)
+    offline = CapabilityRegistry(online.store.root, profile_settings=online.ai_node.settings)
+    assert offline.snapshot()[0][0]["state"] == "ready"
+    assert len(offline.orchestration_catalog()["skills"]) == 1
+    offline.profile_settings = replace(online.ai_node.settings, model="different")
+    assert offline.snapshot()[0][0]["state"] == "stale"

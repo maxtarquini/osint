@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Event, Thread
+from time import monotonic
 from typing import Any
 
 import pytest
@@ -12,6 +15,8 @@ from raven.exceptions import (
     InfrastructureAuthenticationError,
     InfrastructureConfigurationError,
 )
+from raven.exceptions.chat import InvestigationChatCancelledError
+from raven.exceptions.graph import GraphAgentRequestError
 from raven.models import TokenUsage
 
 
@@ -342,3 +347,71 @@ def test_llama_cpp_receives_sampling_and_template_thinking_controls() -> None:
         "reasoning_effort": "low",
         "enable_thinking": True,
     }
+
+
+@pytest.mark.parametrize("stop", ["cancel", "deadline"])
+def test_pending_real_http_request_closes_on_cancel_or_deadline(stop):
+    received, disconnected = Event(), Event()
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            body = b'{"models":[{"model":"test-model"}]}'
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            received.set()
+            self.connection.settimeout(3)
+            if self.connection.recv(1) == b"":
+                disconnected.set()
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    worker = Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    node = SharedAiNode()
+    try:
+        node.initialize(
+            AiNodeSettings(
+                model="test-model",
+                base_url=f"http://127.0.0.1:{server.server_port}",
+                timeout_seconds=1200,
+            )
+        )
+        started = monotonic()
+        error = InvestigationChatCancelledError if stop == "cancel" else GraphAgentRequestError
+        with pytest.raises(error) as caught:
+            node.chat(
+                "system",
+                "question",
+                timeout_seconds=1200 if stop == "cancel" else 0.5,
+                cancelled=received.is_set if stop == "cancel" else None,
+            )
+        assert received.is_set()
+        assert monotonic() - started < 2
+        assert disconnected.wait(1), "Cancellation must close the socket, not abandon a thread"
+        assert not node._request_lock.locked()
+        if stop == "deadline":
+            assert caught.value.code == "timeout"
+    finally:
+        node.close()
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=2)
+
+
+def test_headless_embedding_connection_does_not_require_or_probe_chat_model() -> None:
+    create, clients = client_factory(FakeResponse({"models": [{"model": "embed-only"}]}))
+    node = SharedAiNode(create)
+    node.initialize_embeddings(AiNodeSettings(embedding_model="embed-only"))
+    assert len(clients) == 1
+    clients[0].post_response = FakeResponse({"embeddings": [[0.1, 0.2]]})
+    assert node.embed(["query"]) == ((0.1, 0.2),)
+    assert not node.available
+    node.close()
+    assert clients[0].closed

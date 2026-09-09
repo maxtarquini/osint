@@ -32,7 +32,7 @@ class QdrantRepository:
         self._settings: QdrantSettings | None = None
         self._lock = RLock()
 
-    def initialize(self, settings: QdrantSettings) -> None:
+    def initialize(self, settings: QdrantSettings, *, bootstrap: bool = True) -> None:
         candidate = self._client_factory(
             url=settings.url,
             api_key=settings.api_key,
@@ -41,6 +41,8 @@ class QdrantRepository:
         try:
             candidate.get_collections()
             if not candidate.collection_exists(settings.collection):
+                if not bootstrap:
+                    raise ValueError("Qdrant collection is not available for reading")
                 candidate.create_collection(
                     collection_name=settings.collection,
                     vectors_config=VectorParams(
@@ -50,19 +52,20 @@ class QdrantRepository:
                 )
             else:
                 self._validate_vector_size(candidate, settings)
-            for field_name in ("investigation_id", "document_id", "sha256"):
+            if bootstrap:
+                for field_name in ("investigation_id", "document_id", "sha256"):
+                    candidate.create_payload_index(
+                        collection_name=settings.collection,
+                        field_name=field_name,
+                        field_schema=PayloadSchemaType.KEYWORD,
+                        wait=True,
+                    )
                 candidate.create_payload_index(
                     collection_name=settings.collection,
-                    field_name=field_name,
-                    field_schema=PayloadSchemaType.KEYWORD,
+                    field_name="page_number",
+                    field_schema=PayloadSchemaType.INTEGER,
                     wait=True,
                 )
-            candidate.create_payload_index(
-                collection_name=settings.collection,
-                field_name="page_number",
-                field_schema=PayloadSchemaType.INTEGER,
-                wait=True,
-            )
         except Exception:
             candidate.close()
             raise

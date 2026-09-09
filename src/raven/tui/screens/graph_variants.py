@@ -12,7 +12,10 @@ from raven.graph.variants import comparison_text
 
 
 class GraphVariantsScreen(ModalScreen):
-    BINDINGS = [Binding("escape", "close", "Chiudi")]
+    BINDINGS = [
+        Binding("escape", "close", "Chiudi"),
+        Binding("ctrl+g", "generate", "Crea variante"),
+    ]
 
     def __init__(self, investigation, service, *, busy=False, model=""):
         super().__init__()
@@ -38,12 +41,6 @@ class GraphVariantsScreen(ModalScreen):
                 yield Input(
                     placeholder="Nome della nuova variante (facoltativo)", id="variant-name"
                 )
-                yield Button(
-                    "Genera nuova variante",
-                    id="variant-generate",
-                    variant="primary",
-                    disabled=self.busy,
-                )
                 yield Static("Variante A · apertura / selezione attiva")
                 yield Select([], id="variant-a", prompt="Nessuna variante")
                 yield Static("Variante B · confronto con A")
@@ -54,7 +51,14 @@ class GraphVariantsScreen(ModalScreen):
                     yield Button("Confronta", id="variant-compare", disabled=True)
             yield Static("Caricamento…", id="variant-status", markup=False)
             yield TextArea("", read_only=True, soft_wrap=True, id="variant-report")
-            yield Button("Chiudi", id="variant-close")
+            with Horizontal(id="variant-footer"):
+                yield Button(
+                    "Crea variante · Ctrl+G",
+                    id="variant-generate",
+                    variant="primary",
+                    disabled=self.busy,
+                )
+                yield Button("Chiudi", id="variant-close")
 
     def on_mount(self):
         self._purpose()
@@ -79,7 +83,7 @@ class GraphVariantsScreen(ModalScreen):
                     f"{metadata.get('name', '')}\nMetodo: {manifest.get('method_id', 'legacy')} "
                     f"v{manifest.get('method_version', '?')}\nModello: {manifest.get('model', '?')}"
                     f"\nPrompt: {manifest.get('prompt_version', '?')}"
-                    f"\nDizionari: {', '.join(manifest.get('dictionary_versions', [])) or '?'}"
+                    f"\nDizionari: {', '.join(manifest.get('dictionary_versions') or []) or '?'}"
                     f"\nHash dizionario: {manifest.get('dictionary_hash', '?')}"
                     f"\nDocumenti nel manifest: {len(manifest.get('documents', []))}"
                     "\nAprire non cambia la variante usata dalla chat."
@@ -139,18 +143,23 @@ class GraphVariantsScreen(ModalScreen):
         if action == "variant-close":
             self.action_close()
         elif action == "variant-generate":
-            self._operating = True
-            self._operation(
-                "generate",
-                str(self.query_one("#variant-method", Select).value),
-                self.query_one("#variant-name", Input).value,
-            )
+            self.action_generate()
         else:
             a = self.query_one("#variant-a", Select).value
             b = self.query_one("#variant-b", Select).value
             if a is not Select.BLANK:
                 self._operating = True
                 self._operation(action, str(a), str(b))
+
+    def action_generate(self):
+        if self.busy or self._operating:
+            return
+        self._operating = True
+        self._operation(
+            "generate",
+            str(self.query_one("#variant-method", Select).value),
+            self.query_one("#variant-name", Input).value,
+        )
 
     @work(thread=True, exclusive=True, group="variant-operation", exit_on_error=False)
     def _operation(self, action, first, second):

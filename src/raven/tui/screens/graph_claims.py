@@ -101,13 +101,20 @@ class GraphClaimsScreen(ModalScreen[None]):
                 + self.details.source_text(event.support)
             )
         event_claims = {key for event in self.graph.events for key in event.claim_ids}
+        # An agreement may be classified as DOCUMENT in a custom dictionary. Its
+        # corrections/cessation still belong in this view, regardless of the base type.
+        for claim in self.graph.claims:
+            if claim.claim_kind in {"corrects", "retracts", "withdraws_certainty", "ceases"}:
+                if claim.claim_id not in event_claims:
+                    rows.append("\nOPERAZIONE SULLA FONTE\n" + self.details.claim_text(claim))
+                event_claims.add(claim.claim_id)
         rows.append("\nCONFRONTI TEMPORALI TRA AFFERMAZIONI CANDIDATE")
         for link in self.graph.claim_links:
             first = claims.get(link.source_claim_id)
             second = claims.get(link.target_claim_id)
             if first and second and {first.claim_id, second.claim_id} & event_claims:
                 rows.append(
-                    f"\n{first.claim_id} → {second.claim_id}: {link.kind}"
+                    f"\nAffermazioni {first.claim_id} / {second.claim_id}: {link.kind}"
                     f"\nIntervalli espliciti: {temporal_relation(first, second)}"
                     f" · revisione confronto: {link.review_state}"
                     f"\n{link.review_rationale or link.rationale}"

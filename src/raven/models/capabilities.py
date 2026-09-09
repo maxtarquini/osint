@@ -97,3 +97,21 @@ def object_schema(properties):
         "required": list(properties),
         "additionalProperties": False,
     }
+
+
+def mcp_input_schema(definition):
+    if definition.tool_id == "list_investigations":
+        return definition.parameters
+    return {
+        **definition.parameters,
+        "properties": {
+            **definition.parameters["properties"],
+            "investigation_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000,
+                "description": "An investigation explicitly authorized when the server started.",
+            },
+        },
+        "required": [*definition.parameters["required"], "investigation_id"],
+    }

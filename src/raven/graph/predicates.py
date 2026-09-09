@@ -3,7 +3,7 @@
 import re
 from decimal import Decimal, InvalidOperation
 
-PREDICATE_VERSION = "raven-predicates-v1"
+PREDICATE_VERSION = "raven-predicates-v2"
 PREDICATES = {
     "DEPENDENT_ON": "subject depends organizationally on object; direction matters",
     "TRANSFER": "subject transfers funds to object; retain amount, currency and transaction",
@@ -51,17 +51,32 @@ def type_family(value: str) -> str:
     return "collective" if value in {"GROUP", "ORGANIZATION", "FACILITY"} else value
 
 
+def canonical_number(value):
+    """Normalize representation without context rounding or expanding huge exponents."""
+    try:
+        number = Decimal(value)
+        if number.is_finite():
+            if number.is_zero():
+                return "0"
+            sign, digits, exponent = number.as_tuple()
+            while digits[-1] == 0:
+                digits, exponent = digits[:-1], exponent + 1
+            normalized = Decimal((sign, digits, exponent))
+            return (
+                format(normalized, "f") if -6 <= normalized.adjusted() <= 100 else str(normalized)
+            )
+    except (InvalidOperation, ValueError, TypeError):
+        pass
+    return value
+
+
 def qualifiers_scope(qualifiers):
     result = []
     for key, value in qualifiers:
         key = name(key)
         key = {"importo": "amount", "valuta": "currency"}.get(key, key)
         if key == "amount":
-            try:
-                number = Decimal(value)
-                value = format(number.normalize(), "f") if number.is_finite() else value
-            except InvalidOperation:
-                pass
+            value = canonical_number(value)
         if key == "currency":
             value = {"euro": "EUR", "eur": "EUR", "€": "EUR"}.get(name(value), value.upper())
         result.append((key, value.strip()))

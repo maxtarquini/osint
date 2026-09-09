@@ -1,0 +1,335 @@
+{
+  "interpretation": "Literal interval checks and descriptive counts, not semantic accuracy.",
+  "active_preserved": true,
+  "runs": [
+    {
+      "method": "document_claims",
+      "run_id": "54266b58-3c24-4982-9bd8-120001348475",
+      "manifest": {
+        "schema_version": 2,
+        "method_id": "document_claims",
+        "method_version": "4",
+        "prompt_version": "raven-integrity-v5",
+        "documents": [
+          [
+            "2dde1f01-0f16-4b16-a722-3c622a3c6d42",
+            "218cb4639d0807ec3f6ddc447c2306a904734e25aaa19af2aff3ae57af85373d"
+          ],
+          [
+            "46fce612-cb70-431c-b859-ef819743186d",
+            "9f263bdbdea9ec46e3ad1a2b7dc303bbebc1b972c30730b0bedc820ae99901b7"
+          ],
+          [
+            "b6e69ce5-ed81-4262-abd0-9dd2d3b74271",
+            "649299133b3434ff66044ffc8c0e0c15d665aea4458714dbe8ef6b5622de8b57"
+          ]
+        ],
+        "catalogs": [
+          [
+            "2dde1f01-0f16-4b16-a722-3c622a3c6d42",
+            "31f952659ebe7c9af34299d5b5687c764b9b38b1da15c91b6a4d0cc29f44435c"
+          ],
+          [
+            "46fce612-cb70-431c-b859-ef819743186d",
+            "352bdbfb6aa3c0a801a4b905f8c9a6ff3c5b76664486bcbd5116921d8c502999"
+          ],
+          [
+            "b6e69ce5-ed81-4262-abd0-9dd2d3b74271",
+            "de44fb0b2d9fce2b77a51f0c2c2d53bf19e5e6d1de42a46d6b576fc26ed40e30"
+          ]
+        ],
+        "dictionary_hash": "ef0df6355dde3260e78fba454e7e728c73a354854d194c8f49d2357df1347f71",
+        "dictionary_versions": [
+          "CORE@2.0.0",
+          "TERRORISM_EXTREMISM@1.0.0"
+        ],
+        "dictionary_snapshot": "{\"domain_code\":\"TERRORISM_EXTREMISM\",\"domain_name\":\"Terrorism and extremism\",\"domain_description\":\"Terrorism, violent extremism, radicalization and counter-terrorism OSINT investigations.\",\"vocabulary_versions\":[\"CORE@2.0.0\",\"TERRORISM_EXTREMISM@1.0.0\"],\"entity_types\":[{\"type\":\"PERSON\",\"subtype\":null,\"label\":\"Person\",\"description\":\"A specifically named natural person.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":null,\"label\":\"Organization\",\"description\":\"A named formal organization, institution, company, agency or association.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LOCATION\",\"subtype\":null,\"label\":\"Location\",\"description\":\"A named geographic area, administrative region, settlement or physical place.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":null,\"label\":\"Facility\",\"description\":\"A named physical site with a specific operational function.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":null,\"label\":\"Group\",\"description\":\"A named informal collective that is not necessarily a formal organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EVENT\",\"subtype\":null,\"label\":\"Event\",\"description\":\"A named occurrence bounded in time or described as having happened.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":null,\"label\":\"Program\",\"description\":\"A named structured and continuing initiative or programme.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":null,\"label\":\"Operation\",\"description\":\"A named coordinated operation with an explicit objective.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":null,\"label\":\"Campaign\",\"description\":\"A named coordinated series of activities directed toward an objective.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":null,\"label\":\"Document\",\"description\":\"A named document, report, filing, record or documentary artifact.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"MEDIA_CONTENT\",\"subtype\":null,\"label\":\"Media content\",\"description\":\"A named article, post, image, video, audio item, broadcast or publication.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DATASET\",\"subtype\":null,\"label\":\"Dataset\",\"description\":\"A named database, register, corpus, leak or structured collection of data.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"AGREEMENT\",\"subtype\":null,\"label\":\"Agreement\",\"description\":\"A named contract, treaty, memorandum, concession or other agreement.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LEGAL_CASE\",\"subtype\":null,\"label\":\"Legal case\",\"description\":\"A named judicial, regulatory, arbitration or administrative proceeding.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"BRAND\",\"subtype\":null,\"label\":\"Brand\",\"description\":\"A named commercial or institutional brand.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PRODUCT\",\"subtype\":null,\"label\":\"Product\",\"description\":\"A named manufactured, commercial or published product.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SERVICE\",\"subtype\":null,\"label\":\"Service\",\"description\":\"A named commercial, public or digital service.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SOFTWARE\",\"subtype\":null,\"label\":\"Software\",\"description\":\"A named software application, platform, model or system.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DEVICE\",\"subtype\":null,\"label\":\"Device\",\"description\":\"A specifically identified physical electronic or communications device.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ASSET\",\"subtype\":null,\"label\":\"Asset\",\"description\":\"A named asset that is not represented by a more specific core type.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"INFRASTRUCTURE\",\"subtype\":null,\"label\":\"Infrastructure\",\"description\":\"A named transport, energy, communications or other infrastructure system.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FINANCIAL_ACCOUNT\",\"subtype\":null,\"label\":\"Financial account\",\"description\":\"A specifically identified bank, investment, exchange or other financial account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOMAIN\",\"subtype\":null,\"label\":\"Domain\",\"description\":\"An explicitly observed internet domain name.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"HOSTNAME\",\"subtype\":null,\"label\":\"Hostname\",\"description\":\"An explicitly observed host name.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"URL\",\"subtype\":null,\"label\":\"URL\",\"description\":\"An explicitly observed web or network resource locator.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EMAIL_ADDRESS\",\"subtype\":null,\"label\":\"Email address\",\"description\":\"An explicitly observed email address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PHONE_NUMBER\",\"subtype\":null,\"label\":\"Phone number\",\"description\":\"An explicitly observed telephone number.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"IP_ADDRESS\",\"subtype\":null,\"label\":\"IP address\",\"description\":\"An explicitly observed IP address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"USERNAME\",\"subtype\":null,\"label\":\"Username\",\"description\":\"An explicitly observed username or handle without an identified account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SOCIAL_ACCOUNT\",\"subtype\":null,\"label\":\"Social account\",\"description\":\"A specifically identified social-media profile or account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ONLINE_ACCOUNT\",\"subtype\":null,\"label\":\"Online account\",\"description\":\"A specifically identified non-social online account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FILE_HASH\",\"subtype\":null,\"label\":\"File hash\",\"description\":\"An explicitly observed cryptographic file digest.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CRYPTOCURRENCY_ADDRESS\",\"subtype\":null,\"label\":\"Cryptocurrency address\",\"description\":\"An explicitly observed cryptocurrency address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"IBAN\",\"subtype\":null,\"label\":\"IBAN\",\"description\":\"An explicitly observed International Bank Account Number.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LICENSE_PLATE\",\"subtype\":null,\"label\":\"License plate\",\"description\":\"An explicitly observed vehicle registration plate.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"VEHICLE\",\"subtype\":null,\"label\":\"Vehicle\",\"description\":\"A specifically identified land vehicle.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"VESSEL\",\"subtype\":null,\"label\":\"Vessel\",\"description\":\"A specifically identified maritime vessel.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"AIRCRAFT\",\"subtype\":null,\"label\":\"Aircraft\",\"description\":\"A specifically identified aircraft.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PASSPORT_NUMBER\",\"subtype\":null,\"label\":\"Passport number\",\"description\":\"An explicitly observed passport identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"NATIONAL_ID\",\"subtype\":null,\"label\":\"National ID\",\"description\":\"An explicitly observed national identity identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"TAX_IDENTIFIER\",\"subtype\":null,\"label\":\"Tax identifier\",\"description\":\"An explicitly observed tax or company fiscal identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_TERRORIST_ORGANIZATION\",\"label\":\"Terrorist organization\",\"description\":\"A specifically named organization designated or described as a terrorist organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[\"Islamic State\",\"Al-Qaeda\"]},{\"type\":\"GROUP\",\"subtype\":\"TER_EXTREMIST_GROUP\",\"label\":\"Extremist group\",\"description\":\"A specifically named extremist or violent ideological group.\",\"include_when\":[],\"exclude_when\":[\"Do not use for formally constituted political parties or state organizations.\"],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":\"TER_TERRORIST_CELL\",\"label\":\"Terrorist cell\",\"description\":\"A specifically named operational terrorist cell or local network.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_AFFILIATE\",\"label\":\"Affiliate organization\",\"description\":\"A specifically named affiliate, regional branch or franchise of a terrorist organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":\"TER_RECRUITMENT_NETWORK\",\"label\":\"Recruitment network\",\"description\":\"A specifically named recruitment or facilitation network.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":\"TER_TRAINING_CAMP\",\"label\":\"Training camp\",\"description\":\"A specifically named terrorist or extremist training facility.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":\"TER_SAFEHOUSE\",\"label\":\"Safehouse\",\"description\":\"A specifically named safehouse or operational hideout.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":\"TER_OPERATION\",\"label\":\"Terrorist operation\",\"description\":\"A specifically named terrorist operation or coordinated attack.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EVENT\",\"subtype\":\"TER_ATTACK\",\"label\":\"Terrorist attack\",\"description\":\"A specifically named terrorist attack or bombing.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[\"2015 Paris attacks\",\"2019 Easter bombings\"]},{\"type\":\"EVENT\",\"subtype\":\"TER_HOSTAGE_CRISIS\",\"label\":\"Hostage crisis\",\"description\":\"A specifically named hostage-taking or siege event.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_MANIFESTO\",\"label\":\"Manifesto\",\"description\":\"A specifically named extremist manifesto, declaration or ideological document.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_PROPAGANDA_PUBLICATION\",\"label\":\"Propaganda publication\",\"description\":\"A specifically named extremist publication, magazine or newsletter.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SERVICE\",\"subtype\":\"TER_MEDIA_CHANNEL\",\"label\":\"Media channel\",\"description\":\"A specifically named propaganda outlet, media channel or dissemination platform.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":\"TER_RECRUITMENT_CAMPAIGN\",\"label\":\"Recruitment campaign\",\"description\":\"A specifically named extremist recruitment campaign.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":\"TER_PROPAGANDA_CAMPAIGN\",\"label\":\"Propaganda campaign\",\"description\":\"A specifically named propaganda or influence campaign.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":\"TER_RADICALIZATION_PROGRAM\",\"label\":\"Radicalization program\",\"description\":\"A specifically named radicalization or ideological indoctrination program.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":\"TER_DERADICALIZATION_PROGRAM\",\"label\":\"Deradicalization program\",\"description\":\"A specifically named deradicalization or disengagement program.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":\"TER_COUNTERTERRORISM_OPERATION\",\"label\":\"Counter-terrorism operation\",\"description\":\"A specifically named counter-terrorism operation.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_COUNTERTERRORISM_UNIT\",\"label\":\"Counter-terrorism unit\",\"description\":\"A specifically named law-enforcement or military counter-terrorism unit.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_DESIGNATION\",\"label\":\"Terrorist designation\",\"description\":\"A specifically named terrorist designation list or official designation document.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]}]}",
+        "model": "gpt-oss-120b",
+        "configuration": "{\"comparisons\": \"raven-comparison-v3\", \"context_size\": 128000, \"effective_thinking\": \"medium\", \"events\": \"raven-event-records-v1\", \"extraction_basis\": \"original\", \"language\": \"english\", \"max_output_tokens\": 8192, \"model\": \"gpt-oss-120b\", \"predicates\": \"raven-predicates-v1\", \"preparation_requested\": \"full_text\", \"provider\": \"llama.cpp\", \"random_seed\": 2345467, \"repair_budget\": 1, \"request_timeout\": 1200.0, \"semantic_pair_retrieval\": \"raven-source-candidates-v1\", \"thinking\": \"high\", \"timeout_seconds\": 1200.0, \"top_k\": 40}"
+      },
+      "document_hashes_match": true,
+      "dictionary_snapshot_hash_matches": true,
+      "elapsed_seconds": 4283.170427666977,
+      "entities": 173,
+      "claims": 170,
+      "relationships": 62,
+      "comparisons": 14,
+      "events": 37,
+      "model_semantic_states": {
+        "supported": 146,
+        "unsupported": 15,
+        "contradicted": 6,
+        "uncertain": 3
+      },
+      "claim_kinds": {
+        "relation": 109,
+        "value": 47,
+        "withdraws_certainty": 2,
+        "event": 5,
+        "corrects": 2,
+        "retracts": 1,
+        "ceases": 4
+      },
+      "epistemic_states": {
+        "reported": 158,
+        "not_documented": 11,
+        "unknown": 1
+      },
+      "polarity": {
+        "affirmed": 145,
+        "denied": 25
+      },
+      "page_states": {
+        "analyzed": 5,
+        "partial": 13
+      },
+      "source_ids_missing": 5,
+      "copied_source_records": 0,
+      "literal_verification": {
+        "entities": {
+          "spans": 344,
+          "exact_original_intervals": 344,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "claims": {
+          "spans": 170,
+          "exact_original_intervals": 170,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "relationships": {
+          "spans": 62,
+          "exact_original_intervals": 62,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "events": {
+          "spans": 37,
+          "exact_original_intervals": 37,
+          "items_without_support": 0,
+          "failures": []
+        }
+      }
+    },
+    {
+      "method": "cross_source_review",
+      "run_id": "34b9bb64-d8c6-4b9b-957e-3e936291ee08",
+      "manifest": {
+        "schema_version": 2,
+        "method_id": "cross_source_review",
+        "method_version": "4",
+        "prompt_version": "raven-integrity-v5",
+        "documents": [
+          [
+            "2dde1f01-0f16-4b16-a722-3c622a3c6d42",
+            "218cb4639d0807ec3f6ddc447c2306a904734e25aaa19af2aff3ae57af85373d"
+          ],
+          [
+            "46fce612-cb70-431c-b859-ef819743186d",
+            "9f263bdbdea9ec46e3ad1a2b7dc303bbebc1b972c30730b0bedc820ae99901b7"
+          ],
+          [
+            "b6e69ce5-ed81-4262-abd0-9dd2d3b74271",
+            "649299133b3434ff66044ffc8c0e0c15d665aea4458714dbe8ef6b5622de8b57"
+          ]
+        ],
+        "catalogs": [
+          [
+            "2dde1f01-0f16-4b16-a722-3c622a3c6d42",
+            "31f952659ebe7c9af34299d5b5687c764b9b38b1da15c91b6a4d0cc29f44435c"
+          ],
+          [
+            "46fce612-cb70-431c-b859-ef819743186d",
+            "352bdbfb6aa3c0a801a4b905f8c9a6ff3c5b76664486bcbd5116921d8c502999"
+          ],
+          [
+            "b6e69ce5-ed81-4262-abd0-9dd2d3b74271",
+            "de44fb0b2d9fce2b77a51f0c2c2d53bf19e5e6d1de42a46d6b576fc26ed40e30"
+          ]
+        ],
+        "dictionary_hash": "ef0df6355dde3260e78fba454e7e728c73a354854d194c8f49d2357df1347f71",
+        "dictionary_versions": [
+          "CORE@2.0.0",
+          "TERRORISM_EXTREMISM@1.0.0"
+        ],
+        "dictionary_snapshot": "{\"domain_code\":\"TERRORISM_EXTREMISM\",\"domain_name\":\"Terrorism and extremism\",\"domain_description\":\"Terrorism, violent extremism, radicalization and counter-terrorism OSINT investigations.\",\"vocabulary_versions\":[\"CORE@2.0.0\",\"TERRORISM_EXTREMISM@1.0.0\"],\"entity_types\":[{\"type\":\"PERSON\",\"subtype\":null,\"label\":\"Person\",\"description\":\"A specifically named natural person.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":null,\"label\":\"Organization\",\"description\":\"A named formal organization, institution, company, agency or association.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LOCATION\",\"subtype\":null,\"label\":\"Location\",\"description\":\"A named geographic area, administrative region, settlement or physical place.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":null,\"label\":\"Facility\",\"description\":\"A named physical site with a specific operational function.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":null,\"label\":\"Group\",\"description\":\"A named informal collective that is not necessarily a formal organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EVENT\",\"subtype\":null,\"label\":\"Event\",\"description\":\"A named occurrence bounded in time or described as having happened.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":null,\"label\":\"Program\",\"description\":\"A named structured and continuing initiative or programme.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":null,\"label\":\"Operation\",\"description\":\"A named coordinated operation with an explicit objective.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":null,\"label\":\"Campaign\",\"description\":\"A named coordinated series of activities directed toward an objective.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":null,\"label\":\"Document\",\"description\":\"A named document, report, filing, record or documentary artifact.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"MEDIA_CONTENT\",\"subtype\":null,\"label\":\"Media content\",\"description\":\"A named article, post, image, video, audio item, broadcast or publication.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DATASET\",\"subtype\":null,\"label\":\"Dataset\",\"description\":\"A named database, register, corpus, leak or structured collection of data.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"AGREEMENT\",\"subtype\":null,\"label\":\"Agreement\",\"description\":\"A named contract, treaty, memorandum, concession or other agreement.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LEGAL_CASE\",\"subtype\":null,\"label\":\"Legal case\",\"description\":\"A named judicial, regulatory, arbitration or administrative proceeding.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"BRAND\",\"subtype\":null,\"label\":\"Brand\",\"description\":\"A named commercial or institutional brand.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PRODUCT\",\"subtype\":null,\"label\":\"Product\",\"description\":\"A named manufactured, commercial or published product.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SERVICE\",\"subtype\":null,\"label\":\"Service\",\"description\":\"A named commercial, public or digital service.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SOFTWARE\",\"subtype\":null,\"label\":\"Software\",\"description\":\"A named software application, platform, model or system.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DEVICE\",\"subtype\":null,\"label\":\"Device\",\"description\":\"A specifically identified physical electronic or communications device.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ASSET\",\"subtype\":null,\"label\":\"Asset\",\"description\":\"A named asset that is not represented by a more specific core type.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"INFRASTRUCTURE\",\"subtype\":null,\"label\":\"Infrastructure\",\"description\":\"A named transport, energy, communications or other infrastructure system.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FINANCIAL_ACCOUNT\",\"subtype\":null,\"label\":\"Financial account\",\"description\":\"A specifically identified bank, investment, exchange or other financial account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOMAIN\",\"subtype\":null,\"label\":\"Domain\",\"description\":\"An explicitly observed internet domain name.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"HOSTNAME\",\"subtype\":null,\"label\":\"Hostname\",\"description\":\"An explicitly observed host name.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"URL\",\"subtype\":null,\"label\":\"URL\",\"description\":\"An explicitly observed web or network resource locator.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EMAIL_ADDRESS\",\"subtype\":null,\"label\":\"Email address\",\"description\":\"An explicitly observed email address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PHONE_NUMBER\",\"subtype\":null,\"label\":\"Phone number\",\"description\":\"An explicitly observed telephone number.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"IP_ADDRESS\",\"subtype\":null,\"label\":\"IP address\",\"description\":\"An explicitly observed IP address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"USERNAME\",\"subtype\":null,\"label\":\"Username\",\"description\":\"An explicitly observed username or handle without an identified account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SOCIAL_ACCOUNT\",\"subtype\":null,\"label\":\"Social account\",\"description\":\"A specifically identified social-media profile or account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ONLINE_ACCOUNT\",\"subtype\":null,\"label\":\"Online account\",\"description\":\"A specifically identified non-social online account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FILE_HASH\",\"subtype\":null,\"label\":\"File hash\",\"description\":\"An explicitly observed cryptographic file digest.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CRYPTOCURRENCY_ADDRESS\",\"subtype\":null,\"label\":\"Cryptocurrency address\",\"description\":\"An explicitly observed cryptocurrency address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"IBAN\",\"subtype\":null,\"label\":\"IBAN\",\"description\":\"An explicitly observed International Bank Account Number.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LICENSE_PLATE\",\"subtype\":null,\"label\":\"License plate\",\"description\":\"An explicitly observed vehicle registration plate.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"VEHICLE\",\"subtype\":null,\"label\":\"Vehicle\",\"description\":\"A specifically identified land vehicle.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"VESSEL\",\"subtype\":null,\"label\":\"Vessel\",\"description\":\"A specifically identified maritime vessel.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"AIRCRAFT\",\"subtype\":null,\"label\":\"Aircraft\",\"description\":\"A specifically identified aircraft.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PASSPORT_NUMBER\",\"subtype\":null,\"label\":\"Passport number\",\"description\":\"An explicitly observed passport identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"NATIONAL_ID\",\"subtype\":null,\"label\":\"National ID\",\"description\":\"An explicitly observed national identity identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"TAX_IDENTIFIER\",\"subtype\":null,\"label\":\"Tax identifier\",\"description\":\"An explicitly observed tax or company fiscal identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_TERRORIST_ORGANIZATION\",\"label\":\"Terrorist organization\",\"description\":\"A specifically named organization designated or described as a terrorist organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[\"Islamic State\",\"Al-Qaeda\"]},{\"type\":\"GROUP\",\"subtype\":\"TER_EXTREMIST_GROUP\",\"label\":\"Extremist group\",\"description\":\"A specifically named extremist or violent ideological group.\",\"include_when\":[],\"exclude_when\":[\"Do not use for formally constituted political parties or state organizations.\"],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":\"TER_TERRORIST_CELL\",\"label\":\"Terrorist cell\",\"description\":\"A specifically named operational terrorist cell or local network.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_AFFILIATE\",\"label\":\"Affiliate organization\",\"description\":\"A specifically named affiliate, regional branch or franchise of a terrorist organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":\"TER_RECRUITMENT_NETWORK\",\"label\":\"Recruitment network\",\"description\":\"A specifically named recruitment or facilitation network.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":\"TER_TRAINING_CAMP\",\"label\":\"Training camp\",\"description\":\"A specifically named terrorist or extremist training facility.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":\"TER_SAFEHOUSE\",\"label\":\"Safehouse\",\"description\":\"A specifically named safehouse or operational hideout.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":\"TER_OPERATION\",\"label\":\"Terrorist operation\",\"description\":\"A specifically named terrorist operation or coordinated attack.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EVENT\",\"subtype\":\"TER_ATTACK\",\"label\":\"Terrorist attack\",\"description\":\"A specifically named terrorist attack or bombing.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[\"2015 Paris attacks\",\"2019 Easter bombings\"]},{\"type\":\"EVENT\",\"subtype\":\"TER_HOSTAGE_CRISIS\",\"label\":\"Hostage crisis\",\"description\":\"A specifically named hostage-taking or siege event.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_MANIFESTO\",\"label\":\"Manifesto\",\"description\":\"A specifically named extremist manifesto, declaration or ideological document.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_PROPAGANDA_PUBLICATION\",\"label\":\"Propaganda publication\",\"description\":\"A specifically named extremist publication, magazine or newsletter.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SERVICE\",\"subtype\":\"TER_MEDIA_CHANNEL\",\"label\":\"Media channel\",\"description\":\"A specifically named propaganda outlet, media channel or dissemination platform.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":\"TER_RECRUITMENT_CAMPAIGN\",\"label\":\"Recruitment campaign\",\"description\":\"A specifically named extremist recruitment campaign.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":\"TER_PROPAGANDA_CAMPAIGN\",\"label\":\"Propaganda campaign\",\"description\":\"A specifically named propaganda or influence campaign.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":\"TER_RADICALIZATION_PROGRAM\",\"label\":\"Radicalization program\",\"description\":\"A specifically named radicalization or ideological indoctrination program.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":\"TER_DERADICALIZATION_PROGRAM\",\"label\":\"Deradicalization program\",\"description\":\"A specifically named deradicalization or disengagement program.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":\"TER_COUNTERTERRORISM_OPERATION\",\"label\":\"Counter-terrorism operation\",\"description\":\"A specifically named counter-terrorism operation.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_COUNTERTERRORISM_UNIT\",\"label\":\"Counter-terrorism unit\",\"description\":\"A specifically named law-enforcement or military counter-terrorism unit.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_DESIGNATION\",\"label\":\"Terrorist designation\",\"description\":\"A specifically named terrorist designation list or official designation document.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]}]}",
+        "model": "gpt-oss-120b",
+        "configuration": "{\"comparisons\": \"raven-comparison-v3\", \"context_size\": 128000, \"effective_thinking\": \"medium\", \"events\": \"raven-event-records-v1\", \"extraction_basis\": \"original\", \"language\": \"english\", \"max_output_tokens\": 8192, \"model\": \"gpt-oss-120b\", \"predicates\": \"raven-predicates-v1\", \"preparation_requested\": \"full_text\", \"provider\": \"llama.cpp\", \"random_seed\": 2345467, \"repair_budget\": 1, \"request_timeout\": 1200.0, \"semantic_pair_retrieval\": \"raven-source-candidates-v1\", \"thinking\": \"high\", \"timeout_seconds\": 1200.0, \"top_k\": 40}"
+      },
+      "document_hashes_match": true,
+      "dictionary_snapshot_hash_matches": true,
+      "elapsed_seconds": 6869.84112829098,
+      "entities": 172,
+      "claims": 165,
+      "relationships": 57,
+      "comparisons": 417,
+      "events": 37,
+      "model_semantic_states": {
+        "supported": 145,
+        "unsupported": 14,
+        "contradicted": 5,
+        "uncertain": 1
+      },
+      "claim_kinds": {
+        "relation": 103,
+        "value": 45,
+        "withdraws_certainty": 6,
+        "event": 5,
+        "corrects": 2,
+        "retracts": 1,
+        "ceases": 3
+      },
+      "epistemic_states": {
+        "reported": 154,
+        "not_documented": 11
+      },
+      "polarity": {
+        "affirmed": 141,
+        "denied": 24
+      },
+      "page_states": {
+        "reused": 5,
+        "partial": 12,
+        "analyzed": 1
+      },
+      "source_ids_missing": 5,
+      "copied_source_records": 0,
+      "literal_verification": {
+        "entities": {
+          "spans": 352,
+          "exact_original_intervals": 352,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "claims": {
+          "spans": 165,
+          "exact_original_intervals": 165,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "relationships": {
+          "spans": 57,
+          "exact_original_intervals": 57,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "events": {
+          "spans": 37,
+          "exact_original_intervals": 37,
+          "items_without_support": 0,
+          "failures": []
+        }
+      }
+    },
+    {
+      "method": "event_temporal",
+      "run_id": "b2d11b05-3e2c-4a7d-bcdd-cd908b8e349c",
+      "manifest": {
+        "schema_version": 2,
+        "method_id": "event_temporal",
+        "method_version": "4",
+        "prompt_version": "raven-integrity-v5",
+        "documents": [
+          [
+            "2dde1f01-0f16-4b16-a722-3c622a3c6d42",
+            "218cb4639d0807ec3f6ddc447c2306a904734e25aaa19af2aff3ae57af85373d"
+          ],
+          [
+            "46fce612-cb70-431c-b859-ef819743186d",
+            "9f263bdbdea9ec46e3ad1a2b7dc303bbebc1b972c30730b0bedc820ae99901b7"
+          ],
+          [
+            "b6e69ce5-ed81-4262-abd0-9dd2d3b74271",
+            "649299133b3434ff66044ffc8c0e0c15d665aea4458714dbe8ef6b5622de8b57"
+          ]
+        ],
+        "catalogs": [
+          [
+            "2dde1f01-0f16-4b16-a722-3c622a3c6d42",
+            "31f952659ebe7c9af34299d5b5687c764b9b38b1da15c91b6a4d0cc29f44435c"
+          ],
+          [
+            "46fce612-cb70-431c-b859-ef819743186d",
+            "352bdbfb6aa3c0a801a4b905f8c9a6ff3c5b76664486bcbd5116921d8c502999"
+          ],
+          [
+            "b6e69ce5-ed81-4262-abd0-9dd2d3b74271",
+            "de44fb0b2d9fce2b77a51f0c2c2d53bf19e5e6d1de42a46d6b576fc26ed40e30"
+          ]
+        ],
+        "dictionary_hash": "ef0df6355dde3260e78fba454e7e728c73a354854d194c8f49d2357df1347f71",
+        "dictionary_versions": [
+          "CORE@2.0.0",
+          "TERRORISM_EXTREMISM@1.0.0"
+        ],
+        "dictionary_snapshot": "{\"domain_code\":\"TERRORISM_EXTREMISM\",\"domain_name\":\"Terrorism and extremism\",\"domain_description\":\"Terrorism, violent extremism, radicalization and counter-terrorism OSINT investigations.\",\"vocabulary_versions\":[\"CORE@2.0.0\",\"TERRORISM_EXTREMISM@1.0.0\"],\"entity_types\":[{\"type\":\"PERSON\",\"subtype\":null,\"label\":\"Person\",\"description\":\"A specifically named natural person.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":null,\"label\":\"Organization\",\"description\":\"A named formal organization, institution, company, agency or association.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LOCATION\",\"subtype\":null,\"label\":\"Location\",\"description\":\"A named geographic area, administrative region, settlement or physical place.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":null,\"label\":\"Facility\",\"description\":\"A named physical site with a specific operational function.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":null,\"label\":\"Group\",\"description\":\"A named informal collective that is not necessarily a formal organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EVENT\",\"subtype\":null,\"label\":\"Event\",\"description\":\"A named occurrence bounded in time or described as having happened.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":null,\"label\":\"Program\",\"description\":\"A named structured and continuing initiative or programme.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":null,\"label\":\"Operation\",\"description\":\"A named coordinated operation with an explicit objective.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":null,\"label\":\"Campaign\",\"description\":\"A named coordinated series of activities directed toward an objective.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":null,\"label\":\"Document\",\"description\":\"A named document, report, filing, record or documentary artifact.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"MEDIA_CONTENT\",\"subtype\":null,\"label\":\"Media content\",\"description\":\"A named article, post, image, video, audio item, broadcast or publication.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DATASET\",\"subtype\":null,\"label\":\"Dataset\",\"description\":\"A named database, register, corpus, leak or structured collection of data.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"AGREEMENT\",\"subtype\":null,\"label\":\"Agreement\",\"description\":\"A named contract, treaty, memorandum, concession or other agreement.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LEGAL_CASE\",\"subtype\":null,\"label\":\"Legal case\",\"description\":\"A named judicial, regulatory, arbitration or administrative proceeding.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"BRAND\",\"subtype\":null,\"label\":\"Brand\",\"description\":\"A named commercial or institutional brand.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PRODUCT\",\"subtype\":null,\"label\":\"Product\",\"description\":\"A named manufactured, commercial or published product.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SERVICE\",\"subtype\":null,\"label\":\"Service\",\"description\":\"A named commercial, public or digital service.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SOFTWARE\",\"subtype\":null,\"label\":\"Software\",\"description\":\"A named software application, platform, model or system.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DEVICE\",\"subtype\":null,\"label\":\"Device\",\"description\":\"A specifically identified physical electronic or communications device.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ASSET\",\"subtype\":null,\"label\":\"Asset\",\"description\":\"A named asset that is not represented by a more specific core type.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"INFRASTRUCTURE\",\"subtype\":null,\"label\":\"Infrastructure\",\"description\":\"A named transport, energy, communications or other infrastructure system.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FINANCIAL_ACCOUNT\",\"subtype\":null,\"label\":\"Financial account\",\"description\":\"A specifically identified bank, investment, exchange or other financial account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOMAIN\",\"subtype\":null,\"label\":\"Domain\",\"description\":\"An explicitly observed internet domain name.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"HOSTNAME\",\"subtype\":null,\"label\":\"Hostname\",\"description\":\"An explicitly observed host name.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"URL\",\"subtype\":null,\"label\":\"URL\",\"description\":\"An explicitly observed web or network resource locator.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EMAIL_ADDRESS\",\"subtype\":null,\"label\":\"Email address\",\"description\":\"An explicitly observed email address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PHONE_NUMBER\",\"subtype\":null,\"label\":\"Phone number\",\"description\":\"An explicitly observed telephone number.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"IP_ADDRESS\",\"subtype\":null,\"label\":\"IP address\",\"description\":\"An explicitly observed IP address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"USERNAME\",\"subtype\":null,\"label\":\"Username\",\"description\":\"An explicitly observed username or handle without an identified account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SOCIAL_ACCOUNT\",\"subtype\":null,\"label\":\"Social account\",\"description\":\"A specifically identified social-media profile or account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ONLINE_ACCOUNT\",\"subtype\":null,\"label\":\"Online account\",\"description\":\"A specifically identified non-social online account.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FILE_HASH\",\"subtype\":null,\"label\":\"File hash\",\"description\":\"An explicitly observed cryptographic file digest.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CRYPTOCURRENCY_ADDRESS\",\"subtype\":null,\"label\":\"Cryptocurrency address\",\"description\":\"An explicitly observed cryptocurrency address.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"IBAN\",\"subtype\":null,\"label\":\"IBAN\",\"description\":\"An explicitly observed International Bank Account Number.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"LICENSE_PLATE\",\"subtype\":null,\"label\":\"License plate\",\"description\":\"An explicitly observed vehicle registration plate.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"VEHICLE\",\"subtype\":null,\"label\":\"Vehicle\",\"description\":\"A specifically identified land vehicle.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"VESSEL\",\"subtype\":null,\"label\":\"Vessel\",\"description\":\"A specifically identified maritime vessel.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"AIRCRAFT\",\"subtype\":null,\"label\":\"Aircraft\",\"description\":\"A specifically identified aircraft.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PASSPORT_NUMBER\",\"subtype\":null,\"label\":\"Passport number\",\"description\":\"An explicitly observed passport identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"NATIONAL_ID\",\"subtype\":null,\"label\":\"National ID\",\"description\":\"An explicitly observed national identity identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"TAX_IDENTIFIER\",\"subtype\":null,\"label\":\"Tax identifier\",\"description\":\"An explicitly observed tax or company fiscal identifier.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_TERRORIST_ORGANIZATION\",\"label\":\"Terrorist organization\",\"description\":\"A specifically named organization designated or described as a terrorist organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[\"Islamic State\",\"Al-Qaeda\"]},{\"type\":\"GROUP\",\"subtype\":\"TER_EXTREMIST_GROUP\",\"label\":\"Extremist group\",\"description\":\"A specifically named extremist or violent ideological group.\",\"include_when\":[],\"exclude_when\":[\"Do not use for formally constituted political parties or state organizations.\"],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":\"TER_TERRORIST_CELL\",\"label\":\"Terrorist cell\",\"description\":\"A specifically named operational terrorist cell or local network.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_AFFILIATE\",\"label\":\"Affiliate organization\",\"description\":\"A specifically named affiliate, regional branch or franchise of a terrorist organization.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"GROUP\",\"subtype\":\"TER_RECRUITMENT_NETWORK\",\"label\":\"Recruitment network\",\"description\":\"A specifically named recruitment or facilitation network.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":\"TER_TRAINING_CAMP\",\"label\":\"Training camp\",\"description\":\"A specifically named terrorist or extremist training facility.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"FACILITY\",\"subtype\":\"TER_SAFEHOUSE\",\"label\":\"Safehouse\",\"description\":\"A specifically named safehouse or operational hideout.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":\"TER_OPERATION\",\"label\":\"Terrorist operation\",\"description\":\"A specifically named terrorist operation or coordinated attack.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"EVENT\",\"subtype\":\"TER_ATTACK\",\"label\":\"Terrorist attack\",\"description\":\"A specifically named terrorist attack or bombing.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[\"2015 Paris attacks\",\"2019 Easter bombings\"]},{\"type\":\"EVENT\",\"subtype\":\"TER_HOSTAGE_CRISIS\",\"label\":\"Hostage crisis\",\"description\":\"A specifically named hostage-taking or siege event.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_MANIFESTO\",\"label\":\"Manifesto\",\"description\":\"A specifically named extremist manifesto, declaration or ideological document.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_PROPAGANDA_PUBLICATION\",\"label\":\"Propaganda publication\",\"description\":\"A specifically named extremist publication, magazine or newsletter.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"SERVICE\",\"subtype\":\"TER_MEDIA_CHANNEL\",\"label\":\"Media channel\",\"description\":\"A specifically named propaganda outlet, media channel or dissemination platform.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":\"TER_RECRUITMENT_CAMPAIGN\",\"label\":\"Recruitment campaign\",\"description\":\"A specifically named extremist recruitment campaign.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"CAMPAIGN\",\"subtype\":\"TER_PROPAGANDA_CAMPAIGN\",\"label\":\"Propaganda campaign\",\"description\":\"A specifically named propaganda or influence campaign.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":\"TER_RADICALIZATION_PROGRAM\",\"label\":\"Radicalization program\",\"description\":\"A specifically named radicalization or ideological indoctrination program.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"PROGRAM\",\"subtype\":\"TER_DERADICALIZATION_PROGRAM\",\"label\":\"Deradicalization program\",\"description\":\"A specifically named deradicalization or disengagement program.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"OPERATION\",\"subtype\":\"TER_COUNTERTERRORISM_OPERATION\",\"label\":\"Counter-terrorism operation\",\"description\":\"A specifically named counter-terrorism operation.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"ORGANIZATION\",\"subtype\":\"TER_COUNTERTERRORISM_UNIT\",\"label\":\"Counter-terrorism unit\",\"description\":\"A specifically named law-enforcement or military counter-terrorism unit.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]},{\"type\":\"DOCUMENT\",\"subtype\":\"TER_DESIGNATION\",\"label\":\"Terrorist designation\",\"description\":\"A specifically named terrorist designation list or official designation document.\",\"include_when\":[],\"exclude_when\":[],\"examples\":[]}]}",
+        "model": "gpt-oss-120b",
+        "configuration": "{\"comparisons\": \"raven-comparison-v3\", \"context_size\": 128000, \"effective_thinking\": \"medium\", \"events\": \"raven-event-records-v1\", \"extraction_basis\": \"original\", \"language\": \"english\", \"max_output_tokens\": 8192, \"model\": \"gpt-oss-120b\", \"predicates\": \"raven-predicates-v1\", \"preparation_requested\": \"full_text\", \"provider\": \"llama.cpp\", \"random_seed\": 2345467, \"repair_budget\": 1, \"request_timeout\": 1200.0, \"semantic_pair_retrieval\": \"raven-source-candidates-v1\", \"thinking\": \"high\", \"timeout_seconds\": 1200.0, \"top_k\": 40}"
+      },
+      "document_hashes_match": true,
+      "dictionary_snapshot_hash_matches": true,
+      "elapsed_seconds": 6438.585692290973,
+      "entities": 173,
+      "claims": 266,
+      "relationships": 78,
+      "comparisons": 61,
+      "events": 60,
+      "model_semantic_states": {
+        "supported": 213,
+        "contradicted": 17,
+        "uncertain": 6,
+        "unsupported": 30
+      },
+      "claim_kinds": {
+        "relation": 176,
+        "value": 69,
+        "withdraws_certainty": 3,
+        "event": 5,
+        "corrects": 5,
+        "retracts": 2,
+        "ceases": 6
+      },
+      "epistemic_states": {
+        "reported": 248,
+        "not_documented": 18
+      },
+      "polarity": {
+        "affirmed": 225,
+        "denied": 41
+      },
+      "page_states": {
+        "analyzed": 3,
+        "partial": 15
+      },
+      "source_ids_missing": 5,
+      "copied_source_records": 3,
+      "literal_verification": {
+        "entities": {
+          "spans": 344,
+          "exact_original_intervals": 344,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "claims": {
+          "spans": 274,
+          "exact_original_intervals": 274,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "relationships": {
+          "spans": 82,
+          "exact_original_intervals": 82,
+          "items_without_support": 0,
+          "failures": []
+        },
+        "events": {
+          "spans": 66,
+          "exact_original_intervals": 66,
+          "items_without_support": 0,
+          "failures": []
+        }
+      }
+    }
+  ]
+}

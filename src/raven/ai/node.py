@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Callable, Iterator
+from contextlib import suppress
 from dataclasses import replace
 from threading import Lock
 from time import monotonic
@@ -57,6 +59,23 @@ class SharedAiNode:
         self.close()
         self._chat_client = chat_client
         self._embedding_client = embedding_client
+        self._settings = settings
+
+    def initialize_embeddings(self, settings: AiNodeSettings) -> None:
+        """Connect only the embedding endpoint for headless retrieval consumers."""
+        settings = settings.validated()
+        if not settings.embedding_model:
+            raise InfrastructureConfigurationError("An embedding model must be selected")
+        client = self._verified_endpoint(
+            settings.embedding_provider,
+            settings.embedding_base_url,
+            settings.embedding_model,
+            settings.embedding_api_key,
+            settings.embedding_timeout_seconds,
+            "Embedding",
+        )
+        self.close()
+        self._embedding_client = client
         self._settings = settings
 
     def probe(self, settings: AiNodeSettings) -> None:
@@ -137,7 +156,16 @@ class SharedAiNode:
                 if timeout_seconds is not None:
                     remaining = max(0.01, deadline - monotonic())
                     options["timeout"] = httpx.Timeout(remaining, connect=min(5.0, remaining))
-                response = self._chat_client.post(url, json=payload, **options)
+                if (
+                    self._client_factory is httpx.Client
+                    and type(self._chat_client) is httpx.Client
+                    and (cancelled is not None or timeout_seconds is not None)
+                ):
+                    response = asyncio.run(
+                        self._cancellable_post(url, payload, settings, deadline, check_request)
+                    )
+                else:
+                    response = self._chat_client.post(url, json=payload, **options)
             finally:
                 self._request_lock.release()
             check_request()
@@ -189,6 +217,36 @@ class SharedAiNode:
                 "The AI node returned an empty graph-agent response", "empty_response"
             )
         return cleaned
+
+    @staticmethod
+    async def _cancellable_post(
+        url: str,
+        payload: dict[str, Any],
+        settings: AiNodeSettings,
+        deadline: float,
+        check_request: Callable[[], None],
+    ) -> httpx.Response:
+        """Close the HTTP request on cancellation before releasing the inference lock."""
+        headers = {"Accept": "application/json"}
+        if settings.api_key:
+            headers["Authorization"] = f"Bearer {settings.api_key}"
+        remaining = max(0.01, deadline - monotonic())
+        async with httpx.AsyncClient(
+            headers=headers,
+            timeout=httpx.Timeout(remaining, connect=min(5.0, remaining)),
+        ) as client:
+            request = asyncio.create_task(client.post(url, json=payload))
+            try:
+                while not request.done():
+                    check_request()
+                    await asyncio.wait({request}, timeout=0.1)
+                check_request()
+                return await request
+            finally:
+                if not request.done():
+                    request.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await request
 
     def embed(self, texts: list[str]) -> tuple[tuple[float, ...], ...]:
         """Embed a batch through the configured provider on the shared AI endpoint."""

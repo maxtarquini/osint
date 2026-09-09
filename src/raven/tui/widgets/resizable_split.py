@@ -24,7 +24,7 @@ class PaneDivider(Static):
         super().__init__(id=id)
         self._drag_start: tuple[int, int] | None = None
         self.tooltip = (
-            "Trascina per ridimensionare grafo e dettagli. "
+            "Trascina per ridimensionare i pannelli. "
             "Con Tab seleziona il separatore, poi usa ←/→. Home o doppio clic ripristina."
         )
 
@@ -147,3 +147,14 @@ class ResizableSplit(Horizontal):
     def on_hide(self) -> None:
         for divider in self.query(PaneDivider):
             divider.stop_drag()
+
+
+class CatalogSplit(ResizableSplit):
+    """A catalog list on the left, with most of the space reserved for its card."""
+
+    DEFAULT_RATIO = 0.65
+
+    def _clamp_width(self, width: int) -> int:
+        maximum = max(1, self._pane_space - 24)
+        minimum = min(32, maximum)
+        return max(minimum, min(maximum, width))

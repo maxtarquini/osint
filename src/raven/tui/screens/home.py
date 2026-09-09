@@ -31,6 +31,7 @@ class HelpScreen(ModalScreen[None]):
             yield Label("Keyboard help", id="help-title")
             yield Static(
                 "[b]Enter[/b]  activate\n[b]C[/b]      configuration\n"
+                "[b]S[/b]      cataloghi skills e tools\n"
                 "[b]R[/b]      refresh services\n[b]?[/b]      open this help\n"
                 "[b]Q[/b]      quit Raven\n\n"
                 "[b]Chat[/b]   /NEW · /SAVE · /STATS · /INFO"
@@ -50,6 +51,7 @@ class HomeScreen(Screen[None]):
         Binding("question_mark", "show_help", "Help"),
         Binding("c", "app.navigate('configuration')", "Configuration"),
         Binding("r", "app.refresh_infrastructure", "Refresh"),
+        Binding("s", "app.navigate('capabilities')", "Cataloghi"),
     ]
 
     def compose(self) -> ComposeResult:

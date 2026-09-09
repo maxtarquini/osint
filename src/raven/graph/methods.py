@@ -1,5 +1,6 @@
 """Versioned investigative methods, independent of RAG and preparation settings."""
 
+import json
 from dataclasses import dataclass
 
 
@@ -48,6 +49,18 @@ def extraction_profile(manifest):
     from dataclasses import asdict
 
     profile = asdict(manifest)
+    if manifest.method_id in {method.method_id for method in METHODS if method.original_pages}:
+        # Keep the requested legacy mode in the immutable manifest, but it cannot change
+        # reuse when extraction always receives originals. Malformed old metadata stays
+        # distinct rather than accidentally becoming a compatible empty configuration.
+        try:
+            configuration = json.loads(manifest.configuration)
+        except (ValueError, TypeError):
+            pass
+        else:
+            if isinstance(configuration, dict):
+                configuration.pop("preparation_requested", None)
+                profile["configuration"] = json.dumps(configuration, sort_keys=True)
     if manifest.method_id in {"document_claims", "cross_source_review"}:
         profile["method_id"] = "shared_document_integrity"
     return profile

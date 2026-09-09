@@ -97,6 +97,12 @@ Graph extraction failures remain in graph runs and page coverage; they never cha
 
 ## Evidence-to-Graph analysis
 
+Il [manuale dei metodi di analisi e generazione dei grafi](docs/graph-analysis-methods.md)
+descrive in italiano il flusso completo, i dizionari modificabili, le varianti, il confronto,
+il recupero per la chat e i limiti verificati. Il precedente menu **Evidence preparation** è
+sostituito dall'indicazione **Originali con contesto documentale**: i tre metodi selezionabili
+usano gli originali e ignorano la preparazione legacy anche nella firma della cache.
+
 In **Graph**, choose **Nuova variante** or **Varianti / confronta**. Select the investigative
 method and an optional name before generation. The method becomes the default for the case;
 its purpose, version and model are shown in the dialog. Each completed generation creates a
@@ -109,7 +115,7 @@ to explicitly select the graph used by chat. Opening or generating a variant doe
 | Verifica tra fonti | Shared document extraction plus targeted comparison of source scope, disagreement, copies and corrections |
 | Eventi e temporalità | Document extraction plus a dedicated pass for events, typed values, corrections, withdrawals and cessations |
 
-The methods extract from originals regardless of the legacy preparation control. Catalogs can
+The methods extract from originals, shown as **Originali con contesto documentale**. Catalogs can
 prioritize pages but cannot exclude them or supply quotations. Program-assigned mention IDs
 and contiguous citation units constrain model references. Validation preserves valid siblings;
 claim repairs are bounded to one attempt per extraction batch. Source pages, model stages,
@@ -119,14 +125,23 @@ Literal quotation matching and semantic support are separate. The supported grap
 grounded affirmative relations whose semantics passed review. **Affermazioni / copertura** keeps
 all source assertions, including denials and absence of documentation; **Da revisionare** preserves
 unsupported candidates, and **Eventi / tempo** exposes source-specific event records. A semantic
-review does not certify the truth or reliability of a source.
+review does not certify the truth or reliability of a source, and can also misinterpret its
+meaning. The [controlled evaluation](docs/research/graph-evaluation-2026-09-08.md) records
+recovered cases, omissions and reviewer errors on RX41 and an independent civil corpus.
 
 MongoDB snapshots preserve the immutable manifest: document hashes, catalog and dictionary
 versions, method and prompt versions, model and public configuration. Neo4j projections are
 partitioned by case and variant, including when they contain identical entity/claim IDs. Legacy
 snapshots remain readable without being rewritten. A/B aligns candidate identities and qualified
 propositions, showing recovered/missing assertions, classification differences, source coverage
-and fragmentation; the counts are not an accuracy score.
+and fragmentation; the counts are not an accuracy score. Equivalent numerical representations
+align without rounding long values; units and date precision remain distinct. Attribution,
+copy ancestry and correction references participate in alignment. References to claim IDs
+resolve to their propositions within each variant; differing reviewer outcomes are shown
+with both rationales even when the underlying proposition aligns.
+Rejected, unrelated and unresolved comparison candidates remain available for review, but do
+not force claims into joint chat-context groups. Meaningful comparison candidates retain both
+sides together, and the chat receives their review states and rationales.
 
 The graph view uses `netext`'s native Textual widget with a deterministic left-to-right
 Sugiyama layout. It supports mouse selection, arrow-key panning, `J/K` entity navigation,
@@ -146,7 +161,9 @@ Every new generation reloads the configured dictionary files, including edits ma
 is open. Extraction and semantic review use the same resolved definitions, including custom
 types and their inclusion/exclusion rules. The resulting snapshot remains fixed during that run.
 Changing definitions or versions changes the cache signature; previously saved variants retain
-their original classification data and manifest.
+their original classification data, resolved dictionary definitions and manifest. A/B comparison
+distinguishes identical documents from identical dictionaries and shows added, removed or changed
+definitions. Older variants without a saved definition snapshot are identified explicitly.
 
 Every run freezes the investigation language, preparation mode, dictionary domain, component
 versions, and dictionary snapshot hash for reproducibility. The eleven copied Hudiny dictionaries
@@ -284,13 +301,19 @@ Before adding components, review the quality gates in [`dev-guides`](dev-guides/
 
 ## Registro di skill e tool
 
+Il pulsante **Cataloghi** nella navigazione principale e il tasto **S** dalla home aprono
+la schermata **Cataloghi · Skills e Tools**. Puoi cercare e filtrare per disponibilità,
+disabilitazione o necessità di verifica. **Tool usati** mostra le dipendenze dichiarate;
+**Tutti i tool** ripristina l'elenco completo. Le schede dei tool mostrano le skill che li
+usano, le modalità di accesso ai dati e gli schemi di chiamata MCP e locali.
+
 In **Configurazione → Skills & Tools** puoi scegliere la cartella dei file `.SKILL`.
 Il valore viene applicato salvando la configurazione; `RAVEN_SKILL_ROOT`, quando presente,
 ha la precedenza. La cartella predefinita è `skills` nella directory dati di Raven.
 Cambiare cartella non sposta i file già presenti. **Gestisci** apre il registro che usa
 la configurazione salvata: le modifiche ancora nel modulo non vengono applicate al registro.
 
-La schermata **Capacità** separa le skill dai tool. Una skill è una definizione di lavoro
+La schermata **Cataloghi** separa le skill dai tool. Una skill è una definizione di lavoro
 investigativo, scritta in Markdown con un contratto iniziale; un tool è un'operazione
 implementata nel programma. **Aggiungi esempi** installa sei definizioni: catalogazione
 pagine, estrazione di entità e relazioni, riconciliazione delle identità, analisi delle
@@ -359,6 +382,14 @@ Un nuovo avvio riprende le schede mancanti, fallite o da aggiornare.
 > di aggiungere tool. Il contenuto della skill viene analizzato come dato dal catalogatore:
 > non viene eseguito. Il catalogo registra versione, impronta SHA-256, agente, modello e data;
 > cambiamenti al file o al profilo del catalogatore rendono la scheda da aggiornare.
+
+Il registro comprende ora **18 tool investigativi** condivisi con il server MCP `stdio`.
+Per consultarli da un client esterno usa `uv run raven-mcp --investigation UUID`; il parametro
+è obbligatorio e ripetibile. Sono disponibili fonti originali, recupero ibrido, entità,
+affermazioni, relazioni, eventi, copertura, dizionari e confronto delle varianti persistenti.
+I tool rispettano le abilitazioni configurate in Raven e non attivano o generano varianti.
+Il [manuale dei tool e del server MCP](docs/tools-and-mcp.md) descrive contratti, avvio,
+paginazione, provenienza, limiti e verifiche riproducibili.
 
 La scheda **Tools** mostra versione, descrizione, perimetro, timeout e schemi di input/output.
 I primi tool sono `read_page`, `search_evidence` e `verify_quote`. L'esecutore lavora su uno
@@ -487,7 +518,7 @@ impediscono anche questo abbinamento.
 > in attendibilità della fonte e non considera automaticamente più corretta la fonte più recente.
 
 Generando una nuova variante, Raven riutilizza le estrazioni riuscite della precedente
-istantanea. La chiave comprende pagina, testo, dizionario, lingua, preparazione, modello,
+istantanea. La chiave comprende pagina, testo, dizionario, lingua, preparazione effettiva, modello,
 profilo di generazione, versioni dei contratti e suggerimenti del catalogo effettivamente usati.
 Pagine cambiate, parziali o fallite vengono rielaborate. Affermazioni documentali e Verifica tra
 fonti condividono soltanto il passaggio documentale compatibile; la revisione tra fonti viene

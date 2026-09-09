@@ -22,7 +22,6 @@ from textual.widgets import (
     Input,
     Label,
     LoadingIndicator,
-    Select,
     Static,
     TabbedContent,
     TabPane,
@@ -301,21 +300,10 @@ class InvestigationWorkspaceScreen(Screen[None]):
                         yield EvidenceRow(document)
             with TabPane("Graph", id="workspace-graph-tab"):
                 with Horizontal(id="graph-toolbar"):
-                    with Vertical(id="graph-mode-control"):
-                        yield Static("EVIDENCE PREPARATION", classes="field-label")
-                        yield Select(
-                            [
-                                ("Compress Evidence", EvidencePreparationMode.COMPRESS.value),
-                                ("Full text", EvidencePreparationMode.FULL_TEXT.value),
-                                (
-                                    "Translate + overlapping chunks",
-                                    EvidencePreparationMode.TRANSLATE_AND_CHUNK.value,
-                                ),
-                            ],
-                            value=EvidencePreparationMode.COMPRESS.value,
-                            allow_blank=False,
-                            id="graph-preparation-mode",
-                        )
+                    yield Static(
+                        "Originali con contesto documentale",
+                        id="graph-extraction-basis",
+                    )
                     with Horizontal(id="graph-actions"):
                         yield Button("Nuova variante", id="analyze-evidence", variant="primary")
                         yield Button("Varianti / confronta", id="graph-variants")
@@ -1437,12 +1425,11 @@ class InvestigationWorkspaceScreen(Screen[None]):
         if method_id is None:
             self._open_variants()
             return
-        mode = EvidencePreparationMode(self.query_one("#graph-preparation-mode", Select).value)
         try:
             job = self._raven_app.enqueue_graph_analysis(
                 self.investigation,
                 tuple(self.documents),
-                mode,
+                EvidencePreparationMode.FULL_TEXT,
                 method_id=method_id,
                 variant_name=variant_name,
             )
@@ -1463,9 +1450,6 @@ class InvestigationWorkspaceScreen(Screen[None]):
             return
         active = job.status in {GraphJobStatus.QUEUED, GraphJobStatus.RUNNING}
         self._graph_busy = active
-        mode = self.query_one("#graph-preparation-mode", Select)
-        mode.value = job.preparation_mode.value
-        mode.disabled = active
         self.query_one("#analyze-evidence", Button).disabled = active
         cancel = self.query_one("#cancel-graph-analysis", Button)
         cancel.set_class(not active, "hidden")
@@ -1700,7 +1684,6 @@ class InvestigationWorkspaceScreen(Screen[None]):
         self.query_one("#graph-build-activity", GraphBuildActivity).stop()
         self.query_one("#graph-build-panel").add_class("hidden")
         self.query_one("#analyze-evidence", Button).disabled = False
-        self.query_one("#graph-preparation-mode", Select).disabled = False
         self.query_one("#cancel-graph-analysis", Button).add_class("hidden")
         self._set_graph_status(label, state)
 

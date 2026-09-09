@@ -92,6 +92,7 @@ class GraphManifest:
     catalogs: tuple[tuple[str, str], ...] = ()
     dictionary_hash: str = ""
     dictionary_versions: tuple[str, ...] = ()
+    dictionary_snapshot: str = ""
     model: str = ""
     configuration: str = "{}"
 
@@ -181,6 +182,23 @@ class ClaimLink:
     requires_identity_review: bool = False
     review_state: str = "unreviewed"
     review_rationale: str = ""
+
+    @property
+    def requires_joint_context(self) -> bool:
+        """Keep meaningful comparison candidates together, not rejected retrieval pairs."""
+        return self.review_state in {"unreviewed", "supported"} and self.kind.removeprefix(
+            "candidate_"
+        ) in {
+            "agrees",
+            "contradicts",
+            "temporal_change",
+            "dependent_source",
+            "evidence_gap",
+            "corrects",
+            "retracts",
+            "withdraws_certainty",
+            "ceases",
+        }
 
 
 @dataclass(frozen=True, slots=True)

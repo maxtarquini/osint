@@ -1,0 +1,126 @@
+{
+  "scope": "Read-only probes of stored RX41 cross-source variant, deterministic selection and chat-context serialization. Tested at 40000 characters for diagnosis and at the application maximum of 24000 characters. Smaller dynamic budgets can still omit a whole comparison group. No new LLM answer or general retrieval-accuracy claim. All 417 comparison records remain persisted.",
+  "snapshot_before": {
+    "read_only": true,
+    "run_id": "34b9bb64-d8c6-4b9b-957e-3e936291ee08",
+    "queries": [
+      {
+        "terms": [
+          "240",
+          "passaggio"
+        ],
+        "selected_claims": 44,
+        "context_claims": 11,
+        "expected_pair_complete": false,
+        "selection_truncated": true,
+        "context_truncated": true
+      },
+      {
+        "terms": [
+          "cerchio",
+          "grigio"
+        ],
+        "selected_claims": 20,
+        "context_claims": 20,
+        "expected_pair_complete": true,
+        "selection_truncated": false,
+        "context_truncated": true
+      }
+    ]
+  },
+  "snapshot_after": {
+    "read_only": true,
+    "run_id": "34b9bb64-d8c6-4b9b-957e-3e936291ee08",
+    "queries": [
+      {
+        "terms": [
+          "240",
+          "passaggio"
+        ],
+        "selected_claims": 21,
+        "context_claims": 18,
+        "expected_pair_complete": true,
+        "selection_truncated": true,
+        "context_truncated": true
+      },
+      {
+        "terms": [
+          "cerchio",
+          "grigio"
+        ],
+        "selected_claims": 10,
+        "context_claims": 10,
+        "expected_pair_complete": true,
+        "selection_truncated": false,
+        "context_truncated": false
+      }
+    ]
+  },
+  "neo4j_after": {
+    "read_only": true,
+    "run_id": "34b9bb64-d8c6-4b9b-957e-3e936291ee08",
+    "stored_comparisons": 417,
+    "joint_context_comparisons": 84,
+    "queries": [
+      {
+        "terms": [
+          "240",
+          "passaggio"
+        ],
+        "neo4j_claims": 33,
+        "selected_claims": 21,
+        "context_claims": 19,
+        "expected_pair_complete": true,
+        "selection_truncated": true,
+        "context_truncated": true
+      },
+      {
+        "terms": [
+          "cerchio",
+          "grigio"
+        ],
+        "neo4j_claims": 12,
+        "selected_claims": 15,
+        "context_claims": 15,
+        "expected_pair_complete": true,
+        "selection_truncated": false,
+        "context_truncated": true
+      }
+    ],
+    "active_preserved": true
+  },
+  "application_maximum_characters": 24000,
+  "neo4j_after_at_application_maximum": {
+    "read_only": true,
+    "run_id": "34b9bb64-d8c6-4b9b-957e-3e936291ee08",
+    "stored_comparisons": 417,
+    "joint_context_comparisons": 84,
+    "queries": [
+      {
+        "terms": [
+          "240",
+          "passaggio"
+        ],
+        "neo4j_claims": 33,
+        "selected_claims": 21,
+        "context_claims": 10,
+        "expected_pair_complete": true,
+        "selection_truncated": true,
+        "context_truncated": true
+      },
+      {
+        "terms": [
+          "cerchio",
+          "grigio"
+        ],
+        "neo4j_claims": 12,
+        "selected_claims": 15,
+        "context_claims": 10,
+        "expected_pair_complete": true,
+        "selection_truncated": false,
+        "context_truncated": true
+      }
+    ],
+    "active_preserved": true
+  }
+}

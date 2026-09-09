@@ -221,10 +221,10 @@ class GraphAnalysisService:
                 repair_budget=1,
                 effective_thinking="medium",
                 max_output_tokens=8192,
-                comparisons="raven-comparison-v3",
+                comparisons="raven-comparison-v4",
                 semantic_pair_retrieval="raven-source-candidates-v1",
                 events="raven-event-records-v1",
-                request_timeout=120,
+                request_timeout=getattr(settings, "timeout_seconds", 120),
             )
             manifest = GraphManifest(
                 method_id=method.method_id,
@@ -234,6 +234,7 @@ class GraphAnalysisService:
                 catalogs=tuple(catalog_versions),
                 dictionary_hash=vocabulary.sha256,
                 dictionary_versions=vocabulary.vocabulary_versions,
+                dictionary_snapshot=vocabulary.json,
                 model=getattr(settings, "model", "unavailable"),
                 configuration=json.dumps(configuration, sort_keys=True),
             )
@@ -494,9 +495,13 @@ class GraphAnalysisService:
                     ),
                 )
             relationships = project_claims(claims, cancelled=cancelled)
-        except GraphAnalysisCancelledError:
+        except (
+            GraphAnalysisCancelledError,
+            InvestigationChatCancelledError,
+            InvestigationCancelledError,
+        ) as error:
             self._cancel(run, completed, failed)
-            raise
+            raise GraphAnalysisCancelledError("Graph analysis cancelled") from error
         from raven.graph.events import event_records
 
         now = datetime.now(UTC)

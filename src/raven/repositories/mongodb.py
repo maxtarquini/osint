@@ -65,31 +65,33 @@ class MongoRepository(CatalogReader):
         self._client: Any | None = None
         self._database: Any | None = None
 
-    def initialize(self, settings: MongoSettings) -> None:
+    def initialize(self, settings: MongoSettings, *, bootstrap: bool = True) -> None:
         candidate = self._client_factory(
             settings.uri,
             appname="raven-osint",
             connectTimeoutMS=2500,
             serverSelectionTimeoutMS=2500,
+            **({"socketTimeoutMS": 5000, "timeoutMS": 10000} if not bootstrap else {}),
         )
         try:
             candidate.admin.command("ping")
             database = candidate[settings.database]
-            existing = set(database.list_collection_names())
-            for collection_name in BASE_COLLECTIONS:
-                if collection_name not in existing:
-                    database.create_collection(collection_name)
-            self._ensure_indexes(database)
-            database["app_metadata"].update_one(
-                {"_id": "schema"},
-                {
-                    "$set": {
-                        "version": MONGO_SCHEMA_VERSION,
-                        "updated_at": datetime.now(UTC),
-                    }
-                },
-                upsert=True,
-            )
+            if bootstrap:
+                existing = set(database.list_collection_names())
+                for collection_name in BASE_COLLECTIONS:
+                    if collection_name not in existing:
+                        database.create_collection(collection_name)
+                self._ensure_indexes(database)
+                database["app_metadata"].update_one(
+                    {"_id": "schema"},
+                    {
+                        "$set": {
+                            "version": MONGO_SCHEMA_VERSION,
+                            "updated_at": datetime.now(UTC),
+                        }
+                    },
+                    upsert=True,
+                )
         except Exception:
             candidate.close()
             raise
@@ -281,12 +283,21 @@ class MongoRepository(CatalogReader):
         except Exception as error:
             raise InvestigationPersistenceError("Unable to delete investigation records") from error
 
-    def list_investigations(self) -> tuple[Investigation, ...]:
+    def list_investigations(
+        self, investigation_ids: tuple[str, ...] | None = None
+    ) -> tuple[Investigation, ...]:
         """Load investigations and their evidence manifests, newest first."""
         if self._database is None:
             raise InvestigationPersistenceError("MongoDB is not connected")
         try:
-            records = list(self._database["investigations"].find({}).sort("updated_at", DESCENDING))
+            query = (
+                {}
+                if investigation_ids is None
+                else {"investigation_id": {"$in": list(investigation_ids)}}
+            )
+            records = list(
+                self._database["investigations"].find(query).sort("updated_at", DESCENDING)
+            )
             identifiers = [record["investigation_id"] for record in records]
             evidence_records = list(
                 self._database["evidence_documents"].find(

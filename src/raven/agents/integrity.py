@@ -131,7 +131,7 @@ REVIEW_SCHEMA = _object(
 
 
 class IntegrityAgent(_Agent):
-    """Each stage has one repair at most and a cancellable 120 second request timeout."""
+    """Bounded repair and the AI node's configured, cooperatively cancellable deadline."""
 
     def request(self, case_id, stage, prompt, schema, cancelled):
         if callback := getattr(self, "on_stage", None):
@@ -146,7 +146,7 @@ class IntegrityAgent(_Agent):
             json_schema=schema,
             json_mode=True,
             max_output_tokens=8192,
-            timeout_seconds=120,
+            timeout_seconds=getattr(self.node.settings, "timeout_seconds", 120),
             thinking=AiThinkingLevel.MEDIUM,
             cancelled=cancelled,
         )
