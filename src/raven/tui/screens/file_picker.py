@@ -17,6 +17,7 @@ from raven.exceptions import ConfigurationError
 from raven.models import EvidenceDocument
 from raven.repositories.knowledge_base import SUPPORTED_EVIDENCE_EXTENSIONS
 from raven.services.directories import create_directory
+from raven.tui.widgets.dialogs import ConfirmDialog
 
 
 def filter_evidence_paths(paths: Iterable[Path]) -> list[Path]:
@@ -490,26 +491,24 @@ class NewDirectoryDialog(ModalScreen[Path | None]):
         self.dismiss(destination)
 
 
-class ConfirmEvidenceDelete(ModalScreen[bool]):
+class ConfirmEvidenceDelete(ConfirmDialog):
     """Name the destructive target and require an explicit confirmation."""
 
-    BINDINGS = [Binding("escape", "dismiss(False)", "Cancel")]
-
     def __init__(self, document: EvidenceDocument) -> None:
-        super().__init__()
         self.document = document
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="delete-evidence-dialog"):
-            yield Static("Delete evidence document?", id="delete-evidence-title")
-            yield Static(self.document.original_name, id="delete-evidence-name", markup=False)
-            yield Static(
-                "The Raven copy and its metadata will be removed. The source file is unchanged.",
-                id="delete-evidence-warning",
-            )
-            with Horizontal(id="delete-evidence-actions"):
-                yield Button("Delete", id="confirm-delete-evidence", variant="error")
-                yield Button("Cancel", id="cancel-delete-evidence")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.dismiss(event.button.id == "confirm-delete-evidence")
+        super().__init__(
+            dialog_id="delete-evidence-dialog",
+            title="Delete evidence document?",
+            title_id="delete-evidence-title",
+            subject=document.original_name,
+            subject_id="delete-evidence-name",
+            warning=(
+                "The Raven copy and its metadata will be removed. The source file is unchanged."
+            ),
+            warning_id="delete-evidence-warning",
+            actions_id="delete-evidence-actions",
+            confirm_label="Delete",
+            confirm_id="confirm-delete-evidence",
+            cancel_id="cancel-delete-evidence",
+            centered_actions=False,
+        )

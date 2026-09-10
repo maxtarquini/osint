@@ -59,6 +59,7 @@ from raven.tui.screens.file_picker import (
     filter_directory_paths,
     filter_evidence_paths,
 )
+from raven.tui.screens.help import ContextHelpScreen
 from raven.tui.screens.home import HelpScreen, HomeScreen
 from raven.tui.screens.investigation import InvestigationCreateScreen
 from raven.tui.screens.investigation_catalog import InvestigationCatalogScreen
@@ -395,6 +396,61 @@ async def test_contextual_help_opens_and_closes_from_keyboard(tmp_path: Path) ->
         await pilot.press("escape")
         await pilot.pause()
         assert isinstance(app.screen, HomeScreen)
+
+
+async def test_compact_home_prioritizes_actions_and_recent_cases(tmp_path: Path) -> None:
+    investigations = FakeInvestigations()
+    recent = investigations.create(InvestigationDraft(name="Recent operation", questions=("Who?",)))
+    app = make_app(tmp_path, investigations=investigations)
+
+    async with app.run_test(size=(80, 24)) as pilot:
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+        assert app.screen.has_class("compact-home")
+        assert app.screen.query_one("#brand-logo").region.height == 0
+        recent_button = app.screen.query_one(".recent-investigation")
+        assert "Recent operation" in recent_button.label.plain
+        await pilot.click(recent_button)
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+        assert isinstance(app.screen, InvestigationWorkspaceScreen)
+        assert app.screen.investigation == recent
+
+
+async def test_home_refreshes_recent_cases_when_it_becomes_active_again(
+    tmp_path: Path,
+) -> None:
+    investigations = FakeInvestigations()
+    app = make_app(tmp_path, investigations=investigations)
+
+    async with app.run_test(size=(80, 24)) as pilot:
+        await app.workers.wait_for_complete()
+        investigations.create(InvestigationDraft(name="Newly saved case", questions=("Who?",)))
+
+        await pilot.click("#nav-configuration")
+        await pilot.click("#nav-home")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+        assert isinstance(app.screen, HomeScreen)
+        assert "Newly saved case" in app.screen.query_one(".recent-investigation").label.plain
+
+
+async def test_contextual_help_reflects_the_active_workflow(tmp_path: Path) -> None:
+    app = make_app(tmp_path)
+
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.click("#nav-configuration")
+        await pilot.press("?")
+        await pilot.pause()
+
+        assert isinstance(app.screen, ContextHelpScreen)
+        assert app.screen.query_one("#help-context").render().plain == "Configuration"
+        help_text = app.screen.query_one("#help-bindings").render().plain
+        assert "Save" in help_text
+        assert "Tab / Shift+Tab" in help_text
 
 
 async def test_top_menu_opens_configuration_and_saves_public_values(tmp_path: Path) -> None:
@@ -759,6 +815,27 @@ async def test_investigation_questions_editor_uses_available_height(tmp_path: Pa
         assert not app.screen.has_class("compact-investigation-form")
         assert app.screen.query_one("#investigation-description").outer_size.height == 4
         assert app.screen.query_one("#investigation-questions").outer_size.height >= 12
+
+
+async def test_catalog_row_opens_from_keyboard_without_targeting_its_button(
+    tmp_path: Path,
+) -> None:
+    investigations = FakeInvestigations()
+    investigation = investigations.create(
+        InvestigationDraft(name="Keyboard case", questions=("Who?",))
+    )
+    app = make_app(tmp_path, investigations=investigations)
+
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.click("#nav-investigations")
+        await app.workers.wait_for_complete()
+        row = app.screen.query_one(".investigation-row")
+        row.focus()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert isinstance(app.screen, InvestigationWorkspaceScreen)
+        assert app.screen.investigation == investigation
 
 
 async def test_create_investigation_opens_workspace_without_requiring_evidence(

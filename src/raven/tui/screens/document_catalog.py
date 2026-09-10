@@ -1,7 +1,9 @@
 """Browse, generate and refresh one document's persistent page catalog."""
 
 import logging
+from collections.abc import Callable
 from threading import Event
+from time import monotonic
 
 from textual import work
 from textual.app import ComposeResult
@@ -15,21 +17,40 @@ from raven.exceptions import (
     InvestigationChatCancelledError,
     InvestigationError,
 )
+from raven.tui.state import catalog_document_view_state
 
 logger = logging.getLogger(__name__)
+
+CatalogStateCallback = Callable[[str, str, int, int, str], None]
 
 
 class DocumentCatalogScreen(ModalScreen[None]):
     BINDINGS = [Binding("escape", "close", "Chiudi"), Binding("/", "search", "Cerca pagine")]
 
-    def __init__(self, investigation, document):
+    def __init__(
+        self,
+        investigation,
+        document,
+        *,
+        generate_on_open=False,
+        force_on_open=False,
+        state_callback: CatalogStateCallback | None = None,
+    ):
         super().__init__()
         self.investigation = investigation
         self.document = document
+        self._generate_on_open = generate_on_open
+        self._force_on_open = force_on_open
+        self._state_callback = state_callback
         self.catalog = None
         self.filtered_pages = []
         self._cataloging = False
+        self._catalog_force = False
         self._catalog_cancel = Event()
+        self._catalog_progress_completed = 0
+        self._catalog_progress_total = document.page_count or 0
+        self._catalog_stage = "Preparazione del documento"
+        self._catalog_stage_started_at = monotonic()
 
     def compose(self) -> ComposeResult:
         with Vertical(id="saved-catalog-dialog"):
@@ -59,8 +80,12 @@ class DocumentCatalogScreen(ModalScreen[None]):
                 yield Button("Chiudi", id="close-saved-catalog")
 
     def on_mount(self):
+        # A thread worker can outlive this modal. Keep the owning app instead of
+        # resolving ``self.app`` after the screen has been dismissed.
+        self._owner_app = self.app
         self.on_resize()
         self.query_one("#saved-catalog-table", DataTable).add_columns("Pagina", "Stato", "Titolo")
+        self.set_interval(1.0, self._refresh_running_status)
         self._load()
 
     def on_resize(self):
@@ -68,7 +93,10 @@ class DocumentCatalogScreen(ModalScreen[None]):
 
     def action_close(self):
         if self._cataloging:
-            self._catalog_cancel.set()
+            self.notify(
+                "La catalogazione continua in background; lo stato resta visibile nella riga.",
+                title="Catalogazione pagine",
+            )
         self.dismiss(None)
 
     def action_search(self):
@@ -79,9 +107,10 @@ class DocumentCatalogScreen(ModalScreen[None]):
         if event.button.id == "close-saved-catalog":
             self.action_close()
         elif event.button.id == "generate-saved-catalog":
-            self._start_cataloging()
+            self.call_after_refresh(self._start_cataloging_from_button, event.button)
         elif event.button.id == "cancel-saved-catalog":
             self._catalog_cancel.set()
+            event.button.disabled = True
             self.query_one("#saved-catalog-status", Static).update(
                 "Annullamento richiesto: attendo la conclusione della chiamata attiva…"
             )
@@ -89,32 +118,70 @@ class DocumentCatalogScreen(ModalScreen[None]):
             self.query_one("#refresh-saved-catalog", Button).disabled = True
             self._load()
 
-    def _start_cataloging(self):
+    def _start_cataloging_from_button(self, button: Button) -> None:
+        state = (
+            catalog_document_view_state(self.catalog).state if self.catalog is not None else None
+        )
+        self._start_cataloging(force=state in {"ready", "stale"})
+        button.remove_class("-active")
+
+    def _start_cataloging(self, *, force: bool):
         if self._cataloging:
             return
         self._cataloging = True
+        self._catalog_force = force
         self._catalog_cancel.clear()
-        self.query_one("#generate-saved-catalog", Button).disabled = True
+        generate = self.query_one("#generate-saved-catalog", Button)
+        generate.disabled = True
+        generate.label = "Generazione in corso…"
         self.query_one("#refresh-saved-catalog", Button).disabled = True
-        self.query_one("#cancel-saved-catalog", Button).remove_class("hidden")
+        cancel = self.query_one("#cancel-saved-catalog", Button)
+        cancel.disabled = False
+        cancel.remove_class("hidden")
         self.query_one("#saved-catalog-status", Static).update(
             "Catalogazione avviata · preparazione del documento…"
         )
+        previous = self.catalog
+        if previous is None:
+            detail = "Nessun catalogo precedente. Le pagine completate saranno salvate subito."
+        elif force:
+            detail = (
+                f"Rigenerazione completa richiesta. Il catalogo precedente era "
+                f"{previous.state} ({previous.completed}/{previous.total} pagine)."
+            )
+        else:
+            detail = (
+                f"Ripresa del catalogo precedente: {previous.completed}/{previous.total} "
+                "pagine già completate saranno riutilizzate."
+            )
+        self.query_one("#saved-catalog-summary", TextArea).load_text(
+            "CATALOGAZIONE IN CORSO\n\n"
+            "La barra superiore mostra la fase corrente e da quanto tempo Raven attende "
+            "la risposta del nodo AI. Una singola pagina può richiedere alcuni minuti.\n\n" + detail
+        )
+        completed = previous.completed if previous is not None and not force else 0
+        total = previous.total if previous is not None else (self.document.page_count or 0)
+        self._catalog_progress_completed = completed
+        self._catalog_progress_total = total
+        self._catalog_stage = "Preparazione del documento"
+        self._catalog_stage_started_at = monotonic()
+        self._publish_catalog_state("running", completed, total, "Preparazione della catalogazione")
+        self._refresh_running_status()
         self._generate_catalog()
 
     @work(thread=True, exclusive=True, group="generate-document-catalog", exit_on_error=False)
     def _generate_catalog(self):
         try:
-            catalog = self.app.catalog_evidence_document(
+            catalog = self._owner_app.catalog_evidence_document(
                 self.investigation,
                 self.document,
                 self._catalog_cancel.is_set,
                 self._catalog_progress,
-                force=self.catalog is not None,
+                force=self._catalog_force,
             )
         except InvestigationChatCancelledError:
             catalog = self._load_after_generation()
-            self.app.call_from_thread(
+            self._owner_app.call_from_thread(
                 self._generation_finished,
                 catalog,
                 "Catalogazione annullata; le pagine completate restano salvate.",
@@ -122,33 +189,34 @@ class DocumentCatalogScreen(ModalScreen[None]):
             )
         except (GraphAgentError, InvestigationError) as error:
             catalog = self._load_after_generation()
-            self.app.call_from_thread(
+            self._owner_app.call_from_thread(
                 self._generation_finished,
                 catalog,
                 str(error),
                 "error",
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 "Unexpected catalog generation failure. investigation_id=%s document_id=%s "
-                "error_type=%s",
+                "error_type=%s error=%s",
                 self.investigation.investigation_id,
                 self.document.document_id,
                 type(error).__name__,
+                error,
             )
             catalog = self._load_after_generation()
-            self.app.call_from_thread(
+            self._owner_app.call_from_thread(
                 self._generation_finished,
                 catalog,
                 "Impossibile completare la catalogazione; verifica configurazione e log.",
                 "error",
             )
         else:
-            self.app.call_from_thread(self._generation_finished, catalog, "", "success")
+            self._owner_app.call_from_thread(self._generation_finished, catalog, "", "success")
 
     def _load_after_generation(self):
         try:
-            return self.app.load_evidence_catalog(self.investigation, self.document)
+            return self._owner_app.load_evidence_catalog(self.investigation, self.document)
         except Exception as error:
             logger.warning(
                 "Unable to reload catalog after generation. investigation_id=%s document_id=%s "
@@ -160,20 +228,66 @@ class DocumentCatalogScreen(ModalScreen[None]):
             return None
 
     def _catalog_progress(self, progress):
-        self.app.call_from_thread(self._show_catalog_progress, progress)
+        try:
+            self._owner_app.call_from_thread(self._show_catalog_progress, progress)
+        except Exception as error:
+            # Progress is observational: a transient UI update failure must not
+            # abort the persisted catalog generation running in this thread.
+            logger.warning(
+                "Unable to render catalog progress. investigation_id=%s document_id=%s "
+                "error_type=%s error=%s",
+                self.investigation.investigation_id,
+                self.document.document_id,
+                type(error).__name__,
+                error,
+                exc_info=True,
+            )
 
     def _show_catalog_progress(self, progress):
+        if progress.detail != self._catalog_stage:
+            self._catalog_stage = progress.detail
+            self._catalog_stage_started_at = monotonic()
+        self._catalog_progress_completed = progress.completed
+        self._catalog_progress_total = progress.total
+        self._publish_catalog_state("running", progress.completed, progress.total, progress.detail)
         if not self.is_mounted or not self._cataloging:
             return
-        detail = f" · {progress.detail}" if progress.detail else ""
-        self.query_one("#saved-catalog-status", Static).update(
-            f"Catalogazione {progress.completed}/{progress.total}{detail}"
+        self._refresh_running_status()
+
+    def _refresh_running_status(self) -> None:
+        if not self.is_mounted or not self._cataloging:
+            return
+        elapsed = int(monotonic() - self._catalog_stage_started_at)
+        total = self._catalog_progress_total
+        progress = (
+            f"{self._catalog_progress_completed}/{total} pagine salvate"
+            if total
+            else f"{self._catalog_progress_completed} pagine salvate"
         )
+        stage = self._catalog_stage or "Elaborazione"
+        wait = "risposta AI in attesa" if stage.startswith("Analisi ") else "fase attiva"
+        label = f"● Generazione attiva · {progress} · {stage} · {wait} da {elapsed}s"
+        for status in self.query("#saved-catalog-status").results(Static):
+            status.update(label)
 
     def _generation_finished(self, catalog, detail: str, severity: str):
-        if not self.is_mounted:
-            return
         self._cataloging = False
+        view = catalog_document_view_state(catalog) if catalog is not None else None
+        state = (
+            view.state if view is not None else ("cancelled" if severity == "warning" else "failed")
+        )
+        completed = view.completed if view is not None else 0
+        total = view.total if view is not None else (self.document.page_count or 0)
+        state_detail = view.detail if view is not None else detail
+        self._publish_catalog_state(state, completed, total, state_detail)
+        if not self.is_mounted:
+            notification_severity = severity if severity in {"warning", "error"} else "information"
+            self._owner_app.notify(
+                detail or "Catalogazione completata in background.",
+                title=self.document.original_name,
+                severity=notification_severity,
+            )
+            return
         self._show(catalog, detail if catalog is None else "")
         if detail:
             self.notify(
@@ -185,9 +299,9 @@ class DocumentCatalogScreen(ModalScreen[None]):
     @work(thread=True, exclusive=True, group="read-document-catalog", exit_on_error=False)
     def _load(self):
         try:
-            catalog = self.app.load_evidence_catalog(self.investigation, self.document)
+            catalog = self._owner_app.load_evidence_catalog(self.investigation, self.document)
         except InvestigationError as error:
-            self.app.call_from_thread(self._show, None, str(error))
+            self._owner_app.call_from_thread(self._show, None, str(error))
         except Exception as error:
             logger.warning(
                 "Unexpected catalog read failure. investigation_id=%s document_id=%s error_type=%s",
@@ -195,43 +309,88 @@ class DocumentCatalogScreen(ModalScreen[None]):
                 self.document.document_id,
                 type(error).__name__,
             )
-            self.app.call_from_thread(self._show, None, "Impossibile leggere il catalogo salvato.")
+            self._owner_app.call_from_thread(
+                self._show, None, "Impossibile leggere il catalogo salvato."
+            )
         else:
-            self.app.call_from_thread(self._show, catalog, "")
+            self._owner_app.call_from_thread(self._show, catalog, "")
 
     def _show(self, catalog, error):
         if not self.is_mounted:
             return
         self.catalog = catalog
+        view = catalog_document_view_state(catalog) if catalog is not None else None
+        self._publish_catalog_state(
+            view.state if view is not None else ("unverified" if error else "missing"),
+            view.completed if view is not None else 0,
+            view.total if view is not None else (self.document.page_count or 0),
+            error or (view.detail if view is not None else ""),
+        )
         self.query_one("#refresh-saved-catalog", Button).disabled = False
         generate = self.query_one("#generate-saved-catalog", Button)
         generate.disabled = False
-        generate.label = "Rigenera catalogo" if catalog is not None else "Genera catalogo"
-        self.query_one("#cancel-saved-catalog", Button).add_class("hidden")
+        generate.label = (
+            {
+                "ready": "Rigenera catalogo",
+                "stale": "Aggiorna catalogo",
+                "summary_pending": "Completa catalogo",
+                "incomplete": "Riprendi catalogo",
+                "cancelled": "Riprendi catalogo",
+                "failed": "Riprova catalogo",
+                "review": "Riprendi catalogo",
+            }.get(view.state, "Genera catalogo")
+            if view is not None
+            else "Genera catalogo"
+        )
+        cancel = self.query_one("#cancel-saved-catalog", Button)
+        cancel.disabled = False
+        cancel.add_class("hidden")
         if catalog is None:
             status = error or "Nessun catalogo salvato per questo documento."
             summary = status + "\n\nLa reindicizzazione RAG aggiorna la ricerca nei documenti; "
             summary += "la catalogazione delle pagine è un'elaborazione distinta."
             provenance = ""
         else:
-            status = (
-                f"Catalogo salvato · {catalog.completed}/{catalog.total} pagine · "
-                f"{catalog.failed_count} errori · {catalog.review_count} da verificare"
-            )
+            if view.state == "summary_pending":
+                status = (
+                    f"Pagine analizzate · {catalog.completed}/{catalog.total} · "
+                    "nessun errore pagina · sintesi finale da completare"
+                )
+            elif view.state == "incomplete":
+                status = (
+                    f"Analisi interrotta · {catalog.completed}/{catalog.total} pagine salvate · "
+                    "nessun errore nelle pagine salvate"
+                )
+            else:
+                status = (
+                    f"Catalogo salvato · {catalog.completed}/{catalog.total} pagine · "
+                    f"{catalog.failed_count} errori · {catalog.review_count} da verificare"
+                )
             if (
                 catalog.domain != self.investigation.analysis_domain
                 or catalog.language != self.investigation.analysis_language.value
             ):
                 status += " · Profilo diverso dall'indagine attuale"
+            state_label = {
+                "summary_pending": "SINTESI DA COMPLETARE",
+                "incomplete": "ANALISI INCOMPLETA",
+                "ready": "COMPLETO",
+                "review": "COMPLETO CON AVVISI",
+                "failed": "FALLITO",
+                "cancelled": "INTERROTTO",
+                "stale": "DA AGGIORNARE",
+            }.get(view.state, view.state.upper())
             summary = (
-                f"{catalog.domain} · {catalog.state}\n\n"
+                f"{catalog.domain} · {state_label}\n\n"
                 + ("RIEPILOGO AI" if catalog.summary_state == "ready" else "SINTESI DELLE PAGINE")
                 + f"\n\n{catalog.summary}\n\nCATEGORIE\n"
                 + "\n".join(catalog.categories)
                 + "\n\nTEMI\n"
                 + ", ".join(catalog.topics)
             )
-            if catalog.error:
+            if view.state in {"summary_pending", "incomplete"}:
+                summary += "\n\nCOSA È SUCCESSO\n" + view.detail
+            elif catalog.error:
                 summary += "\n\nERRORE REGISTRATO\n" + catalog.error
             provenance = (
                 f"Indagine: {catalog.investigation_id}\nDocumento: {catalog.document_id}\n"
@@ -247,6 +406,35 @@ class DocumentCatalogScreen(ModalScreen[None]):
         self.query_one("#saved-catalog-summary", TextArea).load_text(summary)
         self.query_one("#saved-catalog-provenance", TextArea).load_text(provenance)
         self._filter_pages()
+        if self._generate_on_open:
+            self._generate_on_open = False
+            force = self._force_on_open
+            self._force_on_open = False
+            self._start_cataloging(force=force)
+
+    def _publish_catalog_state(
+        self, state: str, completed: int, total: int, detail: str = ""
+    ) -> None:
+        if self._state_callback is not None:
+            try:
+                self._state_callback(
+                    self.document.document_id,
+                    state,
+                    completed,
+                    total,
+                    detail,
+                )
+            except Exception as error:
+                logger.warning(
+                    "Unable to publish catalog state. investigation_id=%s document_id=%s "
+                    "state=%s error_type=%s error=%s",
+                    self.investigation.investigation_id,
+                    self.document.document_id,
+                    state,
+                    type(error).__name__,
+                    error,
+                    exc_info=True,
+                )
 
     def on_input_changed(self, event: Input.Changed):
         if event.input.id == "saved-catalog-search":

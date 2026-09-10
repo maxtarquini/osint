@@ -1,0 +1,127 @@
+/* Textual scopes variables to each stylesheet; keep this palette local. */
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+/* Capability management keeps list, source consultation and actions visible at 80x24. */
+#capabilities-title { height: 1; color: $accent; text-style: bold; margin: 0 1; }
+#capabilities-root { height: 1; color: $text-muted; margin: 0 1; }
+#capabilities-status { height: 1; color: $accent; margin: 0 1; }
+.capability-actions { height: 3; }
+.capability-actions Button { width: 1fr; min-width: 12; height: 3; margin: 0; }
+#capability-search { height: 3; margin: 0; }
+CatalogSplit { height: 1fr; min-height: 3; }
+#skills-table, #tools-table { width: 1fr; min-width: 0; height: 100%; }
+#skill-details, #tool-details { height: 100%; min-width: 0; }
+CapabilitiesScreen TabPane { padding: 0 1; }
+SkillEditor { align: center middle; background: rgba(0, 0, 0, 0.65); }
+#skill-editor-dialog { width: 95%; height: 95%; border: round $accent; background: $surface; padding: 0 1; }
+#skill-editor-dialog .panel-title { height: 1; margin: 0; padding: 0; }
+#skill-source-editor { height: 1fr; }
+#skill-editor-status { height: 2; color: $warning; }
+
+CapabilitiesScreen > TabbedContent { height: 1fr; min-height: 0; }
+CapabilitiesScreen ContentSwitcher { height: 1fr; min-height: 0; }
+CapabilitiesScreen TabPane { height: 1fr; min-height: 0; }
+
+
+/* Per-document actions retain dev's row-based evidence layout and theme. */
+.evidence-document-actions { width: 44; height: 3; }
+.evidence-document-actions Button { height: 3; min-width: 9; margin: 0; }
+.open-evidence-catalog { width: 10; }
+.generate-evidence-catalog { width: 10; }
+.reindex-evidence { width: 15; }
+#evidence-header .evidence-action { width: 44; }
+InvestigationWorkspaceScreen.compact-evidence .evidence-row { layout: vertical; height: 6; }
+InvestigationWorkspaceScreen.compact-evidence .evidence-document-info { width: 1fr; height: 1; }
+InvestigationWorkspaceScreen.compact-evidence .evidence-row .evidence-name { height: 1; }
+InvestigationWorkspaceScreen.compact-evidence .catalog-explanation { display: none; }
+InvestigationWorkspaceScreen.compact-evidence .evidence-statuses { width: 100%; height: 1; }
+InvestigationWorkspaceScreen.compact-evidence .evidence-row .evidence-state,
+InvestigationWorkspaceScreen.compact-evidence .evidence-row .catalog-state { width: 50%; height: 1; }
+InvestigationWorkspaceScreen.compact-evidence .evidence-format,
+InvestigationWorkspaceScreen.compact-evidence .evidence-pages,
+InvestigationWorkspaceScreen.compact-evidence #evidence-header .evidence-state,
+InvestigationWorkspaceScreen.compact-evidence #evidence-header .catalog-state,
+InvestigationWorkspaceScreen.compact-evidence #evidence-header .evidence-action { display: none; }
+InvestigationWorkspaceScreen.compact-evidence .evidence-document-actions { width: 100%; }
+DocumentCatalogScreen { align: center middle; background: rgba(0, 0, 0, 0.65); }
+#saved-catalog-dialog { width: 96%; height: 96%; border: round $accent; background: $surface; padding: 0 1; }
+#saved-catalog-title { height: 1; color: $accent; text-style: bold; }
+#saved-catalog-status { height: 2; color: $muted; }
+#saved-catalog-dialog TabbedContent,
+#saved-catalog-dialog ContentSwitcher,
+#saved-catalog-dialog TabPane { height: 1fr; min-height: 0; }
+#saved-catalog-dialog TabPane { padding: 0; }
+#saved-catalog-dialog TextArea { height: 1fr; }
+#saved-catalog-body { height: 1fr; }
+#saved-catalog-table { width: 45%; }
+#saved-catalog-page { width: 1fr; }
+#saved-catalog-actions { height: 3; }
+#saved-catalog-actions Button { height: 3; width: 1fr; }
+DocumentCatalogScreen.narrow-catalog-reader #saved-catalog-body { layout: vertical; }
+DocumentCatalogScreen.narrow-catalog-reader #saved-catalog-table { width: 100%; height: 5; }
+
+
+PaneDivider {
+    width: 3;
+    height: 100%;
+    color: $accent-dark;
+    background: $surface;
+}
+
+PaneDivider:hover,
+PaneDivider:focus,
+PaneDivider.dragging {
+    color: $accent;
+    background: $surface-raised;
+}
+
+
+#graph-visual-panel.compact-graph-pane #graph-navigation-hint {
+    display: none;
+}
+
+#graph-visual-panel.compact-graph-pane #open-graph-claims {
+    width: 1fr;
+    min-width: 12;
+}
+
+#graph-visual-panel.compact-graph-pane #graph-zoom-label {
+    width: 4;
+}
+
+GraphVariantsScreen { align: center middle; }
+#variants-dialog { width: 95%; height: 95%; padding: 0 1; background: $surface; border: round $accent; }
+#variants-title { height: 1; text-style: bold; }
+#variants-controls { height: auto; max-height: 50%; }
+#variants-controls Static { height: auto; }
+#variants-controls Select, #variant-name { width: 100%; }
+#variant-purpose { height: auto; }
+.variant-actions { height: 3; }
+.variant-actions Button { width: 1fr; min-width: 12; }
+#variant-status { height: 2; }
+#variant-report { height: 1fr; min-height: 3; }
+#variant-footer { dock: bottom; height: 3; min-height: 3; }
+#variant-generate { width: 1fr; height: 3; }
+#variant-close { width: 16; height: 3; }
+#graph-review-text { height: 1fr; }
+#analyze-evidence { width: 16; min-width: 16; }
+#graph-variants { width: 23; min-width: 23; }
+
+/* Catalog search and state filters share one row at the minimum terminal size. */
+#capability-filters { height: 3; }
+#capability-filters #capability-search { width: 1fr; }
+#capability-state { width: 22; }
+TopNavigation.compact #navigation-context { display: none; }
+CatalogDetailScreen { align: center middle; background: rgba(0, 0, 0, 0.65); }
+#catalog-detail-dialog { width: 100%; height: 100%; border: round $accent; padding: 0 1; }
+#catalog-detail-title { height: 1; color: $accent; text-style: bold; }
+#catalog-detail-text { height: 1fr; }
+#close-catalog-detail { height: 3; width: 100%; }

@@ -50,5 +50,5 @@ class ServiceStatusIndicator(Static):
         self.add_class(self.status.state.value)
         label = SERVICE_LABELS[self.service]
         state = STATE_LABELS[self.status.state]
-        self.update(f"● {label}\n{state}")
+        self.update(f"● {label}: {state}")
         self.tooltip = self.status.detail

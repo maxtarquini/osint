@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections import Counter
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -21,6 +22,8 @@ from raven.exceptions import (
 from raven.graph.vocabulary import NamedEntityVocabularyCatalog
 from raven.models import EvidenceIngestionState, RagIndexProgress
 from raven.models.catalog import CatalogPage, DocumentCatalog, catalog_overview
+
+logger = logging.getLogger(__name__)
 
 
 def catalog_source_units(document, pages: tuple[str, ...]) -> tuple[str, ...]:
@@ -124,16 +127,27 @@ class PageCatalogService:
     def _report(progress, document, catalog, detail: str = "") -> None:
         if progress is None:
             return
-        progress(
-            RagIndexProgress(
-                document.document_id,
-                document.original_name,
-                EvidenceIngestionState.PROCESSING,
-                catalog.completed,
-                catalog.total,
-                detail,
+        try:
+            progress(
+                RagIndexProgress(
+                    document.document_id,
+                    document.original_name,
+                    EvidenceIngestionState.PROCESSING,
+                    catalog.completed,
+                    catalog.total,
+                    detail,
+                )
             )
-        )
+        except Exception as error:
+            # Progress callbacks are observers. Persistence and model work must
+            # continue even if a screen is being mounted, replaced, or closed.
+            logger.warning(
+                "Page catalog progress observer failed. document_id=%s error_type=%s error=%s",
+                document.document_id,
+                type(error).__name__,
+                error,
+                exc_info=True,
+            )
 
     def _catalog_document(
         self,

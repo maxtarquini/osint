@@ -1,0 +1,143 @@
+/* Textual scopes variables to each stylesheet; keep this palette local. */
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+HelpScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+#help-dialog {
+    width: 42;
+    height: auto;
+    padding: 1 2;
+    border: round $accent;
+    background: $surface;
+}
+
+#help-title {
+    width: 100%;
+    margin-bottom: 1;
+    color: $accent;
+    text-align: center;
+    text-style: bold;
+}
+
+#close-help {
+    width: 100%;
+    margin-top: 1;
+}
+
+#investigation-title {
+    width: 100%;
+    height: 4;
+    padding: 0 2;
+    content-align: left middle;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+    color: $accent;
+    text-style: bold;
+}
+
+#investigation-hint,
+#evidence-formats {
+    width: 100%;
+    height: 2;
+    content-align: center middle;
+    background: $surface-raised;
+    color: $muted;
+    text-align: center;
+}
+
+#investigation-form {
+    width: 100%;
+    height: 1fr;
+    margin: 1 2 0 2;
+    padding: 1 2 2 2;
+    background: $surface;
+    border: round $accent-dark;
+}
+
+#investigation-form Label {
+    margin-top: 1;
+    color: $muted;
+}
+
+#investigation-form Input,
+#investigation-form Select,
+#investigation-form TextArea {
+    width: 100%;
+}
+
+#investigation-form .short-editor {
+    height: 4;
+    border: round $muted;
+}
+
+#investigation-form .questions-editor {
+    height: 12;
+    min-height: 12;
+    border: round $muted;
+}
+
+InvestigationCreateScreen.compact-investigation-form #investigation-form .questions-editor {
+    height: 7;
+    min-height: 7;
+}
+
+#investigation-domain-description {
+    width: 100%;
+    height: auto;
+    color: $muted;
+    padding: 0 1;
+}
+
+#investigation-actions {
+    width: 100%;
+    height: 5;
+    padding: 1 0;
+    background: $surface;
+    border-top: solid $accent-dark;
+}
+
+#investigation-actions Horizontal {
+    width: 64;
+    height: 3;
+}
+
+#investigation-create-status {
+    width: 32;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#investigation-create-status.running {
+    color: $warning;
+}
+
+#investigation-create-status.error {
+    color: $error;
+}
+
+#investigation-create-status.cancelled {
+    color: $warning;
+}
+
+#create-investigation,
+#cancel-investigation {
+    width: 16;
+}
+
+.hidden {
+    display: none;
+}
+
+

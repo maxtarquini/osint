@@ -1,0 +1,774 @@
+/* Textual scopes variables to each stylesheet; keep this palette local. */
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+#graph-toolbar {
+    width: 100%;
+    height: 4;
+    padding: 0 1;
+    background: $surface-raised;
+    border-bottom: solid $accent-dark;
+}
+
+.field-label {
+    width: 100%;
+    height: 1;
+    color: $muted;
+    text-style: bold;
+}
+
+#graph-extraction-basis {
+    width: 1fr;
+    min-width: 0;
+    height: 3;
+    padding: 0 1 0 0;
+    content-align: left middle;
+    color: $muted;
+}
+
+#graph-actions {
+    width: auto;
+    height: 3;
+    padding: 0;
+}
+
+#analyze-evidence {
+    width: 19;
+}
+
+#cancel-graph-analysis {
+    width: 12;
+    min-width: 12;
+}
+
+#graph-analysis-status {
+    width: 100%;
+    height: 2;
+    padding-left: 2;
+    content-align: left middle;
+    color: $muted;
+}
+
+#graph-analysis-status.running,
+#graph-analysis-status.cancelled,
+#graph-analysis-status.warning {
+    color: $warning;
+}
+
+#graph-analysis-status.success {
+    color: $accent;
+}
+
+#graph-analysis-status.error {
+    color: $error;
+}
+
+#graph-build-panel {
+    width: 100%;
+    height: 7;
+    padding: 1 2;
+    background: $surface-raised;
+    border-left: thick $accent;
+}
+
+#graph-build-activity {
+    width: 60;
+    height: auto;
+    color: $accent;
+    background: $surface-raised;
+}
+
+#graph-build-copy {
+    width: 1fr;
+    height: 5;
+    padding: 0 1;
+}
+
+#graph-build-title {
+    height: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+#graph-build-stage {
+    height: 2;
+    content-align: left middle;
+    color: $ink;
+}
+
+#graph-build-hint {
+    height: 2;
+    color: $muted;
+}
+
+InvestigationWorkspaceScreen.compact-graph-activity #graph-build-panel {
+    height: 1;
+    padding: 0 1;
+}
+
+InvestigationWorkspaceScreen.compact-graph-activity #graph-build-activity {
+    width: 1fr;
+    height: 1;
+}
+
+InvestigationWorkspaceScreen.compact-graph-activity #graph-build-copy {
+    display: none;
+}
+
+#graph-statistics {
+    width: 1fr;
+    height: 1;
+    color: $muted;
+    text-align: right;
+}
+
+#graph-body {
+    width: 100%;
+    height: 1fr;
+    padding: 1;
+}
+
+#graph-visual-panel {
+    width: 1fr;
+    height: 100%;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#graph-panel-header {
+    width: 100%;
+    height: 6;
+    border-bottom: solid $accent-dark;
+}
+
+#graph-panel-title-row {
+    width: 100%;
+    height: 3;
+    padding: 0 2;
+    content-align: left middle;
+}
+
+#graph-panel-title-row Static {
+    height: 2;
+}
+
+#graph-view-controls {
+    width: 100%;
+    height: 3;
+    padding-left: 1;
+    background: $surface;
+}
+
+#graph-navigation-hint {
+    width: 1fr;
+    height: 3;
+    color: $muted;
+    content-align: left middle;
+}
+
+#graph-zoom-label {
+    width: 6;
+    height: 3;
+    color: $accent;
+    text-style: bold;
+    content-align: center middle;
+}
+
+.graph-view-button {
+    width: 5;
+    min-width: 5;
+    height: 3;
+}
+
+#open-graph-claims {
+    width: 29;
+    min-width: 29;
+    height: 3;
+    padding: 0;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #graph-zoom-label {
+    width: 4;
+}
+
+GraphClaimsScreen {
+    align: center middle;
+    background: $background 70%;
+}
+
+#graph-claims-dialog {
+    width: 96%;
+    height: 96%;
+    border: round $accent;
+    padding: 0 1;
+    background: $surface;
+}
+
+#graph-claims-title {
+    height: 1;
+    text-style: bold;
+    color: $accent;
+}
+
+#graph-claims-summary {
+    height: 2;
+    color: $muted;
+}
+
+#graph-claims-tabs {
+    height: 1fr;
+}
+
+#graph-claims-tabs ContentSwitcher,
+#graph-claims-tabs TabPane {
+    height: 1fr;
+    padding: 0;
+}
+
+#graph-claims-tabs Tab {
+    width: 1fr;
+}
+
+#graph-claims-search,
+#graph-coverage-search {
+    height: 3;
+    margin: 0;
+}
+
+.claims-reader-body {
+    width: 100%;
+    height: 1fr;
+}
+
+#graph-claims-table,
+#graph-coverage-table {
+    width: 45%;
+    height: 100%;
+}
+
+#graph-claim-detail,
+#graph-coverage-detail {
+    width: 1fr;
+    height: 100%;
+    margin-left: 1;
+}
+
+#graph-claims-actions {
+    height: 3;
+    align-horizontal: right;
+}
+
+#claim-open-catalog {
+    width: 23;
+}
+
+#close-graph-claims {
+    width: 12;
+    min-width: 12;
+}
+
+GraphClaimsScreen.narrow-claims-reader .claims-reader-body {
+    layout: vertical;
+}
+
+GraphClaimsScreen.narrow-claims-reader #graph-claims-table,
+GraphClaimsScreen.narrow-claims-reader #graph-coverage-table {
+    width: 100%;
+    height: 5;
+}
+
+GraphClaimsScreen.narrow-claims-reader #graph-claim-detail,
+GraphClaimsScreen.narrow-claims-reader #graph-coverage-detail {
+    width: 100%;
+    height: 1fr;
+    min-height: 3;
+    margin-left: 0;
+}
+
+#graph-canvas {
+    width: 100%;
+    height: 1fr;
+    min-height: 4;
+    padding: 0;
+    scrollbar-size: 1 1;
+}
+
+#graph-canvas:focus {
+    outline: tall $accent;
+}
+
+#graph-details-panel {
+    width: 30%;
+    height: 100%;
+    padding: 1 2;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#graph-entity-search {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+}
+
+#graph-selection-detail {
+    color: $ink;
+}
+
+.graph-detail-block {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    padding-bottom: 1;
+    border-bottom: solid $accent-dark;
+    color: $muted;
+}
+
+#graph-provenance-hint {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    color: $muted;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #workspace-summary {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #evidence-section-header {
+    height: 6;
+    padding: 0 1;
+    border: none;
+    border-bottom: solid $accent-dark;
+}
+
+InvestigationWorkspaceScreen.compact-workspace .panel-title {
+    height: 1;
+    padding: 0;
+    border-left: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #overview-case-actions-hint {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #workspace-heading,
+InvestigationWorkspaceScreen.compact-workspace #workspace-metrics,
+InvestigationWorkspaceScreen.compact-workspace .workspace-metric {
+    height: 2;
+}
+
+InvestigationWorkspaceScreen.compact-workspace .section-kicker,
+InvestigationWorkspaceScreen.compact-workspace .field-label {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-panel-header {
+    height: 4;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-panel-title-row {
+    height: 1;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-view-controls {
+    height: 3;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-navigation-hint {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-body {
+    padding: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #graph-details-panel > .panel-title,
+InvestigationWorkspaceScreen.compact-workspace #graph-language-detail,
+InvestigationWorkspaceScreen.compact-workspace #graph-domain-detail,
+InvestigationWorkspaceScreen.compact-workspace #graph-evidence-detail,
+InvestigationWorkspaceScreen.compact-workspace #graph-breakdown,
+InvestigationWorkspaceScreen.compact-workspace #graph-provenance-hint {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #graph-details-panel {
+    padding: 1;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #graph-navigation-hint {
+    display: none;
+}
+
+#chat-toolbar {
+    width: 100%;
+    height: 6;
+    padding: 1 2;
+    background: $surface-raised;
+    border: round $accent-dark;
+}
+
+#chat-heading {
+    width: 1fr;
+}
+
+#chat-token-usage {
+    width: 20;
+    height: 4;
+    padding-right: 1;
+    content-align: right middle;
+    color: $muted;
+    text-align: right;
+}
+
+#index-chat-kb,
+#clear-chat {
+    width: 13;
+    margin-top: 1;
+}
+
+#chat-operation-status {
+    width: 100%;
+    height: 2;
+    padding-left: 2;
+    content-align: left middle;
+    color: $muted;
+}
+
+#chat-operation-status.running,
+#chat-operation-status.warning,
+#chat-operation-status.cancelled {
+    color: $warning;
+}
+
+#chat-operation-status.success,
+#chat-operation-status.ready {
+    color: $accent;
+}
+
+#chat-operation-status.error {
+    color: $error;
+}
+
+#chat-body {
+    width: 100%;
+    height: 1fr;
+    padding: 1;
+}
+
+#chat-conversation {
+    width: 1fr;
+    height: 100%;
+    padding: 1 2;
+    border: round $accent-dark;
+    background: $background;
+}
+
+#chat-empty {
+    width: 100%;
+    height: auto;
+    min-height: 5;
+    padding: 2;
+    content-align: center middle;
+    color: $muted;
+    text-align: center;
+}
+
+#chat-context-panel {
+    width: 29;
+    height: 100%;
+    margin-left: 1;
+    padding: 1 2 2 2;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#chat-context-summary,
+.chat-context-note {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    color: $muted;
+}
+
+.chat-context-note {
+    padding-top: 1;
+    border-top: solid $accent-dark;
+}
+
+#chat-composer {
+    width: 100%;
+    height: 8;
+    padding: 1 2 0 2;
+    background: $surface-raised;
+    border-top: solid $accent-dark;
+}
+
+#chat-input {
+    width: 100%;
+    height: 4;
+    border: round $muted;
+}
+
+#chat-input:focus {
+    border: round $accent;
+}
+
+#chat-composer-actions {
+    width: 100%;
+    height: 3;
+}
+
+#chat-composer-hint {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#send-chat,
+#cancel-chat {
+    width: 12;
+}
+
+.chat-message {
+    width: 100%;
+    height: auto;
+    margin: 1 0;
+    padding: 0 1 1 1;
+    border-left: heavy $accent-dark;
+    background: $surface;
+}
+
+.chat-message.user {
+    margin-left: 8;
+    width: 1fr;
+    border-left: heavy #357ebd;
+    background: #0d1b29;
+}
+
+.chat-message.assistant {
+    margin-right: 4;
+}
+
+.chat-message.local-command {
+    border-left: heavy $accent;
+    background: $surface-raised;
+}
+
+.chat-message.streaming {
+    border-left: heavy $warning;
+}
+
+.chat-message.error {
+    border-left: heavy $error;
+}
+
+.chat-message-header {
+    width: 100%;
+    height: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+.chat-message.user .chat-message-header {
+    color: #66b3ff;
+}
+
+.chat-markdown {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    background: transparent;
+}
+
+.chat-message-sources {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    padding-top: 1;
+    border-top: solid $accent-dark;
+    color: $muted;
+}
+
+.chat-message-usage {
+    width: 100%;
+    height: 1;
+    margin-top: 1;
+    color: $muted;
+    text-align: right;
+}
+
+.mermaid-rendered MarkdownFence {
+    margin: 0;
+    padding: 0 1;
+    border: round $accent-dark;
+    background: $background;
+    color: $accent;
+}
+
+InvestigationWorkspaceScreen.narrow-workspace #chat-context-panel {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-toolbar {
+    height: 4;
+    padding: 0 1;
+    border: none;
+    border-bottom: solid $accent-dark;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-token-usage {
+    height: 4;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-heading {
+    height: 4;
+    padding-top: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #index-chat-kb,
+InvestigationWorkspaceScreen.compact-workspace #clear-chat {
+    height: 4;
+    margin-top: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-heading .section-description {
+    display: none;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-body {
+    padding: 0;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-composer {
+    height: 5;
+    padding: 0 1;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-input {
+    height: 3;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-composer-actions {
+    height: 2;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-composer-hint {
+    display: none;
+}
+
+ConfirmClearChat {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+#clear-chat-dialog {
+    width: 62;
+    height: 15;
+    padding: 1 2;
+    border: round $error;
+    background: $surface;
+}
+
+#clear-chat-title {
+    width: 100%;
+    height: 1;
+    color: $error;
+    text-align: center;
+    text-style: bold;
+}
+
+#clear-chat-investigation {
+    width: 100%;
+    height: 2;
+    color: $ink;
+    content-align: center middle;
+    text-align: center;
+    text-style: bold;
+}
+
+#clear-chat-warning {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    text-align: center;
+    color: $muted;
+}
+
+#clear-chat-actions {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+}
+
+#confirm-clear-chat,
+#cancel-clear-chat {
+    width: 17;
+}
+
+ConfirmInvestigationDelete {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+#delete-investigation-dialog {
+    width: 68;
+    max-width: 96%;
+    height: 16;
+    padding: 1 2;
+    background: $surface;
+    border: round $error;
+}
+
+#delete-investigation-title {
+    width: 100%;
+    height: 2;
+    color: $error;
+    text-align: center;
+    text-style: bold;
+}
+
+#delete-investigation-name {
+    width: 100%;
+    height: 2;
+    color: $ink;
+    text-align: center;
+    text-style: bold;
+}
+
+#delete-investigation-warning {
+    width: 100%;
+    height: 4;
+    color: $muted;
+    text-align: center;
+}
+
+#delete-investigation-actions {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+}
+
+#delete-investigation-actions Horizontal {
+    width: 42;
+    height: 3;
+}
+
+#confirm-delete-investigation {
+    width: 24;
+}
+
+#cancel-delete-investigation {
+    width: 18;
+}
+
+
+

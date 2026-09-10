@@ -108,6 +108,27 @@ def test_catalog_document_generates_persistent_page_cards():
     assert ai.calls == 2
 
 
+def test_catalog_generation_ignores_progress_observer_failures():
+    repository = CatalogRepository()
+    service = PageCatalogService(
+        repository,
+        CatalogKnowledgeBase(),
+        CatalogAi(),
+        _project_dictionaries(),
+    )
+    case = _investigation()
+    document = _document(case.investigation_id)
+
+    def broken_progress(_progress):
+        raise RuntimeError("screen changed during progress update")
+
+    generated = service.catalog_document(case, document, progress=broken_progress)
+
+    assert generated.state == "ready"
+    assert generated.completed == generated.total == 1
+    assert repository.load_catalog(case.investigation_id, document.document_id) is not None
+
+
 def test_catalog_document_rejects_foreign_evidence():
     service = PageCatalogService(
         CatalogRepository(), CatalogKnowledgeBase(), CatalogAi(), _project_dictionaries()

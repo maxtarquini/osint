@@ -16,7 +16,11 @@ from raven.tui.widgets.claim_details import PAGE_STATE_LABELS, ClaimDetails
 
 
 class GraphClaimsScreen(ModalScreen[None]):
-    BINDINGS = [Binding("escape", "close", "Chiudi"), Binding("/", "search", "Cerca")]
+    BINDINGS = [
+        Binding("escape", "close", "Chiudi"),
+        Binding("/", "search", "Cerca"),
+        Binding("question_mark", "app.context_help", "Help"),
+    ]
 
     def __init__(
         self,

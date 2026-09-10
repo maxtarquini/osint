@@ -26,6 +26,7 @@ from textual.widgets import (
 from raven.exceptions.capabilities import CapabilityCancelled, CapabilityError
 from raven.services.capability_tools import TOOLS
 from raven.services.catalog_presentation import skill_available, tool_details
+from raven.tui.copy import copy
 from raven.tui.widgets import TopNavigation
 from raven.tui.widgets.resizable_split import CatalogSplit, PaneDivider
 
@@ -166,6 +167,7 @@ class CapabilitiesScreen(Screen[None]):
         Binding("/", "search", "Search"),
         Binding("r", "refresh_registry", "Refresh"),
         Binding("f3", "open_details", "Scheda"),
+        Binding("question_mark", "app.context_help", "Help"),
     ]
 
     def __init__(self, registry):
@@ -182,7 +184,7 @@ class CapabilitiesScreen(Screen[None]):
         self.related_skill = None
 
     def tr(self, en, it):
-        return it
+        return copy.choose(en, it)
 
     def compose(self) -> ComposeResult:
         yield TopNavigation(active="capabilities")

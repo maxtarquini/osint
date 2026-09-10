@@ -79,6 +79,24 @@ async def test_keyboard_resize_reset_and_compact_limits(tmp_path, size):
         assert app.focused is not divider
 
 
+async def test_details_panel_can_be_collapsed_for_graph_first_inspection(tmp_path):
+    app, case, _ = _app_with_previous_graph(tmp_path)
+    async with app.run_test(size=(80, 24)) as pilot:
+        split, _ = await open_graph(app, pilot, case)
+        details = app.screen.query_one("#graph-details-panel")
+
+        await pilot.click("#toggle-graph-details")
+        await pilot.pause()
+        assert split.has_class("details-collapsed")
+        assert not details.display
+        assert app.screen.query_one("#graph-visual-panel").region.width == split.region.width
+
+        await pilot.click("#toggle-graph-details")
+        await pilot.pause()
+        assert not split.has_class("details-collapsed")
+        assert details.display
+
+
 async def test_split_preserves_preference_across_tabs_and_terminal_resize_releases_capture(
     tmp_path,
 ):

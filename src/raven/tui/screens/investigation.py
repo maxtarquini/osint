@@ -35,6 +35,7 @@ class InvestigationCreateScreen(Screen[None]):
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
         Binding("ctrl+s", "create", "Create"),
+        Binding("question_mark", "app.context_help", "Help"),
     ]
 
     def __init__(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Button, Static
@@ -12,6 +13,12 @@ from raven.models import Investigation
 
 class InvestigationRow(Horizontal):
     """Catalog row with explicit open and destructive delete actions."""
+
+    can_focus = True
+    BINDINGS = [
+        Binding("enter", "open", "Open", show=False),
+        Binding("d", "delete", "Delete", show=False),
+    ]
 
     class OpenRequested(Message):
         def __init__(self, investigation: Investigation) -> None:
@@ -56,3 +63,9 @@ class InvestigationRow(Horizontal):
         elif event.button.has_class("delete-investigation-catalog"):
             event.stop()
             self.post_message(self.DeleteRequested(self.investigation))
+
+    def action_open(self) -> None:
+        self.post_message(self.OpenRequested(self.investigation))
+
+    def action_delete(self) -> None:
+        self.post_message(self.DeleteRequested(self.investigation))

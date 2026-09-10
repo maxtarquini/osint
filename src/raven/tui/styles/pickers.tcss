@@ -1,0 +1,308 @@
+/* Textual scopes variables to each stylesheet; keep this palette local. */
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+EvidenceFilePicker,
+EvidenceStorageDirectoryPicker,
+MarkdownExportPicker,
+NewDirectoryDialog,
+ConfirmEvidenceDelete {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.path-picker-dialog {
+    width: 96%;
+    min-width: 52;
+    max-width: 120;
+    height: 94%;
+    min-height: 22;
+    padding: 1 2;
+    border: round $accent;
+    background: $surface;
+}
+
+.path-picker-header {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    background: $surface-raised;
+}
+
+.path-picker-title,
+#delete-evidence-title {
+    width: 1fr;
+    height: 2;
+    content-align: left middle;
+    color: $accent;
+    text-style: bold;
+}
+
+#delete-evidence-title {
+    width: 100%;
+    text-align: center;
+}
+
+.path-picker-help {
+    width: auto;
+    height: 2;
+    content-align: right middle;
+    color: $muted;
+    text-align: right;
+}
+
+.path-picker-locations {
+    width: 100%;
+    height: 4;
+    padding-top: 1;
+}
+
+.path-picker-locations Button {
+    width: 9;
+    min-width: 8;
+}
+
+#storage-picker-add-folder,
+#export-picker-add-folder {
+    width: 12;
+    min-width: 11;
+}
+
+.path-picker-root {
+    width: 1fr;
+    height: 3;
+    padding-left: 1;
+    content-align: left middle;
+    color: $muted;
+}
+
+#evidence-directory-tree,
+#storage-directory-tree,
+#markdown-export-directory-tree {
+    width: 100%;
+    height: 1fr;
+    border: round $muted;
+    background: $background;
+}
+
+.path-picker-selection {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    background: $surface-raised;
+}
+
+.path-picker-selection-label {
+    width: 10;
+    height: 2;
+    content-align: left middle;
+    color: $accent;
+    text-style: bold;
+}
+
+.path-picker-selection-value {
+    width: 1fr;
+    height: 2;
+    content-align: left middle;
+    color: $ink;
+}
+
+#selected-evidence-format {
+    width: 10;
+    height: 2;
+    content-align: right middle;
+    color: $muted;
+}
+
+.path-picker-actions {
+    width: 100%;
+    height: 4;
+    padding-top: 1;
+}
+
+.path-picker-formats {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#confirm-evidence-file,
+#confirm-storage-directory {
+    width: 13;
+    min-width: 12;
+}
+
+#confirm-markdown-export {
+    width: 18;
+    min-width: 18;
+}
+
+#cancel-evidence-file,
+#cancel-storage-directory,
+#cancel-markdown-export {
+    width: 10;
+    min-width: 9;
+}
+
+.markdown-export-name-row {
+    width: 100%;
+    height: 4;
+    padding-top: 1;
+}
+
+.markdown-export-name-label {
+    width: 12;
+    height: 3;
+    color: $accent;
+    content-align: left middle;
+    text-style: bold;
+}
+
+#markdown-export-name {
+    width: 1fr;
+}
+
+#markdown-export-error {
+    width: 100%;
+    height: 1;
+    color: $error;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-dialog,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-dialog,
+MarkdownExportPicker.compact-path-picker .path-picker-dialog {
+    padding: 0 1;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-header,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-header,
+MarkdownExportPicker.compact-path-picker .path-picker-header,
+EvidenceFilePicker.compact-path-picker .path-picker-title,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-title,
+MarkdownExportPicker.compact-path-picker .path-picker-title,
+EvidenceFilePicker.compact-path-picker .path-picker-help,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-help,
+MarkdownExportPicker.compact-path-picker .path-picker-help {
+    height: 1;
+    padding: 0;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-locations,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-locations,
+MarkdownExportPicker.compact-path-picker .path-picker-locations {
+    height: 3;
+    padding-top: 0;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-selection,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-selection,
+MarkdownExportPicker.compact-path-picker .path-picker-selection,
+EvidenceFilePicker.compact-path-picker .path-picker-selection-label,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-selection-label,
+MarkdownExportPicker.compact-path-picker .path-picker-selection-label,
+EvidenceFilePicker.compact-path-picker .path-picker-selection-value,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-selection-value,
+MarkdownExportPicker.compact-path-picker .path-picker-selection-value,
+EvidenceFilePicker.compact-path-picker #selected-evidence-format {
+    height: 1;
+}
+
+EvidenceFilePicker.compact-path-picker .path-picker-actions,
+EvidenceStorageDirectoryPicker.compact-path-picker .path-picker-actions,
+MarkdownExportPicker.compact-path-picker .path-picker-actions {
+    height: 3;
+    padding-top: 0;
+}
+
+MarkdownExportPicker.compact-path-picker .markdown-export-name-row {
+    height: 3;
+    padding-top: 0;
+}
+
+#new-directory-dialog {
+    width: 90%;
+    min-width: 42;
+    max-width: 52;
+    height: 13;
+    padding: 1 2;
+    border: round $accent;
+    background: $surface;
+}
+
+#new-directory-title {
+    width: 100%;
+    height: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+#new-directory-parent {
+    width: 100%;
+    height: 1;
+    color: $muted;
+}
+
+#new-directory-name {
+    width: 100%;
+    margin-top: 1;
+}
+
+#new-directory-error {
+    width: 100%;
+    height: 1;
+    color: $error;
+}
+
+#new-directory-actions {
+    width: 100%;
+    height: 3;
+    align-horizontal: right;
+}
+
+#confirm-new-directory,
+#cancel-new-directory {
+    width: 11;
+    min-width: 10;
+}
+
+#delete-evidence-dialog {
+    width: 60;
+    height: auto;
+    padding: 1 2;
+    border: round $error;
+    background: $surface;
+}
+
+#delete-evidence-name,
+#delete-evidence-warning {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    text-align: center;
+}
+
+#delete-evidence-warning {
+    color: $muted;
+}
+
+#delete-evidence-actions {
+    width: 100%;
+    height: 3;
+    margin-top: 1;
+    align: center middle;
+}
+
+#confirm-delete-evidence,
+#cancel-delete-evidence {
+    width: 16;
+}
+
+

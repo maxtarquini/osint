@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal
+from textual.events import Resize
 from textual.message import Message
 from textual.widgets import Button, Static
+
+from raven.tui.copy import copy
 
 
 class TopNavigation(Horizontal):
@@ -25,10 +28,10 @@ class TopNavigation(Horizontal):
     def compose(self) -> ComposeResult:
         yield Static("RAVEN", id="navigation-brand")
         for target, label in (
-            ("home", "Home"),
-            ("investigations", "Investigations"),
-            ("configuration", "Configuration"),
-            ("capabilities", "Cataloghi"),
+            ("home", copy.text("nav.home")),
+            ("investigations", copy.text("nav.investigations")),
+            ("configuration", copy.text("nav.configuration")),
+            ("capabilities", copy.text("nav.capabilities")),
         ):
             button = Button(label, id=f"nav-{target}", classes="navigation-item")
             if target == self.active:
@@ -36,8 +39,18 @@ class TopNavigation(Horizontal):
             yield button
         yield Static("GRAPH INTELLIGENCE", id="navigation-context")
 
-    def on_resize(self, event):
-        self.set_class(event.size.width < 100, "compact")
+    def on_resize(self, event: Resize) -> None:
+        compact = event.size.width < 100
+        self.set_class(compact, "compact")
+        self.query_one("#nav-investigations", Button).label = (
+            copy.text("nav.investigations.short") if compact else copy.text("nav.investigations")
+        )
+        self.query_one("#nav-configuration", Button).label = (
+            copy.text("nav.configuration.short") if compact else copy.text("nav.configuration")
+        )
+        self.query_one("#nav-capabilities", Button).label = (
+            copy.text("nav.capabilities.short") if compact else copy.text("nav.capabilities")
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         target = event.button.id.removeprefix("nav-") if event.button.id else ""

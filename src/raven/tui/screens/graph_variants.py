@@ -15,6 +15,7 @@ class GraphVariantsScreen(ModalScreen):
     BINDINGS = [
         Binding("escape", "close", "Chiudi"),
         Binding("ctrl+g", "generate", "Crea variante"),
+        Binding("question_mark", "app.context_help", "Help"),
     ]
 
     def __init__(self, investigation, service, *, busy=False, model=""):
