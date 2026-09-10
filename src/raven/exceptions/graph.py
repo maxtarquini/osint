@@ -27,3 +27,12 @@ class GraphAgentRequestError(GraphAgentError):
     def __init__(self, message: str, code: str = "request_failed") -> None:
         super().__init__(message)
         self.code = code
+
+
+class CatalogValidationError(GraphAgentError):
+    """A page-catalog response violates its schema or lacks source support."""
+
+    def __init__(self, reason: str, *, rejected_fields: dict | None = None) -> None:
+        super().__init__(f"Catalog validation failed: {reason}")
+        self.code = "validation_failed"
+        self.rejected_fields = rejected_fields or {}

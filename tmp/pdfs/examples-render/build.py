@@ -2,7 +2,7 @@ import json,re,html
 from pathlib import Path
 from reportlab import rl_config
 rl_config.useA85=0
-from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,Image
+from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,Image,KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
@@ -17,7 +17,7 @@ for name in S.byName:S[name].fontName='Arial'
 S.add(ParagraphStyle(name='Body',fontName='Arial',fontSize=10.2,leading=14.8,spaceAfter=7,allowWidows=0,allowOrphans=0,textColor=colors.HexColor('#243749')))
 S.add(ParagraphStyle(name='Cell',parent=S['Body'],fontSize=8.2,leading=11,spaceAfter=1,splitLongWords=True))
 S.add(ParagraphStyle(name='Quote',parent=S['Body'],fontSize=9.5,leading=13.7,leftIndent=12,rightIndent=10,borderPadding=9,borderColor=colors.HexColor('#bed0de'),borderWidth=.6,backColor=colors.HexColor('#f1f5f8'),spaceBefore=6,spaceAfter=10))
-S.add(ParagraphStyle(name='CodeWrap',parent=S['Body'],fontName='Mono',fontSize=7.7,leading=11,backColor=colors.HexColor('#f1f5f8'),borderPadding=8))
+S.add(ParagraphStyle(name='CodeWrap',parent=S['Body'],fontName='Mono',fontSize=8.2,leading=11.5,backColor=colors.HexColor('#f1f5f8'),borderPadding=8))
 for name,size,lead in [('Title',25,30),('Heading1',18,23),('Heading2',14,18),('Heading3',11.6,15)]:
  S[name].keepWithNext=True;S[name].fontName='Arial-Bold';S[name].fontSize=size;S[name].leading=lead;S[name].textColor=colors.HexColor('#123e5a');S[name].spaceBefore=15;S[name].spaceAfter=9
 W=481;anchors=set()
@@ -82,9 +82,20 @@ def build(tokens):
     result.append(Paragraph(html.escape(code).replace(' ','&#160;').replace('\n','<br/>'),S['CodeWrap']))
   elif ty=='hr':result.append(Spacer(1,12))
   else:raise ValueError('Unhandled '+ty)
- for i,item in enumerate(result[:-1]):
-  if isinstance(item,Paragraph) and item.style.name=='Quote' and isinstance(result[i+1],Paragraph) and result[i+1].style.name=='CodeWrap':item.keepWithNext=True
- return result
+ grouped=[];i=0
+ while i<len(result):
+  item=result[i]
+  if isinstance(item,Paragraph) and item.style.name=='Quote':
+   group=[item];i+=1
+   if i<len(result) and isinstance(result[i],Paragraph) and result[i].style.name=='CodeWrap':
+    group.append(result[i]);i+=1
+    if i<len(result) and isinstance(result[i],Paragraph) and result[i].style.name=='Quote':group.append(result[i]);i+=1
+   if i<len(result) and isinstance(result[i],Table):group.append(result[i]);i+=1
+   grouped.append(KeepTogether(group))
+  elif isinstance(item,Table):grouped.append(KeepTogether([item]));i+=1
+  elif isinstance(item,Image) and i+2<len(result) and isinstance(result[i+1],Spacer) and isinstance(result[i+2],Paragraph) and result[i+2].getPlainText().startswith('Figura '):grouped.append(KeepTogether(result[i:i+3]));i+=3
+  else:grouped.append(item);i+=1
+ return grouped
 story=build(json.loads((D/'tokens.json').read_text()))
 def page(c,doc):
  c.saveState();c.setStrokeColor(colors.HexColor('#cad6de'));c.setLineWidth(.5);c.line(57,802,538,802);c.setFont('Arial',8);c.setFillColor(colors.HexColor('#647b8b'));c.drawString(57,811,'RAVEN  /  ESTRAZIONE DEL GRAFO');c.drawRightString(538,811,'Manuale tecnico · 10 settembre 2026');c.drawString(57,31,'Algoritmi, agenti, prompt e workflow');c.drawRightString(538,31,str(doc.page));c.restoreState()

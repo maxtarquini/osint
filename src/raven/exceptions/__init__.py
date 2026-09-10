@@ -3,7 +3,9 @@
 from raven.exceptions.chat import InvestigationChatCancelledError, InvestigationChatError
 from raven.exceptions.configuration import ConfigurationError
 from raven.exceptions.graph import (
+    CatalogValidationError,
     GraphAgentError,
+    GraphAgentRequestError,
     GraphAnalysisCancelledError,
     GraphAnalysisError,
     GraphAnalysisValidationError,
@@ -22,8 +24,10 @@ from raven.exceptions.investigation import (
 )
 
 __all__ = [
+    "CatalogValidationError",
     "ConfigurationError",
     "GraphAgentError",
+    "GraphAgentRequestError",
     "GraphAnalysisCancelledError",
     "GraphAnalysisError",
     "GraphAnalysisValidationError",
