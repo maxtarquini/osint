@@ -1,0 +1,213 @@
+/* Component-level refinements layered over the legacy stylesheet during migration. */
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+Button.-primary {
+    background: $accent-dark;
+    color: $ink;
+    border: tall $accent;
+}
+
+Button.-primary:hover,
+Button.-primary:focus {
+    background: $accent;
+    color: $background;
+    border: tall $ink;
+}
+
+Button.-error {
+    background: #4a2024;
+    color: $ink;
+    border: tall $error;
+}
+
+Button:focus {
+    text-style: bold reverse;
+}
+
+#home-shell {
+    padding: 1 3;
+}
+
+#infrastructure-status {
+    height: 3;
+    margin: 1 0;
+}
+
+.service-status {
+    height: 3;
+    margin: 0 1;
+    padding: 0 1;
+    content-align: center middle;
+}
+
+#primary-action-row,
+#home-primary-actions {
+    height: 3;
+}
+
+#home-primary-actions {
+    width: auto;
+}
+
+#new-investigation,
+#open-investigations {
+    width: 28;
+    height: 3;
+    margin: 0 1;
+}
+
+#recent-investigations-panel {
+    width: 80%;
+    max-width: 110;
+    height: 9;
+    margin-top: 1;
+    padding: 1;
+    background: $surface;
+    border: round $accent-dark;
+}
+
+#recent-investigations {
+    width: 100%;
+    height: 1fr;
+}
+
+#recent-investigations-empty {
+    width: 100%;
+    height: 3;
+    content-align: center middle;
+    color: $muted;
+}
+
+.recent-investigation {
+    width: 100%;
+    height: 3;
+    border: none;
+    background: $surface;
+    color: $ink;
+    content-align: left middle;
+}
+
+.recent-investigation:hover,
+.recent-investigation:focus {
+    background: $accent-dark;
+    color: $accent;
+}
+
+HomeScreen.compact-home #brand-logo,
+HomeScreen.compact-home #tagline {
+    height: 0;
+}
+
+HomeScreen.compact-home #tagline {
+    display: none;
+}
+
+HomeScreen.compact-home #home-shell {
+    padding: 1;
+    align: center top;
+}
+
+HomeScreen.compact-home #recent-investigations-panel {
+    width: 100%;
+    height: 1fr;
+    margin-top: 1;
+}
+
+HomeScreen.compact-home #new-investigation,
+HomeScreen.compact-home #open-investigations {
+    width: 1fr;
+    min-width: 20;
+    margin: 0;
+}
+
+OverviewPanel,
+EvidencePanel,
+GraphPanel,
+ChatPanel,
+ConfigurationPanel,
+StoragePanel,
+DictionariesPanel,
+CapabilitiesPanel,
+MongoPanel,
+QdrantPanel,
+Neo4jPanel,
+AiPanel {
+    width: 100%;
+    height: 1fr;
+    min-height: 0;
+    padding: 0;
+}
+
+.graph-details-button {
+    width: 10;
+    min-width: 10;
+    height: 3;
+}
+
+#graph-body.details-collapsed #graph-pane-divider,
+#graph-body.details-collapsed #graph-details-panel {
+    display: none;
+}
+
+#graph-body.details-collapsed #graph-visual-panel {
+    width: 100%;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-toolbar {
+    height: 3;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-heading,
+InvestigationWorkspaceScreen.compact-workspace #chat-token-usage,
+InvestigationWorkspaceScreen.compact-workspace #index-chat-kb,
+InvestigationWorkspaceScreen.compact-workspace #clear-chat {
+    height: 3;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-composer {
+    height: 6;
+}
+
+InvestigationWorkspaceScreen.compact-workspace #chat-input {
+    height: 3;
+}
+
+InvestigationWorkspaceScreen.compact-evidence .evidence-row {
+    height: 6;
+    padding: 0 1;
+}
+
+InvestigationWorkspaceScreen.compact-evidence .evidence-row .evidence-name {
+    height: 1;
+}
+
+InvestigationWorkspaceScreen.compact-evidence .evidence-document-actions {
+    height: 3;
+}
+
+.investigation-row:focus,
+.evidence-row:focus {
+    border: tall $accent;
+    background: $surface-raised;
+}
+
+#help-context {
+    width: 100%;
+    height: 2;
+    color: $muted;
+    text-align: center;
+}
+
+#help-bindings {
+    width: 100%;
+    height: auto;
+    color: $ink;
+}

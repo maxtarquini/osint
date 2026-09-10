@@ -1,0 +1,354 @@
+/* Textual scopes variables to each stylesheet; keep this palette local. */
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+#workspace-summary {
+    width: 100%;
+    height: 6;
+    padding: 1 2;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+}
+
+#workspace-heading {
+    width: 1fr;
+    height: 4;
+    padding-left: 1;
+}
+
+.section-kicker {
+    width: 100%;
+    height: 1;
+    color: $muted;
+    text-style: bold;
+}
+
+#workspace-title {
+    width: 100%;
+    height: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+#workspace-identifier {
+    width: 100%;
+    height: 1;
+    color: $muted;
+}
+
+#workspace-metrics {
+    width: 39;
+    height: 4;
+}
+
+.workspace-metric {
+    width: 13;
+    height: 4;
+    padding: 0 1;
+    border-left: solid $accent-dark;
+    content-align: left middle;
+    color: $ink;
+}
+
+#workspace-tabs {
+    width: 100%;
+    height: 1fr;
+    margin: 1 2 0 2;
+}
+
+#workspace-overview {
+    padding: 1;
+}
+
+#overview-grid {
+    width: 100%;
+    height: 12;
+}
+
+#overview-case-actions {
+    width: 100%;
+    height: 5;
+    margin-top: 1;
+    padding: 1 2;
+    background: $surface-raised;
+    border-top: solid $accent-dark;
+}
+
+#overview-case-actions-hint {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+    color: $muted;
+}
+
+#edit-investigation {
+    width: 20;
+}
+
+#delete-investigation {
+    width: 22;
+}
+
+.overview-card {
+    height: auto;
+    min-height: 5;
+    padding: 1 2 2 2;
+    border: round $accent-dark;
+    background: $surface-raised;
+}
+
+#overview-brief-card {
+    width: 2fr;
+    height: 12;
+    margin-right: 1;
+}
+
+#overview-profile-card {
+    width: 1fr;
+    height: 12;
+}
+
+#overview-questions-card {
+    width: 100%;
+    margin-top: 1;
+}
+
+.panel-title {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    border-left: heavy $accent;
+    color: $accent;
+    content-align: left middle;
+    text-style: bold;
+}
+
+#workspace-description,
+#workspace-questions,
+#workspace-profile {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+}
+
+#workspace-profile {
+    color: $muted;
+}
+
+#evidence-section-header {
+    width: 100%;
+    height: 9;
+    padding: 1 2;
+    background: $surface-raised;
+    border: round $accent-dark;
+}
+
+.section-heading {
+    width: 1fr;
+    height: 5;
+    padding: 0;
+}
+
+.section-description {
+    width: 100%;
+    height: 2;
+    padding-left: 1;
+    content-align: left middle;
+    color: $muted;
+}
+
+#index-evidence-rag,
+#cancel-rag-index,
+#add-evidence,
+#cancel-evidence-upload {
+    width: 12;
+    margin: 1 0;
+}
+
+#index-evidence-rag,
+#cancel-rag-index {
+    width: 13;
+}
+
+#evidence-operation-line {
+    height: 2;
+}
+
+#rag-activity {
+    width: 11;
+    height: 2;
+    color: $accent;
+}
+
+#evidence-operation-status {
+    width: 1fr;
+    height: 2;
+    padding-left: 2;
+    content-align: left middle;
+    color: $muted;
+}
+
+#evidence-operation-status.running,
+#evidence-operation-status.cancelled,
+#evidence-operation-status.warning {
+    color: $warning;
+}
+
+#evidence-operation-status.success {
+    color: $accent;
+}
+
+#evidence-operation-status.error {
+    color: $error;
+}
+
+#evidence-count {
+    width: 12;
+    height: 5;
+    padding-right: 1;
+    content-align: right middle;
+    color: $muted;
+}
+
+#evidence-header {
+    width: 100%;
+    height: 2;
+    padding: 0 1;
+    background: $surface;
+    content-align: left middle;
+    color: $muted;
+    text-style: bold;
+}
+
+#evidence-list {
+    width: 100%;
+    height: 1fr;
+    margin: 0 1 1 1;
+    border: round $accent-dark;
+    background: $background;
+}
+
+#evidence-empty {
+    width: 100%;
+    height: 3;
+    content-align: center middle;
+    color: $muted;
+}
+
+.evidence-row {
+    width: 100%;
+    height: 5;
+    border-bottom: solid $accent-dark;
+}
+
+.evidence-row Static {
+    height: 4;
+    content-align: left middle;
+}
+
+.evidence-document-info {
+    width: 1fr;
+    height: 4;
+}
+
+.evidence-row .evidence-name {
+    width: 100%;
+    height: 2;
+    padding-left: 1;
+}
+
+.evidence-row .catalog-explanation {
+    width: 100%;
+    height: 2;
+    padding-left: 1;
+    color: $muted;
+}
+
+.evidence-row .catalog-explanation.failed {
+    color: $error;
+}
+
+.evidence-row .catalog-explanation.running,
+.evidence-row .catalog-explanation.review,
+.evidence-row .catalog-explanation.cancelled,
+.evidence-row .catalog-explanation.incomplete,
+.evidence-row .catalog-explanation.summary_pending,
+.evidence-row .catalog-explanation.stale,
+.evidence-row .catalog-explanation.unverified {
+    color: $warning;
+}
+
+.evidence-format {
+    width: 8;
+    padding-left: 1;
+}
+
+.evidence-pages {
+    width: 7;
+    padding-left: 1;
+}
+
+.evidence-statuses {
+    width: 42;
+    height: 4;
+}
+
+.evidence-state {
+    width: 16;
+    padding-left: 1;
+}
+
+.catalog-state {
+    width: 26;
+    padding-left: 1;
+}
+
+.evidence-state.outdated,
+.evidence-state.unverified,
+.evidence-state.pending,
+.evidence-state.processing {
+    color: $warning;
+}
+
+.evidence-state.ready {
+    color: $accent;
+}
+
+.evidence-state.failed {
+    color: $error;
+}
+
+.catalog-state.ready {
+    color: $accent;
+}
+
+.catalog-state.running,
+.catalog-state.review,
+.catalog-state.cancelled,
+.catalog-state.incomplete,
+.catalog-state.summary_pending,
+.catalog-state.stale,
+.catalog-state.unverified {
+    color: $warning;
+}
+
+.catalog-state.failed {
+    color: $error;
+}
+
+.catalog-state.checking,
+.catalog-state.missing {
+    color: $muted;
+}
+
+.evidence-action,
+.delete-evidence {
+    width: 9;
+}

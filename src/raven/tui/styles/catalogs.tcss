@@ -1,0 +1,140 @@
+/* Textual scopes variables to each stylesheet; keep this palette local. */
+$background: #071012;
+$surface: #0d1a1d;
+$ink: #d8ede7;
+$muted: #91aaa4;
+$accent: #42e8b4;
+$accent-dark: #215246;
+$surface-raised: #102326;
+$warning: #f4c95d;
+$error: #ff6b6b;
+
+#catalog-title {
+    width: 100%;
+    height: 4;
+    padding: 0 2;
+    content-align: left middle;
+    background: $surface;
+    border-bottom: solid $accent-dark;
+    color: $accent;
+    text-style: bold;
+}
+
+#catalog-toolbar {
+    width: 100%;
+    height: 5;
+    margin: 1 2 0 2;
+    padding: 0 1;
+    background: $surface-raised;
+    border: round $accent-dark;
+}
+
+#catalog-search {
+    width: 1fr;
+}
+
+#catalog-sort {
+    width: 16;
+}
+
+#refresh-investigations {
+    width: 12;
+    min-width: 12;
+}
+
+#new-investigation-catalog {
+    width: 20;
+}
+
+#catalog-load-status {
+    width: 100%;
+    height: 2;
+    margin: 0 2;
+    padding-left: 1;
+    content-align: left middle;
+    color: $muted;
+}
+
+#catalog-load-status.loading {
+    color: $warning;
+}
+
+#catalog-load-status.error {
+    color: $error;
+}
+
+#catalog-header {
+    width: 100%;
+    height: 2;
+    margin: 0 2;
+    padding: 0 1;
+    background: $surface;
+    content-align: left middle;
+    color: $muted;
+    text-style: bold;
+}
+
+#catalog-list {
+    width: 100%;
+    height: 1fr;
+    margin: 0 2 1 2;
+    border: round $accent-dark;
+    background: $background;
+}
+
+#catalog-empty {
+    width: 100%;
+    height: 3;
+    content-align: center middle;
+    color: $muted;
+}
+
+.investigation-row {
+    width: 100%;
+    height: 4;
+    border-bottom: solid $accent-dark;
+}
+
+.investigation-row Static {
+    height: 4;
+    content-align: left middle;
+}
+
+.catalog-name {
+    width: 1fr;
+    padding-left: 1;
+}
+
+.catalog-status {
+    width: 10;
+    padding-left: 1;
+}
+
+.catalog-updated {
+    width: 18;
+    padding-left: 1;
+}
+
+.catalog-evidence-count {
+    width: 10;
+    padding-left: 1;
+    text-align: center;
+}
+
+.catalog-action,
+.catalog-actions {
+    width: 20;
+}
+
+.catalog-actions {
+    height: 4;
+    align-vertical: middle;
+}
+
+.open-investigation,
+.delete-investigation-catalog {
+    width: 10;
+    min-width: 10;
+}
+
+

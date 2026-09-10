@@ -31,6 +31,7 @@ class InvestigationCatalogScreen(Screen[None]):
         Binding("n", "new_investigation", "New"),
         Binding("r", "refresh", "Refresh"),
         Binding("slash", "focus_search", "Search"),
+        Binding("question_mark", "app.context_help", "Help"),
     ]
 
     def __init__(self) -> None:

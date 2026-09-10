@@ -1,5 +1,6 @@
 """Single-document indexing preserves neighboring vectors and browses stored page catalogs."""
 
+import asyncio
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from threading import Event
@@ -27,6 +28,7 @@ from raven.models.catalog import CatalogPage, DocumentCatalog
 from raven.repositories.mongodb import MongoRepository
 from raven.services.chat import InvestigationChatService
 from raven.tui.screens.document_catalog import DocumentCatalogScreen
+from raven.tui.screens.investigation_workspace import InvestigationWorkspaceScreen
 from raven.tui.widgets.evidence import EvidenceRow
 
 
@@ -221,8 +223,9 @@ async def test_row_catalog_navigation_and_single_document_reindex(tmp_path, size
     app.settings = replace(app.settings, ai=replace(app.settings.ai, embedding_model="test"))
     calls = []
 
-    def load_catalog(investigation, document):
-        calls.append((investigation.investigation_id, document.document_id))
+    def load_catalog(investigation, document, *, with_pages=True):
+        if with_pages:
+            calls.append((investigation.investigation_id, document.document_id))
         return saved_catalog(investigation.investigation_id, document.document_id)
 
     app.load_evidence_catalog = load_catalog
@@ -364,6 +367,299 @@ async def test_missing_catalog_can_be_generated_from_reader(tmp_path):
         assert app.screen.query_one("#generate-saved-catalog", Button).label.plain == (
             "Rigenera catalogo"
         )
+        await pilot.click("#generate-saved-catalog")
+        await settle(app, pilot)
+        assert runner.calls == [
+            (document.document_id, False),
+            (document.document_id, True),
+        ]
+
+
+@pytest.mark.parametrize("size", [(80, 24), (150, 42)])
+async def test_evidence_row_exposes_and_starts_catalog_generation(tmp_path, size):
+    case = _investigation()
+    document = _document(case.investigation_id)
+    case = replace(case, evidence_documents=(document,))
+
+    class CatalogRunner:
+        def __init__(self):
+            self.catalog = None
+            self.calls = []
+
+        def load(self, investigation, selected, *, with_pages=True):
+            return self.catalog
+
+        def catalog_document(
+            self, investigation, selected, cancelled=None, progress=None, *, force=False
+        ):
+            self.calls.append((selected.document_id, force))
+            self.catalog = saved_catalog(investigation.investigation_id, selected.document_id)
+            return self.catalog
+
+    runner = CatalogRunner()
+    app = make_app(tmp_path, infrastructure=FakeInfrastructure(), page_catalog=runner)
+
+    async with app.run_test(size=size) as pilot:
+        app.open_investigation(case)
+        await settle(app, pilot)
+        button = app.screen.query_one(".generate-evidence-catalog", Button)
+        assert button.label.plain == "Genera"
+        assert 0 <= button.region.x < button.region.right <= size[0]
+        row = app.screen.query_one(EvidenceRow)
+        assert row.query_one(".catalog-state").render().plain == "Mai generato"
+        assert "seleziona Genera" in row.query_one(".catalog-explanation").render().plain
+        assert "1 mai generato" in app.screen.query_one("#evidence-operation-status").render().plain
+
+        button.focus()
+        await pilot.press("enter")
+        await settle(app, pilot)
+
+        assert isinstance(app.screen, DocumentCatalogScreen)
+        assert runner.calls == [(document.document_id, False)]
+        assert "Catalogo salvato" in app.screen.query_one("#saved-catalog-status").render().plain
+        await pilot.press("escape")
+        await pilot.pause()
+        row = app.screen.query_one(EvidenceRow)
+        assert row.query_one(".catalog-state").render().plain == "Completo · 2/2"
+        regenerate = row.query_one(".generate-evidence-catalog", Button)
+        assert regenerate.label.plain == "Rigenera"
+        regenerate.focus()
+        await pilot.press("enter")
+        await settle(app, pilot)
+        assert isinstance(app.screen, DocumentCatalogScreen)
+        assert runner.calls == [
+            (document.document_id, False),
+            (document.document_id, True),
+        ]
+
+
+async def test_catalog_states_explain_cause_and_next_action_in_the_evidence_list(tmp_path):
+    case = _investigation()
+    base = _document(case.investigation_id)
+    incomplete_document = replace(base, document_id="incomplete", original_name="incomplete.pdf")
+    summary_document = replace(base, document_id="summary", original_name="summary.pdf")
+    cancelled_document = replace(base, document_id="cancelled", original_name="cancelled.pdf")
+    unverified_document = replace(base, document_id="unverified", original_name="unverified.pdf")
+    missing_document = replace(base, document_id="missing", original_name="missing.pdf")
+    case = replace(
+        case,
+        evidence_documents=(
+            incomplete_document,
+            summary_document,
+            cancelled_document,
+            unverified_document,
+            missing_document,
+        ),
+    )
+    complete = saved_catalog(case.investigation_id, incomplete_document.document_id)
+    incomplete = replace(
+        complete,
+        state="failed",
+        completed=1,
+        pages=complete.pages[:1],
+        error="Catalogazione non riuscita. Verifica il nodo AI e riprova.",
+    )
+    summary_pending = replace(
+        complete,
+        document_id=summary_document.document_id,
+        state="failed",
+        summary_state="page_highlights",
+        error="Catalogazione non riuscita. Verifica il nodo AI e riprova.",
+    )
+    cancelled = replace(
+        complete,
+        document_id=cancelled_document.document_id,
+        state="cancelled",
+        completed=0,
+        pages=(),
+        error="Catalogazione annullata.",
+    )
+
+    class MixedCatalogRunner:
+        def __init__(self):
+            self.unverified_reads = 0
+            self.calls = []
+
+        def load(self, investigation, selected, *, with_pages=True):
+            if selected.document_id == incomplete_document.document_id:
+                return incomplete
+            if selected.document_id == summary_document.document_id:
+                return summary_pending
+            if selected.document_id == cancelled_document.document_id:
+                return cancelled
+            if selected.document_id == unverified_document.document_id:
+                self.unverified_reads += 1
+                if self.unverified_reads == 1:
+                    raise RuntimeError("Catalog storage unavailable")
+            return None
+
+        def catalog_document(
+            self, investigation, selected, cancelled=None, progress=None, *, force=False
+        ):
+            self.calls.append((selected.document_id, force))
+            return saved_catalog(investigation.investigation_id, selected.document_id)
+
+    runner = MixedCatalogRunner()
+    app = make_app(
+        tmp_path,
+        infrastructure=FakeInfrastructure(),
+        page_catalog=runner,
+    )
+
+    async with app.run_test(size=(150, 42)) as pilot:
+        app.open_investigation(case)
+        await settle(app, pilot)
+
+        overview = app.screen.query_one("#evidence-operation-status")
+        assert overview.render().plain == (
+            "● Cataloghi: 1 analisi incompleta · 1 sintesi da completare · 1 interrotto · "
+            "1 stato non leggibile · 1 mai generato"
+        )
+        assert overview.has_class("warning")
+
+        incomplete_row = app.screen.query_one("#evidence-incomplete", EvidenceRow)
+        assert incomplete_row.query_one(".catalog-state").render().plain == (
+            "Analisi incompleta · 1/2"
+        )
+        assert (
+            "1/2 pagine salvate senza errori"
+            in incomplete_row.query_one(".catalog-explanation").render().plain
+        )
+        assert incomplete_row.query_one(".catalog-explanation").display
+        assert incomplete_row.query_one(".catalog-explanation").region.height == 2
+        assert incomplete_row.query_one(".generate-evidence-catalog", Button).label.plain == (
+            "Riprendi"
+        )
+
+        summary_row = app.screen.query_one("#evidence-summary", EvidenceRow)
+        assert summary_row.query_one(".catalog-state").render().plain == "Pagine complete · 2/2"
+        assert (
+            "sintesi finale del documento non è stata completata"
+            in summary_row.query_one(".catalog-explanation").render().plain
+        )
+        assert summary_row.query_one(".generate-evidence-catalog", Button).label.plain == "Completa"
+        await pilot.click("#evidence-summary .open-evidence-catalog")
+        await settle(app, pilot)
+        assert app.screen.query_one("#generate-saved-catalog", Button).label.plain == (
+            "Completa catalogo"
+        )
+        assert (
+            "nessun errore pagina" in app.screen.query_one("#saved-catalog-status").render().plain
+        )
+        assert "COSA È SUCCESSO" in app.screen.query_one("#saved-catalog-summary", TextArea).text
+        await pilot.click("#generate-saved-catalog")
+        await settle(app, pilot)
+        assert runner.calls == [(summary_document.document_id, False)]
+        assert "Catalogo salvato" in app.screen.query_one("#saved-catalog-status").render().plain
+        await pilot.press("escape")
+        await pilot.pause()
+
+        cancelled_row = app.screen.query_one("#evidence-cancelled", EvidenceRow)
+        assert cancelled_row.query_one(".catalog-state").render().plain == "Interrotto · 0/2"
+        assert (
+            "nessuna pagina salvata"
+            in cancelled_row.query_one(".catalog-explanation").render().plain
+        )
+
+        unverified_row = app.screen.query_one("#evidence-unverified", EvidenceRow)
+        assert unverified_row.query_one(".catalog-state").render().plain == ("Stato non leggibile")
+        assert (
+            unverified_row.query_one(".generate-evidence-catalog", Button).label.plain == "Verifica"
+        )
+        verify = unverified_row.query_one(".generate-evidence-catalog", Button)
+        verify.focus()
+        await pilot.press("enter")
+        await settle(app, pilot)
+        assert isinstance(app.screen, InvestigationWorkspaceScreen)
+        assert unverified_row.query_one(".catalog-state").render().plain == "Mai generato"
+        assert verify.label.plain == "Genera"
+
+
+async def test_direct_generation_shows_current_run_and_resumes_partial_catalog(tmp_path):
+    case = _investigation()
+    document = _document(case.investigation_id)
+    case = replace(case, evidence_documents=(document,))
+    complete = saved_catalog(case.investigation_id, document.document_id)
+    partial = replace(
+        complete,
+        state="cancelled",
+        completed=1,
+        pages=complete.pages[:1],
+        error="Catalogazione annullata; le pagine completate sono state salvate.",
+    )
+    started = Event()
+    release = Event()
+    finished = Event()
+
+    class WaitingCatalogRunner:
+        def __init__(self):
+            self.catalog = partial
+            self.calls = []
+            self.cancelled_after_release = None
+
+        def load(self, investigation, selected, *, with_pages=True):
+            return self.catalog
+
+        def catalog_document(
+            self, investigation, selected, cancelled=None, progress=None, *, force=False
+        ):
+            self.calls.append((selected.document_id, force))
+            progress(
+                RagIndexProgress(
+                    selected.document_id,
+                    selected.original_name,
+                    EvidenceIngestionState.PROCESSING,
+                    1,
+                    2,
+                    "Analisi pagina 2/2 · tentativo 1/2",
+                )
+            )
+            started.set()
+            assert release.wait(5)
+            self.cancelled_after_release = cancelled()
+            self.catalog = saved_catalog(investigation.investigation_id, selected.document_id)
+            finished.set()
+            return self.catalog
+
+    runner = WaitingCatalogRunner()
+    app = make_app(tmp_path, infrastructure=FakeInfrastructure(), page_catalog=runner)
+
+    async with app.run_test(size=(150, 42)) as pilot:
+        app.open_investigation(case)
+        await settle(app, pilot)
+        initial_row = app.screen.query_one(EvidenceRow)
+        assert initial_row.query_one(".catalog-state").render().plain == "Interrotto · 1/2"
+        assert initial_row.query_one(".generate-evidence-catalog", Button).label.plain == "Riprendi"
+        await pilot.click(".generate-evidence-catalog")
+        try:
+            assert await asyncio.to_thread(started.wait, 5)
+            await pilot.pause()
+            summary = app.screen.query_one("#saved-catalog-summary", TextArea).text
+            assert summary.startswith("CATALOGAZIONE IN CORSO")
+            assert "Ripresa del catalogo precedente: 1/2" in summary
+            assert "può richiedere alcuni minuti" in summary
+            assert "ERRORE REGISTRATO" not in summary
+            running_status = app.screen.query_one("#saved-catalog-status").render().plain
+            assert "● Generazione attiva" in running_status
+            assert "Analisi pagina 2/2" in running_status
+            assert "risposta AI in attesa" in running_status
+            assert runner.calls == [(document.document_id, False)]
+            assert app.screen.query_one("#cancel-saved-catalog", Button).display
+            await pilot.press("escape")
+            await pilot.pause()
+            assert isinstance(app.screen, InvestigationWorkspaceScreen)
+            row = app.screen.query_one(EvidenceRow)
+            assert row.query_one(".catalog-state").render().plain == "Analisi pagina 2/2"
+            assert "1 in corso" in app.screen.query_one("#evidence-operation-status").render().plain
+            assert row.query_one(".generate-evidence-catalog", Button).disabled
+        finally:
+            release.set()
+        assert await asyncio.to_thread(finished.wait, 5)
+        await pilot.pause()
+        assert runner.cancelled_after_release is False
+        row = app.screen.query_one(EvidenceRow)
+        assert row.query_one(".catalog-state").render().plain == "Completo · 2/2"
+        assert not row.query_one(".generate-evidence-catalog", Button).disabled
 
 
 @pytest.mark.parametrize("outcome", ["ready", "failed", "cancelled"])
