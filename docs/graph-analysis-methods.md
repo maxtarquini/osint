@@ -1,11 +1,14 @@
 # Metodi di analisi e generazione dei grafi in Raven
 
-**Fotografia del comportamento:** branch `dev`, 9 settembre 2026.
+**Fotografia del comportamento:** branch `dev`, commit `d9950f2`, 10 settembre 2026.
 
 ## Indice
 
 - [Che cosa contiene il grafo](#che-cosa-contiene-il-grafo)
 - [La base di integrità comune](#la-base-di-integrità-comune)
+- [Algoritmi e contratti tecnici](#algoritmi-e-contratti-tecnici)
+- [Agenti, responsabilità e workflow](#agenti-responsabilità-e-workflow)
+- [Prompt e skill](#prompt-effettivi-e-skill-catalogate)
 - [I tre metodi](#i-tre-metodi)
 - [Evidence preparation](#evidence-preparation-comportamento-reale)
 - [Dizionari](#dizionari-generici-modificabili-e-versionati)
@@ -96,6 +99,14 @@ di ricerca per la chat. Generare una variante non equivale ad attivarla.
 Il modello dati non si limita ai classici nodi e archi. Questa scelta è essenziale per non
 ridurre una fonte complessa a relazioni binarie apparentemente certe.
 
+> **Nota sugli esempi — Un caso interamente fittizio**
+>
+> Gli esempi di questa sezione usano nomi, documenti e operazioni inventati a scopo didattico.
+> “Aurora Servizi”, “Cooperativa Riva” e le persone citate non indicano soggetti reali. I record
+> mostrano come il modello può rappresentare un testo quando l’estrazione e i controlli hanno
+> esito coerente; non descrivono dati presenti nel sistema e non garantiscono che ogni futura
+> esecuzione produca esattamente gli stessi campi.
+
 ### Entità e menzioni
 
 Un’entità rappresenta una persona, organizzazione, luogo, documento o altro oggetto riconosciuto.
@@ -111,6 +122,19 @@ passato potevano invalidare un’intera lista di affermazioni.
 La riconciliazione delle identità resta prudente. Un nome simile o un tipo appartenente alla
 stessa famiglia può suggerire un confronto, ma non autorizza automaticamente la fusione. Il
 rapporto tra due possibili identità rimane revisionabile.
+
+> **Esempio — Due menzioni uguali non sono ancora la stessa persona**
+>
+> Il documento `verbale-aurora.pdf`, a pagina 2, nomina «Andrea Riva, responsabile acquisti di
+> Aurora Servizi»; `registro-riva.pdf`, a pagina 7, nomina invece «Andrea Riva, socio della
+> Cooperativa Riva». L’estrazione può creare due menzioni, ciascuna con un ID locale come `m1`
+> nel proprio batch, dalle quali derivano due entità proposte di tipo persona. Il nome canonico
+> coincide, ma le fonti non forniscono un identificatore forte condiviso, come lo stesso numero
+> di passaporto. Neppure una data di nascita coincidente autorizzerebbe da sola la fusione.
+> La lettura corretta è quindi: «esistono due riferimenti testuali a persone
+> chiamate Andrea Riva, la cui identità comune deve essere verificata». Non si può concludere che
+> siano la stessa persona, né trasferire automaticamente incarichi, relazioni o eventi dall’una
+> all’altra. Una nota di risoluzione rende visibile proprio questa ambiguità.
 
 ### Affermazioni
 
@@ -130,6 +154,32 @@ perdere uno di questi elementi cambierebbe la proposizione.
 Il catalogo degli alias e la semantica dei predicati vivono nel codice, separati dai dizionari
 di entità. Un predicato sconosciuto non viene scartato: rimane invariato, ma non acquisisce per
 questo regole di confronto specializzate.
+
+> **Esempio — Dalla frase al record di affermazione**
+>
+> Si immagini che la pagina 4 di `nota-banca.pdf` riporti: «Secondo la Cooperativa Riva, Aurora
+> Servizi trasferì 240 EUR alla cooperativa il 12 marzo 2025 per il noleggio di un deposito».
+> Dopo aver risolto le menzioni verso entità distinte, il contenuto può essere conservato in un
+> claim, cioè un record che rappresenta ciò che la fonte dice. Gli identificativi `org-aurora` e
+> `org-riva` presuppongono che le due organizzazioni siano state risolte usando codici di registro
+> fittizi presenti nelle fonti, non soltanto i loro nomi. La tabella seguente mostra perché l’arco,
+> da solo, non basta.
+
+| Campo del claim | Valore didattico | Come si legge |
+| --- | --- | --- |
+| soggetto | `org-aurora` | entità indicata come mittente |
+| predicato | `TRANSFER` | relazione canonica di trasferimento |
+| oggetto | `org-riva` | entità indicata come destinatario |
+| qualificatori | importo `240`, valuta `EUR`, scopo `noleggio deposito` | circostanze che delimitano la proposizione |
+| data di validità | `2025-03-12` | data dichiarata per l’operazione |
+| attribuzione | Cooperativa Riva | soggetto a cui viene attribuita la dichiarazione |
+| supporto | citazione verificata, pagina 4 | punto della fonte originale che sostiene il record |
+| stato | `proposed` | elemento ancora sottoposto a revisione |
+
+Se il controllo semantico assegna `supported`, significa che la citazione sostiene questa
+specifica lettura, compresi importo, valuta, direzione e data. Non significa che il bonifico sia
+realmente avvenuto, che la Cooperativa Riva sia indipendente o attendibile, oppure che il
+noleggio sia lecito. Queste conclusioni richiedono altre prove e il giudizio dell’analista.
 
 ### Negazione, assenza e stato epistemico
 
@@ -154,6 +204,18 @@ Queste dimensioni non sono intercambiabili:
 > confondono ancora alcuni casi di assenza con una smentita; la distinzione esiste nel modello ma
 > l’estrazione non è infallibile.
 
+> **Esempio — Negazione e assenza producono letture diverse**
+>
+> Nel primo caso, una risposta firmata da Aurora Servizi dice: «Aurora Servizi non ha trasferito
+> 240 EUR alla Cooperativa Riva il 12 marzo 2025». Il record conserva la stessa proposizione di
+> base con polarità `denied` e stato epistemico `reported`: la fonte sta formulando una vera e
+> propria negazione. Nel secondo caso, il revisore scrive: «Nel fascicolo esaminato non è presente
+> una ricevuta del trasferimento». Qui la polarità resta `affirmed`, mentre lo stato epistemico è
+> `not_documented`: viene riportata l’assenza di un documento, non la falsità del trasferimento.
+> Da questa seconda frase non si può dedurre che Aurora non abbia pagato. Allo stesso modo, la
+> prima frase non dimostra da sola che il pagamento non sia avvenuto: dimostra che una fonte lo
+> nega. Il grafo conserva entrambe le posizioni affinché il contrasto resti esaminabile.
+
 ### Rettifiche, ritiri e cessazioni
 
 Una rettifica sostituisce o corregge il contenuto di un’affermazione precedente. Un ritiro revoca
@@ -167,6 +229,31 @@ data o un riferimento a un’altra proposizione.
 La distinzione rimane delicata. Nella prova RX41 il ritiro di una localizzazione è stato
 interpretato erroneamente come cessazione. Il modello dati consente la forma corretta, ma non
 garantisce che il modello linguistico la scelga.
+
+> **Esempio — Correggere importo e data senza cancellare la versione precedente**
+>
+> Il 15 marzo `nota-banca.pdf` attribuisce alla Cooperativa Riva il trasferimento di 240 EUR in
+> data 12 marzo. Il 18 marzo la stessa fonte pubblica una nota: «Rettifichiamo: l’importo era 204
+> EUR e la data corretta era il 13 marzo 2025». Il primo claim resta nello snapshot, perché serve
+> a ricostruire ciò che era stato dichiarato. La rettifica diventa un nuovo claim di tipo
+> `corrects`, con un riferimento strutturato alla fonte, al predicato, al soggetto, all’oggetto e,
+> quando disponibile, all’identificativo del claim precedente. I nuovi valori sono conservati
+> come valori o qualificatori tipizzati. La lettura corretta è: «la fonte successiva corregge la
+> propria dichiarazione precedente». Non si può concludere che 204 EUR sia l’importo vero solo
+> perché è l’ultimo, né cancellare 240 EUR come se non fosse mai comparso.
+
+> **Esempio — Ritiro e cessazione rispondono a domande differenti**
+>
+> Se Aurora dichiara «ritiriamo l’ipotesi che Andrea Riva abbia autorizzato il pagamento», il
+> nuovo record è un ritiro della precedente affermazione, `retracts`, e si riferisce al claim
+> sull’autorizzazione. Se dicesse invece «non sosteniamo più con certezza che Andrea abbia
+> autorizzato il pagamento», ritirerebbe la certezza attribuita: `withdraws_certainty`.
+> Nessuna delle due formulazioni sta dicendo che un
+> incarico sia terminato. Se invece un contratto afferma «il servizio di deposito cessa il 30
+> giugno 2025», il record è di tipo `ceases` e usa il limite temporale esplicito. Da questa frase
+> non si può dedurre quando il servizio sia iniziato, né che il trasferimento di marzo sia stato
+> revocato. Il riferimento alla proposizione interessata e la data impediscono di confondere una
+> modifica epistemica con la fine temporale di una relazione.
 
 ### Eventi e valori
 
@@ -182,6 +269,19 @@ Un trasferimento può così essere rappresentato con mittente, destinatario, imp
 data. Una correzione da 93 a 39 CHF può mantenere entrambi i valori e il rapporto di rettifica,
 anziché lasciare un singolo arco ambiguo.
 
+> **Esempio — Un evento conserva ruoli, valori e provenienza**
+>
+> Dal claim sul trasferimento tra Aurora e Riva può derivare un evento specifico della fonte. Il
+> record assegna ad `org-aurora` il ruolo di mittente e a `org-riva` quello di destinatario;
+> collega l’identificativo del claim, registra l’importo come valore decimale con unità `EUR`,
+> conserva la data dichiarata e riporta la stessa provenienza e la stessa citazione. Questo rende
+> possibile chiedere «quali eventi attribuiscono ad Aurora il ruolo di mittente?» senza perdere
+> il contesto documentale. Tuttavia il record evento non prova l’esecuzione bancaria e non unisce
+> automaticamente versioni concorrenti. Se una seconda fonte indica 204 EUR il 13 marzo, può
+> esistere un altro evento o un altro claim collegato: la divergenza deve restare visibile. Un
+> evento non possiede inoltre un proprio campo di supporto semantico: per interpretarne polarità,
+> stato e giudizio occorre consultare il claim di origine collegato.
+
 ### Archi proiettati
 
 Gli archi mostrati nel grafo sono una proiezione operativa delle affermazioni positive che hanno
@@ -191,6 +291,19 @@ informazione dell’affermazione completa.
 Negazioni, assenze, ritiri e confronti possono quindi essere presenti nello snapshot pur non
 apparendo come normali archi positivi. Per un’analisi accurata occorre consultare i dettagli delle
 affermazioni e non dedurre la completezza dal solo disegno del grafo.
+
+> **Esempio — Perché un claim può esserci senza un arco visibile**
+>
+> Il claim affermato sul trasferimento Aurora → Riva può produrre un arco `TRANSFER` soltanto se
+> riguarda una relazione o un evento con entrambi gli estremi, ha stato epistemico `reported`, è
+> fondato su citazioni verificate nell’originale e, nello schema corrente, ha supporto semantico
+> `supported`. Il claim che nega lo stesso trasferimento rimane consultabile ma non diventa un
+> normale arco positivo; lo stesso vale per l’assenza della ricevuta, una rettifica o un ritiro.
+> Se compare l’arco, la lettura corretta è «esiste almeno un’affermazione positiva proiettabile,
+> con questi estremi e qualificatori». Non si può concludere che non esistano contestazioni,
+> versioni corrette o lacune documentali. Per questo l’analista deve aprire i `claim_ids` associati
+> all’arco e leggere citazioni, attribuzione, modalità, periodo, note di risoluzione e possibili
+> claim collegati.
 
 > **Concetto chiave — Proposta, non verdetto**
 >
@@ -263,6 +376,356 @@ respingere una proposta contraddetta dalla sua citazione, ma resta un giudizio d
 Lo `status` manuale (`proposed`, `verified`, `rejected`), il `semantic_support` del revisore e
 l’attendibilità della fonte sono distinti. L’attendibilità nasce come `unassessed`: un esito
 semantico positivo non la aggiorna automaticamente.
+
+## Algoritmi e contratti tecnici
+
+Questa sezione descrive la pipeline come algoritmo eseguibile. I limiti numerici indicati non
+sono consigli editoriali: sono soglie presenti nel codice alla data della fotografia. Dove il
+comportamento deriva da una scelta progettuale non formalizzata, il testo lo segnala come
+motivazione inferita.
+
+### 1. Pianificazione, riuso e segmentazione
+
+Il servizio riceve un’indagine, almeno un documento appartenente a quell’indagine, il metodo e
+il nome facoltativo della variante. Risolve una copia immutabile del dizionario di dominio,
+verifica l’hash di ogni documento nei metodi moderni e crea il manifest prima di analizzare le
+pagine. Un documento con hash diverso dal manifest viene rifiutato: elaborare byte cambiati con
+l’identità del documento precedente renderebbe falsa la provenienza.
+
+Per ogni pagina, il pianificatore calcola hash e firma. Una pagina precedente viene riusata solo
+se la firma coincide e lo stato era `analyzed`, `reused` oppure `empty`. Una pagina fallita non
+viene riusata. Dopo il riuso, la riconciliazione delle identità e i confronti sono comunque
+ricalcolati sull’insieme corrente: eliminare una fonte non può lasciare una fusione o una
+contraddizione ereditata da una variante precedente.
+
+Il catalogo orienta la pianificazione, ma non elimina pagine dall’estrazione moderna. La numerazione
+fisica `1..N` rimane stabile, mentre l’ordine di elaborazione dà precedenza alle pagine i cui `uses`
+comprendono contraddizioni, relazioni, cronologie o transazioni; a parità vale il numero di pagina.
+Soltanto `uses`, candidati di entità, date e riferimenti correnti diventano suggerimenti. Sintesi e
+asserzioni a livello di documento sono escluse deliberatamente. Se il catalogo manca o non è
+leggibile, lo stato lo segnala e ogni pagina viene comunque visitata. La firma comprende testo,
+profilo di estrazione e suggerimenti ammessi: cambiare un input rilevante invalida il riuso senza
+trasformare il catalogo in un filtro di esclusione.
+
+La funzione `citation_units` cerca la fine delle frasi con `.`, `!` o `?` seguiti da spazio o
+fine testo. Ogni intervallo viene poi limitato a 1.800 caratteri; se deve essere spezzato, il
+taglio arretra all’ultimo spazio disponibile. Ogni unità conserva pagina, testo letterale,
+offset iniziale e finale e riceve un identificatore `p{pagina}u{numero}`. Il testo della pagina
+obiettivo viene consumato interamente, in batch da non più di circa 10.000 caratteri. Il contesto
+usa prima le pagine più vicine e si arresta a 32.000 caratteri, registrando
+`document_context_truncated` quando il budget non basta.
+
+> **Perché due budget distinti**
+>
+> Il batch obiettivo determina ciò che l’agente può estrarre e citare; il contesto serve soltanto
+> a sciogliere riferimenti come “la società” o “il giorno seguente”. Questa separazione impedisce
+> che una frase vista come contesto venga attribuita alla pagina sbagliata. La preferenza per le
+> pagine vicine è una scelta di prossimità documentale: è ragionevole per rapporti sequenziali,
+> ma non prova che un rinvio punti davvero alla pagina adiacente.
+
+### 2. Estrazione delle entità
+
+Per ogni batch il `DocumentEntityAgent` riceve il dizionario risolto, il contesto e le unità
+obiettivo. Il suo output deve essere un oggetto JSON con una lista `entities`; oltre 500 elementi
+la risposta è invalida. Ciascuna entità deve contenere tipo, eventuale sottotipo, nome canonico,
+alias, identificatori espliciti, motivazione e da una a trenta unità citate. Tipo e sottotipo
+devono appartenere alle coppie ammesse dal dizionario. Gli identificatori persistenti non sono
+scelti dal modello: il programma calcola un UUID stabile da documento, nome, classificazione,
+identificatori e supporto, e assegna anche un riferimento locale breve (`m1`, `m2`, ...).
+
+Il prompt richiede tutte le entità nominate e permette ancore locali descrittive per eventi,
+transazioni e accordi necessari come soggetti di valori o cessazioni. Vieta di assegnare una
+classificazione esplicitamente negata e preferisce un tipo generale quando quello specialistico
+non è sostenuto. Questa decisione riduce due errori ad alto impatto: inventare un nodo per dare
+un estremo a una proprietà e trasformare un’etichetta discussa dalla fonte in classificazione.
+
+### 3. Estrazione atomica delle affermazioni
+
+Il `DocumentClaimAgent` può usare soltanto gli identificatori `m...` prodotti nello stesso batch.
+Restituisce al massimo 1.000 affermazioni. Lo schema obbliga a dichiarare soggetto, oggetto o
+valore, predicato, polarità, modalità, stato epistemico, natura dell’operazione, date,
+attribuzione, fonte, dipendenze, qualificatori, riferimenti e unità citate. Le date accettate hanno
+forma ISO `YYYY`, `YYYY-MM` o `YYYY-MM-DD`; i valori possono essere stringhe, date, decimali,
+interi o booleani con unità esplicita.
+
+L’algoritmo impone proposizioni atomiche perché importo, valuta, periodo e direzione devono poter
+essere confrontati separatamente. Per una proprietà letterale l’oggetto può essere vuoto. Anche
+un’operazione (`corrects`, `retracts`, `withdraws_certainty`, `ceases`) può riferirsi a una
+proposizione precedente senza creare un’entità artificiale. `reported` significa soltanto che la
+fonte riferisce la proposizione; `not_documented` richiede una dichiarazione esplicita di assenza
+di documentazione.
+
+Nel metodo temporale lo stesso schema viene invocato una seconda volta dal
+`TemporalExtractionAgent`, con un’istruzione mirata a eventi, ruoli, transazioni, valori,
+rettifiche, ritiri e cessazioni. Le due liste sono deduplicate per `claim_id`. Negli altri due
+metodi questo secondo passaggio non avviene, ma la prima estrazione può già produrre affermazioni
+di tipo evento.
+
+> **Esempio — Rettifica di un importo**
+>
+> “D4 corregge l’importo di D2 da 93 a 39 CHF” non dovrebbe diventare un arco generico tra D4 e
+> D2. La rappresentazione utile conserva la proposizione originaria, una nuova proposizione con
+> valore `39`, unità `CHF`, natura `corrects` e un riferimento alla fonte e alla proposizione
+> precedente. L’analista può così ricostruire sia ciò che fu detto prima sia la correzione.
+
+### 4. Riparazione circoscritta e revisione semantica
+
+Ogni elemento viene convertito e validato separatamente. Se alcune affermazioni non superano i
+controlli, il `ClaimRepairAgent` riceve soltanto gli indici falliti, il relativo errore e il
+record originale. Deve restituire una riparazione per indice oppure `null` se il contenuto non è
+sostenibile. È previsto un solo tentativo per risposta di estrazione. Le affermazioni già valide
+non entrano nel prompt di riparazione e quindi non possono essere sostituite accidentalmente.
+
+Il `SemanticSupportAgent` esamina poi entità e affermazioni in blocchi di 24. Per ogni candidato
+deve restituire esattamente uno tra `supported`, `unsupported`, `contradicted` e `uncertain`, con
+motivazione. Controlla classificazione, estremi, direzione, negazione, stato epistemico, modalità,
+valori, periodo, attribuzione e natura dell’operazione contro citazioni, originale e dizionario.
+Se manca una risposta, il candidato diventa `uncertain`. Una claim inizialmente supportata viene
+comunque degradata a `uncertain` se uno dei suoi estremi non ha classificazione semanticamente
+supportata.
+
+Tutte le chiamate di questa famiglia usano lo stesso `IntegrityAgent`: ragionamento `medium`,
+massimo 8.192 token di output e timeout letto dalle impostazioni del nodo. Il codice usa 120
+secondi come ripiego se l’attributo non è disponibile; il valore configurato può essere diverso.
+Schema JSON e valori enumerati limitano la forma dell’output; non eliminano gli
+errori di interpretazione.
+
+### 5. Riconciliazione prudente delle identità
+
+La riconciliazione avviene documento per documento contro le entità già consolidate. Un conflitto
+tra identificatori forti della stessa famiglia, per esempio due registrazioni incompatibili,
+impedisce la fusione. Una corrispondenza esatta sostenuta da identificatori può essere risolta in
+modo deterministico. La somiglianza dei nomi usa normalizzazione e rapporto di similarità almeno
+pari a `0,82`, ma serve solo a formare candidati.
+
+Se esistono più di dieci candidati plausibili, oppure un identificatore forte conduce a più
+identità, l’entità resta separata con una nota di revisione. Anche il solo nome simile non basta.
+Quando esistono elementi corroboranti, l’`EntityResolutionAgent` può proporre `LINK`, `CREATE`,
+`KEEP_SEPARATE` o `REVIEW`; il collegamento viene applicato soltanto con confidenza almeno `0,90`,
+candidato valido e identificatore corroborante. Questo agente usa un profilo più piccolo della
+pipeline di integrità: ragionamento `low`, massimo 2.048 token e timeout 60 secondi. Se non è
+disponibile o fallisce, l’identità rimane separata.
+
+> **Scelta progettuale — Il costo di una falsa fusione**
+>
+> Due nodi separati possono essere revisionati e collegati in seguito. Una fusione errata propaga
+> invece relazioni, eventi e accuse da una persona a un’altra. Il codice sceglie quindi un falso
+> negativo revisionabile al posto di un falso positivo con effetti a cascata.
+
+### 6. Confronti, proiezione ed eventi
+
+`compare_claims` considera soltanto record non rifiutati con citazioni originali verificate e
+senza la nota di polarità legacy. Forma gruppi sia sugli UUID degli estremi sia sulla combinazione
+di famiglia del tipo e nome normalizzato. Lo scope include predicato canonico, `claim_kind`,
+terna letterale (tipo, valore e unità) e qualificatori ordinati da `qualifiers_scope`: un importo
+o una condizione mancante non diventa una wildcard. Una
+coppia dello stesso documento viene esclusa quando non dichiara fonti diverse; un conflitto tra
+identificatori forti blocca il confronto nominale.
+
+La classificazione segue una priorità fissa: uno stato diverso da `reported` produce
+`evidence_gap`; una famiglia di fonte condivisa produce `dependent_source`; periodi espliciti non
+sovrapposti producono `temporal_change`; polarità opposte producono `contradicts`; gli altri casi
+producono `agrees`. Se gli UUID differiscono, il tipo riceve il prefisso `candidate_` e richiede
+revisione dell’identità. Un passaggio separato crea i link indicati dalle `references` per
+rettifiche, ritiri, ritiri della certezza e cessazioni.
+
+Nel metodo `cross_source_review` la copertura viene ampliata in due modi. Il primo raggruppa
+deterministicamente per predicato canonico e identità nominale/tipo degli estremi. Il secondo usa
+il `SourceCandidateAgent`: divide tutte le claim eleggibili in blocchi di 30, visita ogni coppia
+di blocchi, invia per ciascuna claim un estratto di citazione limitato a 900 caratteri e recupera
+possibili parafrasi o riferimenti. Gli estratti selezionano candidati e non diventano prova. Il
+`CrossSourceReviewAgent` riceve poi al massimo otto coppie per volta con le claim e le citazioni
+complete e classifica il rapporto; non decide quale fonte sia vera. Con `n` claim eleggibili si
+ottengono `b = ceil(n / 30)` blocchi e `b(b+1)/2` coppie di blocchi. Per esempio, 61 claim formano
+tre blocchi e sei coppie da visitare. Il costo della ricerca cresce quadraticamente nei blocchi;
+la revisione finale rimane limitata a otto coppie per chiamata.
+
+> **Approfondimento — Perché il recupero usa estratti**
+>
+> Inviare tutte le coppie con citazioni complete farebbe crescere rapidamente il contesto.
+> L’estratto da 900 caratteri serve solo a recuperare candidati. La decisione finale riceve i
+> record completi: l’estratto non viene promosso a evidenza.
+
+`project_claims` crea un arco soltanto se la claim non è rifiutata, ha citazioni originali valide,
+usa stato `reported`, è `relation` o `event`, possiede un oggetto e, nello schema moderno, ha
+`semantic_support=supported`. Una negazione compatibile non genera un arco: viene associata a
+quello positivo e lo lascia `proposed`. Solo un gruppo senza conflitti e composto interamente da
+claim verificate può produrre un arco `verified`. Il grafo conserva comunque tutte le claim e i confronti, comprese negazioni e
+incertezze non rappresentabili come normali archi positivi. Infine `event_records` deriva record
+evento dalle claim per tutti e tre i metodi moderni. Il passaggio dedicato del metodo temporale
+accresce gli input disponibili, ma la materializzazione finale degli eventi è comune.
+
+La funzione `temporal_relation` calcola una descrizione degli intervalli quando l’interfaccia
+mostra il dettaglio di due claim. Non è chiamata dal servizio di generazione: è un ausilio di
+lettura, non uno stadio dell’algoritmo di estrazione.
+
+### Esempio tecnico completo
+
+L’esempio seguente è didattico e non riproduce l’output di una valutazione. Si supponga che D1,
+pagina 2, dica: “Il registro R1 riferisce che l’organizzazione Alfa, numero di registrazione A1,
+trasferì 240 EUR all’organizzazione Beta, numero di registrazione B1.” D2, pagina 1, dice:
+“Il bollettino R2 nega che l’organizzazione Alfa, numero di registrazione A1, abbia trasferito
+240 EUR all’organizzazione Beta, numero di registrazione B1.” A1 e B1 sono identificatori
+didattici. Si assume che il dizionario ammetta il tipo `ORGANIZATION`, assegnato a entrambe:
+per questo tipo lo schema `registration_number` è un identificatore forte.
+
+La segmentazione conserva le due frasi come unità letterali, per esempio `p2u1` in D1 e `p1u1`
+in D2, ciascuna con i propri offset. Nei rispettivi batch l’agente propone `m1=Alfa` e `m2=Beta`;
+gli ID brevi valgono solo nella chiamata e vengono risolti in UUID dal programma. Da D1 nasce una
+claim con soggetto `m1`, oggetto `m2`, predicato `TRANSFER`, polarità `affirmed`, modalità
+`asserted`, stato `reported`, qualificatori `amount=240` e `currency=EUR`, fonte R1 e supporto
+`p2u1`. D2 produce la stessa struttura con polarità `denied`, fonte R2 e supporto `p1u1`.
+
+Il revisore semantico controlla separatamente le entità e tutte le proprietà delle claim. Se
+entrambe risultano `supported`, la corrispondenza dei numeri di registrazione fornisce il riscontro
+forte necessario e la riconciliazione può
+allineare gli estremi. `compare_claims` inserisce le claim nello stesso scope perché predicato,
+estremi, importo e valuta coincidono; poiché le fonti sono distinte, i periodi non divergono e la
+polarità è opposta, crea un link `contradicts`. La claim positiva può generare un arco
+`Alfa -TRANSFER-> Beta`, ma la negazione corrispondente lo mantiene `proposed` e aggiunge una nota
+di revisione. La claim negativa non diventa un secondo arco e non cancella la prima. Se R2 fosse
+una copia dichiarata di R1, la priorità produrrebbe invece `dependent_source`. Senza gli
+identificatori, la sola uguaglianza dei nomi manterrebbe le entità separate e il confronto sarebbe
+`candidate_contradicts`; la negazione non verrebbe agganciata all’arco positivo con UUID diversi.
+
+> **Che cosa dimostra l’esempio**
+>
+> La citazione prova che le parole appartengono ai documenti; `supported` prova che il revisore
+> le considera coerenti con i record proposti; `contradicts` descrive il rapporto fra le due
+> proposizioni. Nessuno dei tre esiti stabilisce se il trasferimento sia realmente avvenuto.
+
+## Agenti, responsabilità e workflow
+
+Nel codice la parola “agente” indica soprattutto un ruolo di prompt. `DocumentEntityAgent`,
+`DocumentClaimAgent`, `TemporalExtractionAgent`, `ClaimRepairAgent`, `SemanticSupportAgent`,
+`SourceCandidateAgent` e `CrossSourceReviewAgent` sono etichette di chiamata dello stesso wrapper
+`IntegrityAgent`; non sono processi autonomi né agenti concorrenti. `EntityResolutionAgent` è una
+classe distinta. Il servizio e la coda governano invece stato, sequenza, annullamento e
+pubblicazione.
+
+| Responsabile | Input vincolante | Output e responsabilità | Fallback o limite |
+| --- | --- | --- | --- |
+| `GraphAnalysisQueue` | richiesta valida e un job per indagine | serializza il lavoro, pubblica avanzamento, propaga annullamento | una richiesta duplicata restituisce il job `QUEUED` o `RUNNING` esistente |
+| `GraphAnalysisService` | indagine, documenti, metodo, dizionario | verifica hash, orchestra pagine, consolida e salva run/snapshot | nessuna pubblicazione finale dopo annullamento |
+| `DocumentEntityAgent` | unità target, contesto, dizionario | entità nominate e ancore locali con citazioni | batch invalido o modello assente rende la pagina fallita/parziale |
+| `DocumentClaimAgent` | entità locali e unità target | proposizioni atomiche attribuite | gli estremi devono essere ID locali esistenti |
+| `TemporalExtractionAgent` | stessi input del claim agent | seconda estrazione specializzata | eseguito solo da `event_temporal` |
+| `ClaimRepairAgent` | soli elementi invalidi | record corretto o `null` | un tentativo circoscritto per risposta |
+| `SemanticSupportAgent` | candidati, citazioni, mappa entità e dizionario | supporto semantico e motivazione | risposta mancante equivale a `uncertain` |
+| `EntityResolutionAgent` | menzione e massimo dieci candidati corroborati | decisione di identità | fusione solo con confidenza ≥ 0,90 e riscontro |
+| `SourceCandidateAgent` | blocchi di claim con estratti | coppie potenzialmente confrontabili | fallimento registrato; restano i candidati deterministici |
+| `CrossSourceReviewAgent` | coppie e record completi | tipo di relazione e supporto del confronto | fallimento produce revisione incerta |
+| Algoritmi deterministici | claim ed entità validate | consolidamento, confronti, archi, eventi e ID stabili | non risolvono ambiguità semantiche |
+
+```mermaid
+flowchart TD
+    Q["Coda: accoda e consente annullamento"] --> S["Servizio: valida documenti, hash e dizionario"]
+    S --> P["Pianificatore: firma pagine e decide il riuso"]
+    P --> E["Estrazione e revisione per pagina"]
+    E --> I["Riconciliazione prudente delle identità"]
+    I --> D["Confronti deterministici"]
+    D --> X{"Revisione cross-source attiva?"}
+    X -->|Sì| SC["Recupero e revisione delle coppie"]
+    X -->|No| O["Proiezione archi e materializzazione eventi"]
+    SC --> O
+    O --> W["Snapshot variante persistente"]
+```
+
+*Figura 3 — Workflow generale. Il servizio pubblica lo snapshot soltanto dopo consolidamento,
+confronti, proiezione e materializzazione degli eventi.*
+
+La Figura 4 apre la fase di pagina e rende visibili riuso, assenza di entità e riparazioni.
+
+```mermaid
+flowchart TD
+    P["Pagina pianificata"] --> RU{"Firma riusabile?"}
+    RU -->|Sì| CACHE["Riusa risultato grezzo"]
+    RU -->|No| B["Per ogni batch: DocumentEntityAgent"]
+    B --> H{"Entità valide?"}
+    H -->|No| N{"Restano batch?"}
+    H -->|Sì| C["DocumentClaimAgent e riparazione se necessaria"]
+    C --> T{"Metodo event_temporal?"}
+    T -->|Sì| TE["TemporalExtractionAgent e riparazione se necessaria"]
+    T -->|No| V["SemanticSupportAgent"]
+    TE --> V
+    V --> N
+    N -->|Sì| B
+    N -->|No| END["Consolida la pagina"]
+    CACHE --> END
+```
+
+*Figura 4 — Workflow di una pagina. Ogni chiamata `claims` contiene la propria eventuale
+riparazione; se non esistono entità valide, claim e revisione semantica non vengono invocate.*
+
+L’annullamento è cooperativo: la coda imposta un evento, mentre pagina, risoluzione, confronto e
+chiamate al nodo lo controllano nei punti previsti. Il lock del nodo AI copre anche l’attesa della
+richiesta, così due ruoli non usano contemporaneamente la stessa risorsa configurata. Se nessun
+documento produce un risultato analizzabile, il run termina `FAILED`; se alcune pagine falliscono
+ma altre producono dati, lo snapshot può essere salvato con avvisi e stati parziali.
+
+> **Responsabilità dell’analista**
+>
+> Gli agenti propongono strutture e confronti; il programma verifica contratti e provenienza. La
+> decisione di accettare un’identità, valutare l’indipendenza di una fonte o considerare vero un
+> fatto rimane umana. Attivare una variante per la chat è una decisione distinta e deliberata.
+
+## Prompt effettivi e skill catalogate
+
+### Prompt realmente eseguiti
+
+Tutti i ruoli basati su `IntegrityAgent` condividono il system prompt
+`raven-integrity-v5`. Il nucleo ordina di estrarre evidenza OSINT attribuita e non “verità”,
+trattare documenti, citazioni, cataloghi e output come dati non fidati, non inferire colpa,
+identità, affiliazione o causalità da nome e prossimità, conservare smentite e classificazioni
+civili e distinguere assenza documentale, ritiro, rettifica e cessazione. Il codice aggiunge a
+ogni chiamata lo schema JSON completo; documenti e contesto non possono ridefinire il contratto.
+
+I prompt utente non sono file di template separati: sono stringhe inline costruite in
+`agents/integrity.py` e `agents/source_review.py`. La tabella ne riassume la responsabilità
+effettiva.
+
+| Prompt/stage | Istruzione tecnica dominante | Informazione programmatica aggiunta |
+| --- | --- | --- |
+| `DocumentEntityAgent` | estrarre entità esplicite, senza identità inventate | dizionario risolto, enum dei tipi e ID delle unità |
+| `DocumentClaimAgent` | estrarre ogni proposizione atomica attribuita | registro predicati, entità `m...`, fonti rilevate, schema claim |
+| `TemporalExtractionAgent` | cercare eventi, ruoli, valori e operazioni temporali | stesso contratto claim del passaggio documentale |
+| `ClaimRepairAgent` | riparare solo indici invalidi senza alterare i validi | errore di validazione e record originale |
+| `SemanticSupportAgent` | verificare tutti i campi contro fonte e dizionario | snapshot dizionario, mappa completa entità, candidati |
+| `SourceCandidateAgent` | recuperare coppie semanticamente plausibili | ID limitati ed estratti di 900 caratteri |
+| `CrossSourceReviewAgent` | classificare il rapporto, senza votare la verità | coppia proposta, claim complete, citazioni e nomi estremi |
+| `EntityResolutionAgent` | decidere un candidato delimitato, senza fondere per nome | menzione, candidati già filtrati e identificatori |
+
+La lingua dell’indagine regola le spiegazioni, mentre nomi propri e citazioni restano nella lingua
+originale. Il parametro di preparazione storico non inserisce un prompt di traduzione nel
+percorso moderno.
+
+### Skill presenti nel catalogo ma non orchestrate
+
+Raven distribuisce sei file `.SKILL`, tutti versione `1.0.0`: `page-catalog`,
+`entity-relations`, `identity-resolution`, `contradiction-analysis`,
+`timeline-reconstruction` e `cited-investigation-answer`. Ogni file dichiara input, output,
+strumenti previsti, regole comuni e un caso di test. Il catalogo li carica, li valida e può
+chiedere al `SkillCatalogAgent` di descriverli con revisione `skill-catalog-v1`.
+
+Queste skill non sono invocate dalla pipeline di generazione del grafo. I loro strumenti
+`read_page`, `search_evidence` e `verify_quote` descrivono un’orchestrazione futura; i file stessi
+precisano che il registro attuale cataloga la definizione e non avvia il workflow. Somiglianze tra
+una skill e uno stage reale indicano coerenza d’intento, non esecuzione della skill.
+
+| Skill catalogata | Responsabilità dichiarata | Rapporto con il codice attuale |
+| --- | --- | --- |
+| Catalogazione delle pagine | categoria, sintesi, entità, temi e incertezza | il catalogo pagina alimenta pianificazione e firma, ma la `.SKILL` non viene eseguita |
+| Entità e relazioni | proposte con estremi, polarità e fonti | obiettivo coperto in parte dai prompt documentali inline |
+| Riconciliazione delle identità | omonimie e corrispondenze motivate | esiste un `EntityResolutionAgent` reale, indipendente dal file `.SKILL` |
+| Negazioni e contraddizioni | confrontare asserzioni, smentite e rettifiche | svolto dai confronti e dal ramo cross-source, senza caricare la `.SKILL` |
+| Ricostruzione cronologica | separare date di evento, fonte e validità | il ramo temporale applica istruzioni inline equivalenti |
+| Risposte con citazioni | risposta attribuita e limiti della ricerca | riguarda il recupero/chat, non la generazione della variante |
+
+> **Attenzione — Due versionamenti diversi**
+>
+> `raven-integrity-v5` identifica il prompt eseguito dalla pipeline. `1.0.0` identifica il
+> contratto editoriale di ciascuna skill catalogata. Registrare una skill non implica che il suo
+> testo sia stato inserito nel prompt né che i tool dichiarati siano stati chiamati.
 
 ## I tre metodi
 
@@ -566,7 +1029,7 @@ Il massimo applicativo verificato per il contesto del grafo è 24.000 caratteri.
 inferiori possono ancora escludere un intero gruppo. Il recupero decide che cosa viene mostrato al
 modello di chat; non corregge un’estrazione errata e non dimostra che una risposta LLM sia corretta.
 
-La Figura 3 chiarisce il confine.
+La Figura 5 chiarisce il confine.
 
 ```mermaid
 flowchart TD
@@ -578,7 +1041,7 @@ flowchart TD
     B -->|non entra| O[Record resta nella variante]
 ```
 
-*Figura 3 — Recupero per la chat. L’esclusione dal contesto di una domanda non cancella il record
+*Figura 5 — Recupero per la chat. L’esclusione dal contesto di una domanda non cancella il record
 dalla variante e non equivale a un rigetto investigativo.*
 
 ## Procedura operativa consigliata
@@ -690,6 +1153,20 @@ di documenti diversi o della variabilità del modello. Non attribuisce però aut
 differenza a una singola causa.
 
 ## Riferimenti tecnici annotati
+
+La matrice seguente collega le parti del manuale ai punti verificabili nel repository. I test
+provano i contratti indicati, non misurano da soli l’accuratezza semantica su corpus reali.
+
+| Argomento | Implementazione primaria | Verifica automatica rappresentativa |
+| --- | --- | --- |
+| Unità, batch, contesto e riuso | [`graph/integrity.py`](../src/raven/graph/integrity.py), [`graph/pages.py`](../src/raven/graph/pages.py) | [`test_graph_integrity.py`](../tests/test_graph_integrity.py), [`test_graph_page_incremental.py`](../tests/test_graph_page_incremental.py) |
+| Prompt, schema, riparazione e review | [`agents/integrity.py`](../src/raven/agents/integrity.py) | [`test_graph_integrity.py`](../tests/test_graph_integrity.py), [`test_graph_entity_contract.py`](../tests/test_graph_entity_contract.py) |
+| Identità e consolidamento | [`graph/extraction.py`](../src/raven/graph/extraction.py), [`agents/graph.py`](../src/raven/agents/graph.py) | [`test_graph_identity_safety.py`](../tests/test_graph_identity_safety.py) |
+| Confronti e proiezione | [`graph/claims.py`](../src/raven/graph/claims.py), [`agents/source_review.py`](../src/raven/agents/source_review.py) | [`test_graph_claims.py`](../tests/test_graph_claims.py), [`test_graph_source_grounding.py`](../tests/test_graph_source_grounding.py) |
+| Eventi e intervalli | [`graph/events.py`](../src/raven/graph/events.py) | [`test_graph_claims.py`](../tests/test_graph_claims.py), [`test_graph_integrity.py`](../tests/test_graph_integrity.py) |
+| Coda, annullamento e pubblicazione | [`services/graph_jobs.py`](../src/raven/services/graph_jobs.py), [`services/graph_analysis.py`](../src/raven/services/graph_analysis.py) | [`test_graph_jobs.py`](../tests/test_graph_jobs.py), [`test_graph_cancel_publish.py`](../tests/test_graph_cancel_publish.py) |
+| Varianti e manifest | [`graph/variants.py`](../src/raven/graph/variants.py), [`models/graph.py`](../src/raven/models/graph.py) | [`test_graph_variants_ui.py`](../tests/test_graph_variants_ui.py), [`test_graph_provenance_storage_ui.py`](../tests/test_graph_provenance_storage_ui.py) |
+| Skill catalogate | [`agents/skill_catalog.py`](../src/raven/agents/skill_catalog.py), [`resources/skills`](../src/raven/resources/skills) | [`test_skill_ai_contract.py`](../tests/test_skill_ai_contract.py) |
 
 > **Riferimento essenziale — Valutazione reale**
 >

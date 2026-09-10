@@ -98,8 +98,10 @@ Graph extraction failures remain in graph runs and page coverage; they never cha
 ## Evidence-to-Graph analysis
 
 Il [manuale dei metodi di analisi e generazione dei grafi](docs/graph-analysis-methods.md)
-descrive in italiano il flusso completo, i dizionari modificabili, le varianti, il confronto,
-il recupero per la chat e i limiti verificati. Il precedente menu **Evidence preparation** è
+descrive in italiano gli algoritmi, il workflow degli agenti e le loro responsabilità, i prompt
+effettivi e il ruolo delle skill, oltre a dizionari, varianti, confronto, recupero per la chat e
+limiti verificati. È disponibile anche in [PDF](output/pdf/graph-analysis-methods.pdf).
+Il precedente menu **Evidence preparation** è
 sostituito dall'indicazione **Originali con contesto documentale**: i tre metodi selezionabili
 usano gli originali e ignorano la preparazione legacy anche nella firma della cache.
 
