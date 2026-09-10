@@ -50,6 +50,12 @@ def test_mongodb_bootstrap_creates_collections_indexes_and_schema_marker() -> No
     collections["investigations"].create_index.assert_called()
     assert collections["evidence_documents"].create_index.call_count == 3
     assert collections["chat_messages"].create_index.call_count == 2
+    assert collections["document_catalogs"].create_index.call_args.kwargs["name"] == (
+        "document_catalog_identity"
+    )
+    assert collections["catalog_pages"].create_index.call_args.kwargs["name"] == (
+        "catalog_page_identity"
+    )
     collections["entities"].create_index.assert_called()
     collections["relationships"].create_index.assert_called()
     collections["app_metadata"].update_one.assert_called_once()

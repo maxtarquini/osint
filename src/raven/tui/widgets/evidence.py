@@ -65,7 +65,11 @@ class EvidenceRow(Horizontal):
         status.tooltip = STATE_DETAILS.get(self.document.ingestion_state)
         yield status
         with Horizontal(classes="evidence-document-actions"):
-            yield Button("Apri catalogo", classes="open-evidence-catalog")
+            yield Button(
+                "Apri catalogo",
+                classes="open-evidence-catalog",
+                tooltip="Consulta il catalogo salvato oppure avvia la catalogazione delle pagine",
+            )
             yield Button("Reindicizza", classes="reindex-evidence")
             yield Button("Delete", classes="delete-evidence")
 

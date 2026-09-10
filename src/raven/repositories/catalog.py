@@ -1,12 +1,44 @@
-"""Read saved document/page catalogs without regenerating or mutating them."""
+"""Persist document catalogs with pages stored as separate bounded records."""
 
-from dataclasses import replace
+from dataclasses import asdict, replace
 
 from raven.exceptions import InvestigationPersistenceError
 from raven.models.catalog import CatalogPage, DocumentCatalog, catalog_overview
 
 
 class CatalogReader:
+    def save_catalog(self, catalog: DocumentCatalog) -> None:
+        if self._database is None:
+            raise InvestigationPersistenceError("MongoDB is not connected")
+        payload = asdict(catalog)
+        payload.pop("pages")
+        identity = {
+            "investigation_id": catalog.investigation_id,
+            "document_id": catalog.document_id,
+        }
+        try:
+            self._database["document_catalogs"].replace_one(identity, payload, upsert=True)
+        except Exception as error:
+            raise InvestigationPersistenceError("Unable to save the document catalog") from error
+
+    def save_catalog_page(self, catalog: DocumentCatalog, page: CatalogPage) -> None:
+        if self._database is None:
+            raise InvestigationPersistenceError("MongoDB is not connected")
+        identity = {
+            "investigation_id": catalog.investigation_id,
+            "document_id": catalog.document_id,
+            "signature": catalog.signature,
+            "number": page.number,
+        }
+        try:
+            self._database["catalog_pages"].replace_one(
+                identity,
+                {**identity, **asdict(page)},
+                upsert=True,
+            )
+        except Exception as error:
+            raise InvestigationPersistenceError("Unable to save the page catalog") from error
+
     def load_catalog(
         self,
         investigation_id: str,
@@ -55,3 +87,15 @@ class CatalogReader:
             return catalog
         except Exception as error:
             raise InvestigationPersistenceError("Unable to load the document catalog") from error
+
+    def delete_catalogs(self, investigation_id: str, document_id: str | None = None) -> None:
+        if self._database is None:
+            raise InvestigationPersistenceError("MongoDB is not connected")
+        identity = {"investigation_id": investigation_id}
+        if document_id is not None:
+            identity["document_id"] = document_id
+        try:
+            for collection in ("document_catalogs", "catalog_pages"):
+                self._database[collection].delete_many(identity)
+        except Exception as error:
+            raise InvestigationPersistenceError("Unable to remove document catalogs") from error

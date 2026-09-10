@@ -1,4 +1,7 @@
-"""Browse stored page catalogs without starting model requests or changing evidence."""
+"""Browse, generate and refresh one document's persistent page catalog."""
+
+import logging
+from threading import Event
 
 from textual import work
 from textual.app import ComposeResult
@@ -7,7 +10,13 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Static, TabbedContent, TabPane, TextArea
 
-from raven.exceptions import InvestigationError
+from raven.exceptions import (
+    GraphAgentError,
+    InvestigationChatCancelledError,
+    InvestigationError,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentCatalogScreen(ModalScreen[None]):
@@ -19,6 +28,8 @@ class DocumentCatalogScreen(ModalScreen[None]):
         self.document = document
         self.catalog = None
         self.filtered_pages = []
+        self._cataloging = False
+        self._catalog_cancel = Event()
 
     def compose(self) -> ComposeResult:
         with Vertical(id="saved-catalog-dialog"):
@@ -42,8 +53,10 @@ class DocumentCatalogScreen(ModalScreen[None]):
                         "", read_only=True, id="saved-catalog-provenance", soft_wrap=True
                     )
             with Horizontal(id="saved-catalog-actions"):
+                yield Button("Genera catalogo", id="generate-saved-catalog", variant="primary")
+                yield Button("Annulla", id="cancel-saved-catalog", classes="hidden")
                 yield Button("Aggiorna", id="refresh-saved-catalog")
-                yield Button("Chiudi", id="close-saved-catalog", variant="primary")
+                yield Button("Chiudi", id="close-saved-catalog")
 
     def on_mount(self):
         self.on_resize()
@@ -54,6 +67,8 @@ class DocumentCatalogScreen(ModalScreen[None]):
         self.set_class(self.size.width < 100, "narrow-catalog-reader")
 
     def action_close(self):
+        if self._cataloging:
+            self._catalog_cancel.set()
         self.dismiss(None)
 
     def action_search(self):
@@ -63,9 +78,109 @@ class DocumentCatalogScreen(ModalScreen[None]):
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "close-saved-catalog":
             self.action_close()
+        elif event.button.id == "generate-saved-catalog":
+            self._start_cataloging()
+        elif event.button.id == "cancel-saved-catalog":
+            self._catalog_cancel.set()
+            self.query_one("#saved-catalog-status", Static).update(
+                "Annullamento richiesto: attendo la conclusione della chiamata attiva…"
+            )
         elif event.button.id == "refresh-saved-catalog":
             self.query_one("#refresh-saved-catalog", Button).disabled = True
             self._load()
+
+    def _start_cataloging(self):
+        if self._cataloging:
+            return
+        self._cataloging = True
+        self._catalog_cancel.clear()
+        self.query_one("#generate-saved-catalog", Button).disabled = True
+        self.query_one("#refresh-saved-catalog", Button).disabled = True
+        self.query_one("#cancel-saved-catalog", Button).remove_class("hidden")
+        self.query_one("#saved-catalog-status", Static).update(
+            "Catalogazione avviata · preparazione del documento…"
+        )
+        self._generate_catalog()
+
+    @work(thread=True, exclusive=True, group="generate-document-catalog", exit_on_error=False)
+    def _generate_catalog(self):
+        try:
+            catalog = self.app.catalog_evidence_document(
+                self.investigation,
+                self.document,
+                self._catalog_cancel.is_set,
+                self._catalog_progress,
+                force=self.catalog is not None,
+            )
+        except InvestigationChatCancelledError:
+            catalog = self._load_after_generation()
+            self.app.call_from_thread(
+                self._generation_finished,
+                catalog,
+                "Catalogazione annullata; le pagine completate restano salvate.",
+                "warning",
+            )
+        except (GraphAgentError, InvestigationError) as error:
+            catalog = self._load_after_generation()
+            self.app.call_from_thread(
+                self._generation_finished,
+                catalog,
+                str(error),
+                "error",
+            )
+        except Exception as error:
+            logger.error(
+                "Unexpected catalog generation failure. investigation_id=%s document_id=%s "
+                "error_type=%s",
+                self.investigation.investigation_id,
+                self.document.document_id,
+                type(error).__name__,
+            )
+            catalog = self._load_after_generation()
+            self.app.call_from_thread(
+                self._generation_finished,
+                catalog,
+                "Impossibile completare la catalogazione; verifica configurazione e log.",
+                "error",
+            )
+        else:
+            self.app.call_from_thread(self._generation_finished, catalog, "", "success")
+
+    def _load_after_generation(self):
+        try:
+            return self.app.load_evidence_catalog(self.investigation, self.document)
+        except Exception as error:
+            logger.warning(
+                "Unable to reload catalog after generation. investigation_id=%s document_id=%s "
+                "error_type=%s",
+                self.investigation.investigation_id,
+                self.document.document_id,
+                type(error).__name__,
+            )
+            return None
+
+    def _catalog_progress(self, progress):
+        self.app.call_from_thread(self._show_catalog_progress, progress)
+
+    def _show_catalog_progress(self, progress):
+        if not self.is_mounted or not self._cataloging:
+            return
+        detail = f" · {progress.detail}" if progress.detail else ""
+        self.query_one("#saved-catalog-status", Static).update(
+            f"Catalogazione {progress.completed}/{progress.total}{detail}"
+        )
+
+    def _generation_finished(self, catalog, detail: str, severity: str):
+        if not self.is_mounted:
+            return
+        self._cataloging = False
+        self._show(catalog, detail if catalog is None else "")
+        if detail:
+            self.notify(
+                detail,
+                title="Catalogazione pagine",
+                severity=severity,
+            )
 
     @work(thread=True, exclusive=True, group="read-document-catalog", exit_on_error=False)
     def _load(self):
@@ -73,7 +188,13 @@ class DocumentCatalogScreen(ModalScreen[None]):
             catalog = self.app.load_evidence_catalog(self.investigation, self.document)
         except InvestigationError as error:
             self.app.call_from_thread(self._show, None, str(error))
-        except Exception:
+        except Exception as error:
+            logger.warning(
+                "Unexpected catalog read failure. investigation_id=%s document_id=%s error_type=%s",
+                self.investigation.investigation_id,
+                self.document.document_id,
+                type(error).__name__,
+            )
             self.app.call_from_thread(self._show, None, "Impossibile leggere il catalogo salvato.")
         else:
             self.app.call_from_thread(self._show, catalog, "")
@@ -83,6 +204,10 @@ class DocumentCatalogScreen(ModalScreen[None]):
             return
         self.catalog = catalog
         self.query_one("#refresh-saved-catalog", Button).disabled = False
+        generate = self.query_one("#generate-saved-catalog", Button)
+        generate.disabled = False
+        generate.label = "Rigenera catalogo" if catalog is not None else "Genera catalogo"
+        self.query_one("#cancel-saved-catalog", Button).add_class("hidden")
         if catalog is None:
             status = error or "Nessun catalogo salvato per questo documento."
             summary = status + "\n\nLa reindicizzazione RAG aggiorna la ricerca nei documenti; "

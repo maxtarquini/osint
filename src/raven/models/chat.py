@@ -25,13 +25,14 @@ class TokenUsage:
 
 @dataclass(frozen=True, slots=True)
 class RagIndexProgress:
-    """Per-document progress emitted while synchronizing an investigation RAG index."""
+    """Per-document progress emitted by Evidence processing operations."""
 
     document_id: str
     document_name: str
     state: EvidenceIngestionState
     completed: int
     total: int
+    detail: str = ""
 
 
 @dataclass(frozen=True, slots=True)

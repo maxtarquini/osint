@@ -322,6 +322,50 @@ async def test_missing_catalog_and_read_error_are_visible(tmp_path):
         assert "private detail" not in status
 
 
+async def test_missing_catalog_can_be_generated_from_reader(tmp_path):
+    case = _investigation()
+    document = _document(case.investigation_id)
+
+    class CatalogRunner:
+        def __init__(self):
+            self.catalog = None
+            self.calls = []
+
+        def load(self, investigation, selected, *, with_pages=True):
+            return self.catalog
+
+        def catalog_document(
+            self, investigation, selected, cancelled=None, progress=None, *, force=False
+        ):
+            self.calls.append((selected.document_id, force))
+            self.catalog = saved_catalog(investigation.investigation_id, selected.document_id)
+            progress(
+                RagIndexProgress(
+                    selected.document_id,
+                    selected.original_name,
+                    EvidenceIngestionState.PROCESSING,
+                    2,
+                    2,
+                    "Catalogo completato",
+                )
+            )
+            return self.catalog
+
+    runner = CatalogRunner()
+    app = make_app(tmp_path, infrastructure=FakeInfrastructure(), page_catalog=runner)
+    async with app.run_test(size=(80, 24)) as pilot:
+        app.push_screen(DocumentCatalogScreen(case, document))
+        await settle(app, pilot)
+        assert "Nessun catalogo" in app.screen.query_one("#saved-catalog-status").render().plain
+        await pilot.click("#generate-saved-catalog")
+        await settle(app, pilot)
+        assert runner.calls == [(document.document_id, False)]
+        assert "2/2 pagine" in app.screen.query_one("#saved-catalog-status").render().plain
+        assert app.screen.query_one("#generate-saved-catalog", Button).label.plain == (
+            "Rigenera catalogo"
+        )
+
+
 @pytest.mark.parametrize("outcome", ["ready", "failed", "cancelled"])
 async def test_indexing_animation_tracks_worker_lifecycle(tmp_path, outcome):
     release = Event()

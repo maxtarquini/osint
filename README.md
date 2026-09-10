@@ -435,8 +435,11 @@ Nella scheda **Evidence**, ogni riga offre **Apri catalogo** e **Reindicizza**.
 complessiva, **Pagine** permette di scorrere e filtrare classificazioni, entità, citazioni,
 date e riferimenti, mentre **Provenienza** riporta modello, dizionario e data del catalogo.
 Con `Invio` sulla pagina selezionata passi al dettaglio, con `/` al filtro e con `Esc`
-torni ai documenti. Se non esiste un catalogo, la schermata lo indica esplicitamente.
-La consultazione non richiede chiamate al modello.
+torni ai documenti. Se non esiste un catalogo, la schermata lo indica e offre **Genera
+catalogo**. L'elaborazione avviene in background, mostra l'avanzamento pagina per pagina e può
+essere annullata; le pagine già completate restano salvate. Quando un catalogo esiste, lo stesso
+comando diventa **Rigenera catalogo** e crea una nuova generazione senza confonderla con la
+precedente. La sola consultazione e il comando **Aggiorna** non effettuano chiamate al modello.
 
 **Reindicizza** ricostruisce l'indice RAG del solo documento scelto, anche quando risulta già
 indicizzato. Gli altri documenti, i loro vettori e i loro stati restano invariati. Durante

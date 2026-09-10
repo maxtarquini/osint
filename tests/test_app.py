@@ -329,6 +329,7 @@ def make_app(
     investigations: FakeInvestigations | None = None,
     graph_analysis: FakeGraphAnalysis | None = None,
     investigation_chat: FakeChat | None = None,
+    page_catalog=None,
     auto_connect: bool = False,
 ) -> RavenApp:
     configuration_store = ConfigurationStore(
@@ -341,6 +342,7 @@ def make_app(
         investigations=investigations,
         graph_analysis=graph_analysis,
         investigation_chat=investigation_chat,
+        page_catalog=page_catalog,
         auto_connect=auto_connect,
     )
 

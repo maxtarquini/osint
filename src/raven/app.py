@@ -44,6 +44,7 @@ from raven.services import (
     InfrastructureService,
     InvestigationChatService,
     InvestigationService,
+    PageCatalogService,
 )
 from raven.services.capabilities import CapabilityRegistry
 from raven.tui.screens.capabilities import CapabilitiesScreen
@@ -148,6 +149,20 @@ class InvestigationChatLifecycle(Protocol):
     def remove_investigation(self, investigation_id: str) -> None: ...
 
 
+class PageCatalogLifecycle(Protocol):
+    def load(self, investigation, document, *, with_pages: bool = True): ...
+
+    def catalog_document(
+        self,
+        investigation,
+        document,
+        cancelled: Callable[[], bool] | None = None,
+        progress: Callable[[RagIndexProgress], None] | None = None,
+        *,
+        force: bool = False,
+    ): ...
+
+
 class RavenApp(App[None]):
     """Keyboard-first shell for Raven's OSINT graph workflows."""
 
@@ -163,6 +178,7 @@ class RavenApp(App[None]):
         investigations: InvestigationLifecycle | None = None,
         graph_analysis: GraphAnalysisLifecycle | None = None,
         investigation_chat: InvestigationChatLifecycle | None = None,
+        page_catalog: PageCatalogLifecycle | None = None,
         auto_connect: bool = True,
     ) -> None:
         super().__init__()
@@ -177,6 +193,7 @@ class RavenApp(App[None]):
         )
         self.graph_analysis = graph_analysis
         self.investigation_chat = investigation_chat
+        self.page_catalog = page_catalog
         self._knowledge_bases: KnowledgeBaseStore | None = None
         if investigations is not None:
             self.investigations: InvestigationLifecycle | None = investigations
@@ -189,6 +206,14 @@ class RavenApp(App[None]):
                 self.infrastructure.mongo_repository,
                 knowledge_bases,
             )
+            if self.page_catalog is None:
+                self.page_catalog = PageCatalogService(
+                    self.infrastructure.mongo_repository,
+                    knowledge_bases,
+                    self.infrastructure.ai_node,
+                    self.settings.with_environment().dictionaries.path,
+                    settings_provider=lambda: self.settings.with_environment().ai,
+                )
             if self.graph_analysis is None:
                 self.graph_analysis = GraphAnalysisService(
                     self.infrastructure.mongo_repository,
@@ -309,12 +334,16 @@ class RavenApp(App[None]):
                 self.graph_analysis.configure_dictionary_root(
                     settings.with_environment().dictionaries.path
                 )
+            if isinstance(self.page_catalog, PageCatalogService):
+                self.page_catalog.dictionary_root = settings.with_environment().dictionaries.path
             self.configuration_store.save(settings)
         except (ConfigurationError, InvestigationPersistenceError) as error:
             if self._knowledge_bases is not None and previous_root is not None:
                 self._knowledge_bases.configure_root(previous_root)
             if isinstance(self.graph_analysis, GraphAnalysisService):
                 self.graph_analysis.configure_dictionary_root(previous_dictionary_root)
+            if isinstance(self.page_catalog, PageCatalogService):
+                self.page_catalog.dictionary_root = previous_dictionary_root
             if isinstance(error, ConfigurationError):
                 raise
             raise ConfigurationError(str(error)) from error
@@ -482,10 +511,31 @@ class RavenApp(App[None]):
     def load_evidence_catalog(self, investigation, document):
         if document.investigation_id != investigation.investigation_id:
             raise InvestigationValidationError("Evidence does not belong to this investigation")
+        if self.page_catalog is not None:
+            return self.page_catalog.load(investigation, document)
         repository = getattr(self.infrastructure, "mongo_repository", None)
         if repository is None:
             raise InvestigationPersistenceError("Catalog storage is not available")
         return repository.load_catalog(investigation.investigation_id, document.document_id)
+
+    def catalog_evidence_document(
+        self,
+        investigation,
+        document,
+        cancelled=None,
+        progress=None,
+        *,
+        force: bool = False,
+    ):
+        if self.page_catalog is None:
+            raise InvestigationPersistenceError("Page cataloging is not available")
+        return self.page_catalog.catalog_document(
+            investigation,
+            document,
+            cancelled,
+            progress,
+            force=force,
+        )
 
     def stream_investigation_chat(
         self,

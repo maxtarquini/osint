@@ -7,6 +7,7 @@ from raven.services.graph_analysis import GraphAnalysisService
 from raven.services.graph_jobs import GraphAnalysisQueue
 from raven.services.infrastructure import InfrastructureService
 from raven.services.investigations import InvestigationService
+from raven.services.page_catalog import PageCatalogService
 
 __all__ = [
     "GraphAnalysisService",
@@ -15,5 +16,6 @@ __all__ = [
     "InvestigationChatService",
     "ChatExportService",
     "InvestigationService",
+    "PageCatalogService",
     "create_directory",
 ]

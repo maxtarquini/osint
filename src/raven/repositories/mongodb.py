@@ -42,7 +42,7 @@ from raven.models.graph import (
 )
 from raven.repositories.catalog import CatalogReader
 
-MONGO_SCHEMA_VERSION = 7
+MONGO_SCHEMA_VERSION = 8
 BASE_COLLECTIONS = (
     "investigations",
     "evidence_documents",
@@ -52,6 +52,8 @@ BASE_COLLECTIONS = (
     "graph_checkpoints",
     "graph_analysis_runs",
     "chat_messages",
+    "document_catalogs",
+    "catalog_pages",
     "app_metadata",
     "graph_preferences",
 )
@@ -175,6 +177,21 @@ class MongoRepository(CatalogReader):
             name="chat_message_identity_unique",
             unique=True,
         )
+        database["document_catalogs"].create_index(
+            [("investigation_id", ASCENDING), ("document_id", ASCENDING)],
+            name="document_catalog_identity",
+            unique=True,
+        )
+        database["catalog_pages"].create_index(
+            [
+                ("investigation_id", ASCENDING),
+                ("document_id", ASCENDING),
+                ("signature", ASCENDING),
+                ("number", ASCENDING),
+            ],
+            name="catalog_page_identity",
+            unique=True,
+        )
 
     def create_investigation(self, investigation: Investigation) -> None:
         """Persist investigation metadata and evidence manifests with rollback."""
@@ -271,6 +288,8 @@ class MongoRepository(CatalogReader):
                 "graph_checkpoints",
                 "graph_analysis_runs",
                 "chat_messages",
+                "document_catalogs",
+                "catalog_pages",
             ):
                 self._database[collection_name].delete_many({"investigation_id": investigation_id})
             result = self._database["investigations"].delete_one(
@@ -365,6 +384,8 @@ class MongoRepository(CatalogReader):
                 {"investigation_id": document.investigation_id},
                 {"$inc": {"evidence_count": -1}, "$set": {"updated_at": datetime.now(UTC)}},
             )
+            for collection_name in ("document_catalogs", "catalog_pages"):
+                self._database[collection_name].delete_many(identity)
         except InvestigationPersistenceError:
             raise
         except Exception as error:
